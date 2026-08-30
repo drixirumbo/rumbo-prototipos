@@ -677,7 +677,11 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
   .rb-logo-row, .rb-sidebar.collapsed .rb-logo-row { flex-direction: row; padding: var(--sp-2) 0; border-bottom: none; margin-bottom: 0; }
   .rb-sidebar.collapsed .rb-logo { justify-content: flex-start; }
   .rb-mobile-menu-btn { display: flex; }
-  .rb-sidebar-toggle { display: none; }
+  /* Solo se oculta el toggle de colapsar el rail (no aplica en mobile, ver
+     comentario de arriba) -- el de tema comparte la misma clase base pero
+     debe seguir visible, es la única forma de cambiar entre claro/oscuro
+     acá (no vive en ningún otro lado de la UI mobile). */
+  .rb-sidebar-toggle:not(.rb-theme-toggle) { display: none; }
   /* El desplegable (grupo + nav + footer) queda oculto por defecto y se
      muestra como overlay flotante debajo de la barra al abrir el menú --
      el estado "collapsed" del rail de desktop no aplica acá, así que se
