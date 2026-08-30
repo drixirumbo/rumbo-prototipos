@@ -446,7 +446,7 @@ function completarRegistro() {
 
 let editForm = null;
 function abrirEditarPerfil() {
-  editForm = { expectativa: YO.expectativa, disponibilidad: YO.disponibilidad, skills: [...YO.skills], nuevoSkill: '' };
+  editForm = { disponibilidad: YO.disponibilidad, skills: [...YO.skills], nuevoSkill: '' };
   state.editandoPerfil = true; render();
 }
 function cerrarEditarPerfil() { state.editandoPerfil = false; editForm = null; render(); }
@@ -457,7 +457,6 @@ function agregarSkillForm() {
 }
 function quitarSkillForm(s) { editForm.skills = editForm.skills.filter(x => x !== s); render(); }
 function guardarPerfil() {
-  YO.expectativa = Number(editForm.expectativa) || YO.expectativa;
   YO.disponibilidad = editForm.disponibilidad;
   YO.skills = editForm.skills;
   state.editandoPerfil = false; editForm = null;
@@ -534,8 +533,8 @@ function renderPostulaciones() {
   if (POSTULACIONES.length === 0) {
     return `<div class="rb-empty card">
       <p style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--sp-2)">Todavía no postulaste a nada</p>
-      <p style="margin-bottom:var(--sp-4)">Explora las vacantes abiertas y postula a la que más te interese.</p>
-      <button class="btn" onclick="irA('vacantes')">${icon('briefcase', 14)} Buscar vacantes</button>
+      <p style="margin-bottom:var(--sp-4)">Explora las posiciones abiertas y postula a la que más te interese.</p>
+      <button class="btn" onclick="irA('vacantes')">${icon('briefcase', 14)} Buscar posiciones</button>
     </div>`;
   }
   return POSTULACIONES.map(p => {
@@ -587,7 +586,6 @@ function renderVacantes() {
           <div class="rb-vacante-titulo">${esc(v.titulo)}</div>
           <div class="rb-vacante-meta">
             <span>${icon('mapPin', 12)} ${esc(v.ubicacion)}</span>
-            <span>${icon('coin', 12)} ${esc(v.bandaLabel)}</span>
           </div>
         </div>
         ${aplicado
@@ -685,7 +683,6 @@ function renderPerfil() {
     <div class="rb-perfil-grid">
       <div><label class="field">Email</label><p style="margin-top:4px">${esc(YO.email)}</p></div>
       <div><label class="field">Teléfono</label><p style="margin-top:4px">${esc(YO.telefono)}</p></div>
-      <div><label class="field">Expectativa salarial</label><p style="margin-top:4px">S/ ${YO.expectativa.toLocaleString('es-PE')}/mes</p></div>
       <div><label class="field">Disponibilidad</label><p style="margin-top:4px">${esc(YO.disponibilidad)}</p></div>
     </div>
     <div style="margin-top:var(--sp-5)">
@@ -709,9 +706,6 @@ function editarPerfilModalHtml() {
     <div class="rb-modal">
       <h3 style="margin-bottom:var(--sp-4)">Editar perfil</h3>
       <div style="display:flex;flex-direction:column;gap:var(--sp-4)">
-        <label class="field">Expectativa salarial (S/ mes)
-          <input class="input" type="number" value="${editForm.expectativa}" oninput="editForm.expectativa=this.value">
-        </label>
         <label class="field">Disponibilidad
           <input class="input" value="${esc(editForm.disponibilidad)}" oninput="editForm.disponibilidad=this.value">
         </label>
@@ -760,10 +754,10 @@ function agendarModalHtml() {
    ========================================================================= */
 const TABS_SESION = [
   { key: 'postulaciones', label: 'Mis postulaciones' },
-  { key: 'vacantes', label: 'Buscar vacantes' },
+  { key: 'vacantes', label: 'Buscar posiciones' },
   { key: 'perfil', label: 'Mi perfil' },
 ];
-const TABS_PUBLICO = [{ key: 'vacantes', label: 'Buscar vacantes' }];
+const TABS_PUBLICO = [{ key: 'vacantes', label: 'Buscar posiciones' }];
 function render() {
   /* Preservar foco+selección a través del re-render -- mismo criterio que
      ya usa rumbo_prototype.html: al reemplazar innerHTML completo en cada
@@ -791,7 +785,7 @@ function render() {
     : renderDetalle();
   const titulos = {
     postulaciones: ['Mis postulaciones', 'El estado de tus procesos, de un vistazo.'],
-    vacantes: ['Vacantes abiertas', 'Postula a la posición que más te interese.'],
+    vacantes: ['Posiciones abiertas', 'Postula a la posición que más te interese.'],
     perfil: ['Mi perfil', 'Así te ven los recruiters de Rumbo.'],
   };
   const [titulo, sub] = titulos[view] || ['', ''];
