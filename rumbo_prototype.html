@@ -552,7 +552,13 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
    .rb-detail-grid/.rb-detail-grid-3 realmente llegan a usar 2 columnas en
    vez de apilarse siempre en una sola -- antes ese quiebre nunca se
    alcanzaba y esas reglas quedaban muertas. */
-.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+/* overscroll-behavior:contain evita el "scroll chaining" -- sin esto, en
+   mobile, al llegar al tope/fondo del scroll interno del drawer el gesto
+   se sigue de largo y scrollea la página de fondo (que igual sigue viva
+   detrás del overlay), dando el efecto de que "salta" o se ve mal. Se
+   complementa con el body-scroll-lock de render() (ver más abajo), que
+   directamente congela la página de fondo mientras el drawer está abierto. */
+.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
 @keyframes rb-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 /* Ver comentario en renderPostulacionDrawer(): suprime la animación de
    entrada en los re-renders del drawer ya abierto (tipear, apretar
@@ -635,7 +641,7 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-checklist-row.off-text { color: var(--text-muted); }
 .rb-entrevistador { font-size: var(--fs-xs); color: var(--cyan-text); margin-top: 2px; }
 .rb-checklist-summary { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; padding: 3px 8px; border-radius: var(--radius-2); margin-bottom: var(--sp-3); line-height: 1; }
-.modal-preview { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-6); width: min(520px, 90vw); max-height: 80vh; overflow-y: auto; z-index: 70; box-shadow: var(--shadow-3); }
+.modal-preview { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-6); width: min(520px, 90vw); max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; z-index: 70; box-shadow: var(--shadow-3); }
 .modal-preview .mhead { display: flex; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-4); }
 .modal-preview .mhead .ic { width: 36px; height: 36px; border-radius: var(--radius-2); background: var(--accent-soft); color: var(--blue-300-text); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: var(--fs-lg); }
 .modal-preview .mhead h5 { margin: 0 0 4px; font-size: var(--fs-md); font-weight: 600; }
@@ -4868,6 +4874,15 @@ function render() {
   const boardEl = document.querySelector('.rb-board');
   const boardScroll = boardEl ? boardEl.scrollLeft : null;
   const pageScroll = window.scrollY;
+  /* Congela el scroll de la página de fondo mientras hay un overlay fijo
+     abierto (drawer de postulación o cualquiera de los modales chicos) --
+     sin esto, el body sigue siendo scrolleable detrás del overlay, y en
+     mobile el gesto de scroll "se filtra" (scroll chaining) apenas el
+     scroll interno del overlay llega a su tope/fondo, dando el efecto de
+     que la página salta o se ve mal (se suma a overscroll-behavior:contain
+     en .rb-side-drawer/.modal-preview, que ataca lo mismo desde el CSS). */
+  const hayOverlayFijo = (state.view === 'pipeline' && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto;
+  document.body.style.overflow = hayOverlayFijo ? 'hidden' : '';
   /* El side drawer tiene su propio scroll interno (overflow-y: auto) --
      sin esto, cualquier render() disparado mientras el drawer está
      scrolleado (ej. tipear en el textarea de sustento de Identificado,
