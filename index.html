@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Rumbo · Hub de prototipos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* Mismos tokens que rumbo_prototype.html/candidate_portal.html -- este hub
+   es solo el punto de entrada entre los dos prototipos navegables, no un
+   producto en sí, así que se queda con lo mínimo del Design System. */
+:root {
+  --rb-blue: #382EDC; --rb-blue-300: #8078F0; --rb-cyan: #47EBEB; --rb-purple: #8452FD;
+  --rb-ink: #0A0A0B; --rb-paper: #F4F2ED;
+  --bg: #0A0A0B; --surface: #1B1B1F; --surface-2: #242428;
+  --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.16);
+  --text: #FAFAFA; --text-muted: rgba(255,255,255,.64);
+  --accent-soft: rgba(56,46,220,.14);
+  --radius-2: 8px; --radius-3: 12px; --radius-4: 16px;
+  --shadow-2: 0 4px 12px rgba(0,0,0,.5); --shadow-3: 0 12px 32px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+  --fs-sm: 12px; --fs-base: 14px; --fs-lg: 18px; --fs-2xl: 28px;
+  --ease-out: cubic-bezier(.2,.7,.2,1); --dur-2: 200ms;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: radial-gradient(900px 480px at 14% -10%, rgba(56,46,220,.16), transparent 60%), radial-gradient(700px 420px at 100% 0%, rgba(71,235,235,.06), transparent 55%), var(--bg);
+  background-attachment: fixed;
+  color: var(--text); min-height: 100vh;
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-6);
+}
+.rb-hub { width: 100%; max-width: 880px; }
+.rb-hub-brand { display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-2); }
+.rb-hub-brand svg { height: 30px; width: auto; color: var(--text); }
+.rb-hub-sub { text-align: center; color: var(--text-muted); margin-bottom: var(--sp-6); font-size: var(--fs-base); }
+.rb-hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+@media (max-width: 640px) { .rb-hub-grid { grid-template-columns: 1fr; } }
+.rb-hub-card { display: block; text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-4); padding: var(--sp-6); transition: border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
+.rb-hub-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-3); }
+.rb-hub-ic { width: 44px; height: 44px; border-radius: var(--radius-3); background: var(--accent-soft); color: var(--rb-blue-300); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-4); }
+.rb-hub-card.cand .rb-hub-ic { background: rgba(71,235,235,.14); color: var(--rb-cyan); }
+.rb-hub-title { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 6px; }
+.rb-hub-desc { color: var(--text-muted); font-size: var(--fs-base); line-height: 1.5; margin-bottom: var(--sp-4); }
+.rb-hub-tag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--rb-blue-300); }
+.rb-hub-card.cand .rb-hub-tag { color: var(--rb-cyan); }
+</style>
+</head>
+<body>
+<div class="rb-hub">
+  <div class="rb-hub-brand"><svg viewBox="0 0 144 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M32.634 6.70557C25.47 6.70557 19.026 12.582 18.774 19.7202C17.28 15.0695 12.906 11.6987 7.758 11.6807V34.9159H19.332V28.03L19.386 26.588C19.386 24.7493 20.124 23.109 21.33 21.9013C22.536 20.6936 24.174 19.9545 26.01 19.9545H32.634C39.942 19.9545 45.864 14.024 45.864 6.70557H32.634Z" fill="#382EDC"/>
+<path d="M50.148 18.3142C50.724 16.6017 52.47 16.0249 54.432 16.0249H55.926V19.5579H53.64C51.66 19.5579 50.238 20.6215 50.238 22.7846V31.473H46.332V16.079H50.184V18.3142H50.148Z" fill="currentColor"/>
+<path d="M69.534 31.4729V28.9853C68.922 30.4093 67.05 31.7252 64.224 31.7252C60.822 31.7252 58.248 29.2737 58.248 25.272V16.0789H62.154V24.8935C62.154 27.0385 63.396 28.3003 65.628 28.3003C68.13 28.3003 69.48 26.7501 69.48 24.0102V16.0789H73.386V31.4729H69.534Z" fill="currentColor"/>
+<path d="M80.676 16.079V18.3683C81.324 16.8722 83.034 15.8267 85.158 15.8267C87.138 15.8267 88.596 16.8902 89.244 18.4404H89.208C89.892 17.0164 91.602 15.8267 94.05 15.8267C96.876 15.8267 99.126 17.9717 99.126 21.1623V31.473H95.22V21.4867C95.22 20.0627 94.194 19.2516 92.718 19.2516C91.098 19.2516 89.928 20.1889 89.928 22.0996V31.473H86.04V21.4867C86.04 20.0627 85.014 19.2516 83.538 19.2516C81.918 19.2516 80.748 20.1889 80.748 22.0996V31.473H76.842V16.079H80.676Z" fill="currentColor"/>
+<path d="M106.344 9.73389V18.242H106.362C107.172 16.9442 108.9 15.6283 111.618 15.6283C115.47 15.6283 118.692 19.0352 118.692 23.7579C118.692 28.4807 115.47 31.8875 111.618 31.8875C108.882 31.8875 107.1 30.5897 106.29 29.2738V31.4549H102.438V9.73389H106.344ZM106.344 23.7759C106.344 26.6961 108.144 28.4266 110.556 28.4266C112.914 28.4266 114.768 26.7502 114.768 23.7759C114.768 20.8017 112.914 19.1073 110.556 19.1073C108.144 19.1073 106.344 20.8558 106.344 23.7759Z" fill="currentColor"/>
+<path d="M128.358 15.6284C132.876 15.6284 136.422 18.9271 136.422 23.758C136.422 28.5889 132.876 31.9057 128.358 31.9057C123.84 31.9057 120.294 28.607 120.294 23.7761C120.294 18.9452 123.822 15.6284 128.358 15.6284ZM128.358 28.4267C128.358 28.4267 132.462 26.1194 132.462 23.3254C132.462 20.5314 130.842 19.1074 128.358 19.1074C125.874 19.1074 124.182 20.5314 124.182 23.3254C124.182 26.1194 128.358 28.4267 128.358 28.4267Z" fill="currentColor"/>
+</svg></div>
+  <p class="rb-hub-sub">Elige qué prototipo navegar.</p>
+  <div class="rb-hub-grid">
+    <a class="rb-hub-card" href="rumbo_prototype.html">
+      <div class="rb-hub-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="5" height="14"/><rect x="9.5" y="5" width="5" height="14"/><rect x="16" y="5" width="5" height="14"/></svg>
+      </div>
+      <div class="rb-hub-title">Pipeline de Reclutamiento</div>
+      <p class="rb-hub-desc">La vista del recruiter: kanban de postulaciones, gates de decisión, agendamiento, dashboard y detalle de cada candidato.</p>
+      <span class="rb-hub-tag">Entrar al pipeline <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+    <a class="rb-hub-card cand" href="candidate_portal.html">
+      <div class="rb-hub-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg>
+      </div>
+      <div class="rb-hub-title">Portal de Candidatos</div>
+      <p class="rb-hub-desc">La vista del candidato: estado de sus postulaciones, agendar Screening/Entrevista Técnica, explorar y postular a vacantes, editar su perfil.</p>
+      <span class="rb-hub-tag">Entrar al portal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Rumbo · Portal de Candidatos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* ===== Mismos tokens que rumbo_prototype.html (Design System de Rumbo) --
+   no se comparte el archivo, pero sí la paleta/escala, para que las dos
+   superficies (recruiter y candidato) se sientan parte del mismo
+   producto. Ver hub (index.html) para el punto de entrada entre ambas. */
+:root {
+  --rb-blue: #382EDC; --rb-blue-700: #2A22A8; --rb-blue-300: #8078F0;
+  --rb-cyan: #47EBEB; --rb-cyan-600: #19B8B8; --rb-purple: #8452FD; --rb-orange: #FF5A36;
+  --rb-ink: #0A0A0B; --rb-paper: #F4F2ED; --rb-white: #FFFFFF;
+  --bg: #0A0A0B; --bg-elev: #121214; --bg-subtle: #17171A; --surface: #1B1B1F; --surface-2: #242428;
+  --border: rgba(255,255,255,.08); --border-strong: rgba(255,255,255,.16);
+  --text: #FAFAFA; --text-muted: rgba(255,255,255,.64); --text-dim: rgba(255,255,255,.44);
+  --accent: var(--rb-blue); --accent-fg: #FFFFFF; --accent-soft: rgba(56,46,220,.14); --highlight: var(--rb-cyan);
+  --success: #3CCB7F; --warning: #FFB020; --danger: #FF5A36;
+  --cyan-text: var(--rb-cyan); --success-text: var(--success); --warning-text: var(--warning); --danger-text: var(--danger);
+  --radius-1: 4px; --radius-2: 8px; --radius-3: 12px; --radius-4: 16px; --radius-full: 9999px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4); --shadow-2: 0 4px 12px rgba(0,0,0,.5); --shadow-3: 0 12px 32px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  --fs-xs: 11px; --fs-sm: 12px; --fs-base: 14px; --fs-md: 16px; --fs-lg: 18px; --fs-xl: 22px; --fs-2xl: 28px;
+  --ease-out: cubic-bezier(.2,.7,.2,1); --dur-2: 200ms;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--rb-paper); --bg-elev: #FFFFFF; --bg-subtle: #EAE7DF; --surface: #FFFFFF; --surface-2: #F0EDE5;
+  --border: rgba(10,10,11,.08); --border-strong: rgba(10,10,11,.16);
+  --text: var(--rb-ink); --text-muted: rgba(10,10,11,.64); --text-dim: rgba(10,10,11,.44);
+  --accent-soft: rgba(56,46,220,.10);
+  --cyan-text: #0D7878; --warning-text: #956000; --success-text: #217B4B; --danger-text: #D42600;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  background: radial-gradient(900px 480px at 14% -10%, rgba(56,46,220,.16), transparent 60%), var(--bg);
+  background-attachment: fixed;
+  color: var(--text); min-height: 100vh;
+}
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0; }
+a { color: inherit; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid transparent; border-radius: var(--radius-2); padding: 10px 16px; font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-fg); transition: filter var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; filter: none; }
+.btn.secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+.btn.ghost { background: transparent; color: var(--text); border-color: transparent; }
+.btn.ghost:hover { background: var(--surface); }
+.btn.sm { padding: 6px 12px; font-size: var(--fs-xs); }
+.btn.lg { padding: 13px 22px; font-size: var(--fs-base); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-5); }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 600; padding: 4px 10px; border-radius: var(--radius-full); line-height: 1; }
+.input, .select, textarea { width: 100%; font-family: inherit; font-size: var(--fs-base); padding: 10px 12px; border-radius: var(--radius-2); border: 1px solid var(--border-strong); background: var(--bg-elev); color: var(--text); }
+.input:focus, .select:focus, textarea:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+label.field { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); color: var(--text-muted); font-weight: 600; }
+
+/* ---- Shell: topbar + contenido centrado, mucho más simple que el CRM del
+   recruiter -- este es un portal de consumo, no una herramienta de
+   trabajo densa. ---- */
+.rb-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: var(--sp-4) var(--sp-6); background: rgba(18,18,20,.75); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+:root[data-theme="light"] .rb-topbar { background: rgba(255,255,255,.75); }
+.rb-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-lg); }
+.rb-brand svg { display: block; height: 22px; width: auto; color: var(--text); }
+.rb-nav { display: flex; gap: var(--sp-2); }
+.rb-nav button { background: transparent; border: none; color: var(--text-muted); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; padding: 8px 14px; border-radius: var(--radius-2); cursor: pointer; }
+.rb-nav button:hover { background: var(--surface); color: var(--text); }
+.rb-nav button.active { background: var(--accent-soft); color: var(--accent); }
+:root[data-theme="light"] .rb-nav button.active { color: var(--rb-blue); }
+.rb-user { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--rb-blue-300); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--fs-sm); flex-shrink: 0; }
+:root[data-theme="light"] .avatar { color: var(--rb-blue); }
+.rb-main { max-width: 880px; margin: 0 auto; padding: var(--sp-8) var(--sp-6) var(--sp-10); }
+.rb-page-title { font-size: var(--fs-2xl); margin-bottom: var(--sp-2); }
+.rb-page-sub { color: var(--text-muted); font-size: var(--fs-base); margin-bottom: var(--sp-6); }
+
+/* ---- Postulación card + stepper ---- */
+.rb-postulacion-card { margin-bottom: var(--sp-4); }
+.rb-postulacion-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-4); cursor: pointer; }
+.rb-postulacion-title { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 2px; }
+.rb-postulacion-sub { color: var(--text-muted); font-size: var(--fs-sm); display: flex; align-items: center; gap: 5px; }
+/* Tracker de fases grandes -- reemplaza al stepper granular de 6 nodos:
+   solo 4 "pills" en fila, sin exponer nombres de etapas técnicas (ver
+   FASES/faseTrackerHtml). Mucho más liviano a propósito -- es el resumen,
+   el detalle es donde se baja de nivel. */
+.rb-fase-tracker { display: flex; align-items: center; gap: 6px; margin: var(--sp-3) 0; flex-wrap: wrap; }
+.rb-fase-pill { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-dim); padding: 5px 12px 5px 5px; border-radius: var(--radius-full); background: var(--bg-elev); border: 1px solid var(--border); }
+.rb-fase-pill-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border-strong); display: flex; align-items: center; justify-content: center; color: var(--rb-ink); flex-shrink: 0; }
+.rb-fase-pill.done { color: var(--text-muted); }
+.rb-fase-pill.done .rb-fase-pill-dot { background: var(--success); }
+.rb-fase-pill.actual { color: var(--text); background: var(--accent-soft); border-color: rgba(56,46,220,.3); }
+.rb-fase-pill.actual .rb-fase-pill-dot { background: var(--accent); }
+.rb-accion-pendiente { background: var(--accent-soft); border: 1px solid rgba(56,46,220,.3); border-radius: var(--radius-2); padding: var(--sp-4); display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); margin-top: var(--sp-3); flex-wrap: wrap; }
+.rb-accion-pendiente-txt { font-size: var(--fs-sm); font-weight: 600; }
+.rb-agendado-info { display: flex; align-items: center; gap: 8px; color: var(--success-text); font-size: var(--fs-sm); font-weight: 600; margin-top: var(--sp-3); background: rgba(60,203,127,.1); border-radius: var(--radius-2); padding: var(--sp-3); }
+
+/* ---- Vacantes ---- */
+.rb-vacante-card { margin-bottom: var(--sp-4); }
+.rb-vacante-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.rb-vacante-titulo { font-size: var(--fs-lg); font-weight: 600; }
+.rb-vacante-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--text-muted); font-size: var(--fs-sm); margin: var(--sp-2) 0 var(--sp-3); }
+.rb-vacante-meta span { display: flex; align-items: center; gap: 5px; }
+.rb-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-3); }
+.rb-tag { font-size: var(--fs-xs); padding: 3px 9px; border-radius: var(--radius-1); background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-muted); }
+
+/* ---- Slot picker ---- */
+.rb-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--sp-2); margin: var(--sp-4) 0; }
+.rb-slot { border: 1px solid var(--border-strong); border-radius: var(--radius-2); padding: var(--sp-3); text-align: center; cursor: pointer; background: var(--bg-elev); transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
+.rb-slot:hover { border-color: var(--accent); }
+.rb-slot.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+.rb-slot-dia { font-size: var(--fs-xs); color: var(--text-muted); text-transform: capitalize; }
+.rb-slot-fecha { font-size: var(--fs-sm); font-weight: 600; margin: 2px 0; }
+.rb-slot-hora { font-size: var(--fs-sm); color: var(--cyan-text); font-weight: 600; }
+
+/* ---- Registro ---- */
+.rb-registro-steps { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+.rb-registro-step { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-dim); }
+.rb-registro-step:not(:last-child)::after { content: ''; width: 16px; height: 1px; background: var(--border-strong); margin: 0 2px; }
+.rb-registro-step-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--bg-elev); border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; }
+.rb-registro-step.done { color: var(--text-muted); }
+.rb-registro-step.done .rb-registro-step-dot { background: var(--success); border-color: var(--success); color: var(--rb-ink); }
+.rb-registro-step.actual { color: var(--text); }
+.rb-registro-step.actual .rb-registro-step-dot { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+:root[data-theme="light"] .rb-registro-step.actual .rb-registro-step-dot { color: var(--rb-blue); }
+.rb-upload-box { display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); text-align: center; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-2); padding: var(--sp-6) var(--sp-4); color: var(--text-muted); font-size: var(--fs-sm); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
+.rb-upload-box:hover { border-color: var(--accent); background: var(--accent-soft); }
+.rb-registro-resumen { display: flex; flex-direction: column; gap: var(--sp-2); }
+.rb-registro-resumen div { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--fs-sm); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+.rb-registro-resumen span { color: var(--text-muted); }
+
+/* ---- Perfil ---- */
+.rb-perfil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+@media (max-width: 640px) { .rb-perfil-grid { grid-template-columns: 1fr; } .rb-main { padding: var(--sp-5) var(--sp-4); } .rb-nav { display: none; } }
+.rb-skill-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 5px 12px; font-size: var(--fs-sm); }
+.rb-skill-chip button { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 0; display: flex; }
+.rb-file-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); }
+.rb-empty { text-align: center; padding: var(--sp-10) var(--sp-6); color: var(--text-muted); }
+.rb-toast { position: fixed; bottom: var(--sp-6); right: var(--sp-6); background: var(--surface); border: 1px solid var(--cyan-text); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); box-shadow: var(--shadow-3); z-index: 80; }
+.rb-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; }
+.rb-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(480px, 92vw); max-height: 86vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-4); padding: var(--sp-6); z-index: 61; box-shadow: var(--shadow-3); }
+.rb-theme-btn { background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-2); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* =========================================================================
+   PORTAL DE CANDIDATOS -- primera versión.
+
+   Prototipo estático (sin backend), mismo espíritu que rumbo_prototype.html:
+   todo vive en memoria, se pierde al refrescar. La única identidad real que
+   comparten los dos archivos es el lenguaje visual (tokens/CSS) y el
+   concepto de etapas (FULL_ORDER) -- los datos NO se comparten entre
+   archivos (cada uno es su propio prototipo aislado), así que "aplicar" acá
+   no crea nada en el pipeline del recruiter ni viceversa.
+
+   Alcance v1 (confirmado con el usuario): estado de postulaciones +
+   agendar horario (Screening/Entrevista Técnica) + explorar y aplicar a
+   vacantes + perfil/documentos. ---- */
+
+const ICONS = {
+  chevronRight: '<path d="M9 6l6 6-6 6"/>',
+  chevronLeft: '<path d="M15 6l-6 6 6 6"/>',
+  check: '<path d="M5 13l4 4L19 7"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  briefcase: '<rect x="3" y="7" width="18" height="10" rx="2"/><path d="M8 12h6"/>',
+  calendar: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>',
+  mapPin: '<path d="M12 21s7-7.5 7-12A7 7 0 0 0 5 9c0 4.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1.1 1.1 2 2.5 2s2.5-.9 2.5-2-1.1-1.7-2.5-2-2.5-.9-2.5-2 1.1-2 2.5-2 2.5.9 2.5 2"/>',
+  building: '<rect x="4" y="3" width="16" height="18"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/>',
+  fileText: '<path d="M6 3h9l4 4v14H6Z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+  trash: '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>',
+  user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>',
+  sparkles: '<path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6Z"/>',
+};
+function icon(name, size) {
+  size = size || 14;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:middle">${ICONS[name] || ''}</svg>`;
+}
+/* Isotipo real de Rumbo -- mismo SVG que ya usa el sidebar de
+   rumbo_prototype.html (idéntico "d" en los paths, solo currentColor en
+   vez de black en las letras para que se adapte a claro/oscuro, igual
+   que allá). El isotipo azul (#382EDC) va fijo en los dos temas. */
+const LOGO_SVG = `<svg viewBox="0 0 144 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M32.634 6.70557C25.47 6.70557 19.026 12.582 18.774 19.7202C17.28 15.0695 12.906 11.6987 7.758 11.6807V34.9159H19.332V28.03L19.386 26.588C19.386 24.7493 20.124 23.109 21.33 21.9013C22.536 20.6936 24.174 19.9545 26.01 19.9545H32.634C39.942 19.9545 45.864 14.024 45.864 6.70557H32.634Z" fill="#382EDC"/>
+<path d="M50.148 18.3142C50.724 16.6017 52.47 16.0249 54.432 16.0249H55.926V19.5579H53.64C51.66 19.5579 50.238 20.6215 50.238 22.7846V31.473H46.332V16.079H50.184V18.3142H50.148Z" fill="currentColor"/>
+<path d="M69.534 31.4729V28.9853C68.922 30.4093 67.05 31.7252 64.224 31.7252C60.822 31.7252 58.248 29.2737 58.248 25.272V16.0789H62.154V24.8935C62.154 27.0385 63.396 28.3003 65.628 28.3003C68.13 28.3003 69.48 26.7501 69.48 24.0102V16.0789H73.386V31.4729H69.534Z" fill="currentColor"/>
+<path d="M80.676 16.079V18.3683C81.324 16.8722 83.034 15.8267 85.158 15.8267C87.138 15.8267 88.596 16.8902 89.244 18.4404H89.208C89.892 17.0164 91.602 15.8267 94.05 15.8267C96.876 15.8267 99.126 17.9717 99.126 21.1623V31.473H95.22V21.4867C95.22 20.0627 94.194 19.2516 92.718 19.2516C91.098 19.2516 89.928 20.1889 89.928 22.0996V31.473H86.04V21.4867C86.04 20.0627 85.014 19.2516 83.538 19.2516C81.918 19.2516 80.748 20.1889 80.748 22.0996V31.473H76.842V16.079H80.676Z" fill="currentColor"/>
+<path d="M106.344 9.73389V18.242H106.362C107.172 16.9442 108.9 15.6283 111.618 15.6283C115.47 15.6283 118.692 19.0352 118.692 23.7579C118.692 28.4807 115.47 31.8875 111.618 31.8875C108.882 31.8875 107.1 30.5897 106.29 29.2738V31.4549H102.438V9.73389H106.344ZM106.344 23.7759C106.344 26.6961 108.144 28.4266 110.556 28.4266C112.914 28.4266 114.768 26.7502 114.768 23.7759C114.768 20.8017 112.914 19.1073 110.556 19.1073C108.144 19.1073 106.344 20.8558 106.344 23.7759Z" fill="currentColor"/>
+<path d="M128.358 15.6284C132.876 15.6284 136.422 18.9271 136.422 23.758C136.422 28.5889 132.876 31.9057 128.358 31.9057C123.84 31.9057 120.294 28.607 120.294 23.7761C120.294 18.9452 123.822 15.6284 128.358 15.6284ZM128.358 28.4267C128.358 28.4267 132.462 26.1194 132.462 23.3254C132.462 20.5314 130.842 19.1074 128.358 19.1074C125.874 19.1074 124.182 20.5314 124.182 23.3254C124.182 26.1194 128.358 28.4267 128.358 28.4267Z" fill="currentColor"/>
+</svg>`;
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(nombre) { return nombre.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase(); }
+
+/* ---- Etapas: mismo state machine conceptual que rumbo_prototype.html
+   (FULL_ORDER/SIGUIENTE), pero acá el candidato no controla casi nada --
+   sus únicas dos acciones posibles son (1) postular y (2) elegir un
+   horario cuando le toca. Todo lo demás (Screening, Entrevista Técnica,
+   GO Interno, decisión del cliente) lo mueve el recruiter desde el otro
+   prototipo, así que acá son solo estados de lectura. ---- */
+
+/* ---- Fases grandes: lo único que el candidato ve en el resumen (Mis
+   postulaciones) y en el encabezado del detalle -- las etapas internas
+   (agenda_enviada, gate_go_interno, gate_cliente, etc.) son jerga de
+   proceso de Rumbo que no le aporta nada de un vistazo, igual que un
+   estado de envío no le muestra al comprador "en depósito" vs "en
+   tránsito interno". El detalle de cada postulación SÍ baja a ese nivel,
+   pero solo para lo que el candidato puede accionar (agendar) o necesita
+   saber (ya agendado) -- ver estadoDetalleHtml. */
+const FASES = [
+  { key: 'postulacion', label: 'Postulación enviada', match: ['intake'] },
+  { key: 'evaluacion', label: 'En evaluación', match: ['agenda_enviada', 'screening', 'agenda_tecnica_enviada', 'entrevista_tecnica', 'gate_go_interno'] },
+  { key: 'cliente', label: 'Con el cliente', match: ['presentado_cliente', 'fase_cliente', 'gate_cliente'] },
+  { key: 'resultado', label: 'Resultado', match: ['oferta', 'contratado'] },
+];
+function faseDe(etapa) { return FASES.find(f => f.match.includes(etapa)); }
+function faseIdx(etapa) { return FASES.findIndex(f => f.match.includes(etapa)); }
+/* Descripción genérica por fase -- fallback cuando no hay nada puntual
+   que accionar/mostrar (ver estadoDetalleHtml). */
+function faseDescripcion(p) {
+  const fase = faseDe(p.etapa).key;
+  if (fase === 'postulacion') return 'Tu postulación está en revisión inicial. Te avisaremos apenas haya novedades.';
+  if (fase === 'evaluacion') return 'Tu postulación está en proceso de evaluación con el equipo de Rumbo.';
+  if (fase === 'cliente') return 'Tu perfil ya fue presentado al cliente — están evaluando tu candidatura.';
+  return p.etapa === 'contratado' ? '¡Felicitaciones! Fuiste seleccionado/a para esta posición.' : 'Estamos definiendo la oferta final.';
+}
+
+/* ---- Horario simulado: mismo criterio que horarioAgendadoSimulado en
+   rumbo_prototype.html (determinístico a partir de un id + fecha ancla),
+   documentado ahí como "no es un campo real del modelo". Acá además hay
+   que fabricar los SLOTS DISPONIBLES (grilla de agendamiento) -- próximos
+   8 días hábiles x 4 horarios fijos, sin fines de semana. ---- */
+function proximosDiasHabiles(n) {
+  const dias = [];
+  const d = new Date();
+  while (dias.length < n) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) dias.push(new Date(d));
+  }
+  return dias;
+}
+const HORAS_DISPONIBLES = ['09:00', '11:00', '14:00', '16:00'];
+function slotsDisponibles() {
+  return proximosDiasHabiles(6).flatMap(dia => HORAS_DISPONIBLES.map(hora => ({
+    fecha: dia, hora,
+    label: dia.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }),
+  })));
+}
+
+/* =========================================================================
+   MOCK DATA
+   ========================================================================= */
+/* YO empieza en null -- el candidato recién llega al portal sin cuenta
+   (ver state.registrado). Se completa recién al terminar el flujo de
+   Registro (ver completarRegistro), que es la única puerta de entrada:
+   no existe un "crear cuenta" suelto sin intención de postular, siempre
+   se registra PARA postular a algo puntual (pedido explícito). */
+let YO = null;
+
+/* Semilla de demo -- para que se pueda ver de entrada el resto del portal
+   ya construido (Mis postulaciones con agendamiento en curso, Mi perfil)
+   sin tener que pasar por el registro cada vez. Ver continuarComoDemo,
+   colgado de un link chico en la pantalla de Vacantes cuando no hay
+   sesión -- no reemplaza al registro real, es un atajo de prototipo. */
+const YO_DEMO = {
+  nombre: 'Renata Salcedo', rol: 'Backend Engineer', seniority: 'Senior', ubicacion: 'Lima, Perú', pais: 'Perú',
+  email: 'renata.salcedo@gmail.com', telefono: '+51 911 137 253', linkedin: 'linkedin.com/in/renata-salcedo',
+  expectativa: 13500, disponibilidad: '15 días',
+  skills: ['Java', 'AWS', 'Kafka', 'PostgreSQL'],
+  cv: { nombre: 'CV_Renata_Salcedo.pdf', actualizado: '2026-07-02' },
+};
+const POSTULACIONES_DEMO = [
+  { id: 1, vacanteId: 6, etapa: 'agenda_enviada', fechaPostulacion: '2026-08-20', horarioAgendado: null },
+  { id: 2, vacanteId: 17, etapa: 'screening', fechaPostulacion: '2026-08-05', horarioAgendado: { label: 'mié 20 ago', hora: '11:00' } },
+];
+
+/* Países de origen soportados en el registro -- los candidatos no son
+   todos de Perú (aunque la mayoría de las vacantes mock sí lo son), así
+   que el país es un select real, no un dato fijo, y la ubicación
+   completa (ciudad + país) se arma a partir de eso en vez de asumirlo. */
+const PAISES = ['Perú', 'Colombia', 'México', 'Chile', 'Argentina', 'Ecuador', 'Bolivia', 'España', 'Estados Unidos', 'Otro'];
+
+const VACANTES = [
+  { id: 1, titulo: 'Arquitecto Cloud', cliente: 'Interbank', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Híbrido', bandaLabel: 'S/ 10,000 – 12,500', skillsMustHave: ['AWS', 'Arquitectura de microservicios', 'Terraform'], descripcion: 'Liderar el diseño de la infraestructura de microservicios sobre AWS, definir estándares de arquitectura y guiar la migración de cargas críticas.' },
+  { id: 2, titulo: 'Data Engineer', cliente: 'Laive', seniority: 'Mid', ubicacion: 'Remoto', modalidad: 'Remoto', bandaLabel: 'S/ 7,500 – 9,000', skillsMustHave: ['Python', 'SQL', 'Airflow'], descripcion: 'Construir y mantener pipelines de datos que alimentan los reportes comerciales y de producción del equipo de datos.' },
+  { id: 5, titulo: 'QA Lead', cliente: 'Niubiz', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Híbrido', bandaLabel: 'S/ 9,000 – 10,500', skillsMustHave: ['Automation', 'Test Strategy'], descripcion: 'Liderar la estrategia de automatización de pruebas de la plataforma de pagos y elevar la cobertura automatizada.' },
+  { id: 6, titulo: 'Backend Ssr.', cliente: 'Laive', seniority: 'Junior', ubicacion: 'Lima, Perú', modalidad: 'Presencial', bandaLabel: 'S/ 4,000 – 5,000', skillsMustHave: ['Node.js', 'PostgreSQL'], descripcion: 'Sumarte al equipo que mantiene los servicios internos de e-commerce, con buena guía de un equipo backend consolidado.' },
+  { id: 17, titulo: 'Site Reliability Engineer', cliente: 'Interbank', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Remoto', bandaLabel: 'S/ 13,500 – 15,500', skillsMustHave: ['SRE', 'Observability', 'Kubernetes'], descripcion: 'Fortalecer la observabilidad y confiabilidad de plataformas críticas, definir SLOs y mejorar la instrumentación de servicios.' },
+  { id: 11, titulo: 'Product Owner', cliente: 'Niubiz', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Híbrido', bandaLabel: 'S/ 11,500 – 13,500', skillsMustHave: ['Agile', 'Roadmapping'], descripcion: 'Llevar el roadmap de un producto de pagos digitales, priorizando junto a stakeholders de negocio y tecnología.' },
+];
+
+/* Postulaciones de YO -- arranca vacío (sin cuenta, no hay nada que
+   mostrar todavía); se llena al completar el Registro (postulación al
+   puesto de interés) o al aplicar a más vacantes ya con sesión, o con la
+   semilla de demo (ver POSTULACIONES_DEMO/continuarComoDemo). */
+let POSTULACIONES = [];
+let nextPostulacionId = 1;
+
+/* Mismo criterio que leerThemeGuardado() en rumbo_prototype.html: default
+   'light' -- solo se mantiene 'dark' si ya se había elegido explícitamente
+   antes. try/catch porque localStorage puede lanzar en contextos con
+   storage bloqueado (iframes/incógnito restringido). */
+function leerThemeGuardado() {
+  try { return localStorage.getItem('rb-cand-theme') === 'dark' ? 'dark' : 'light'; }
+  catch (e) { return 'light'; }
+}
+const state = {
+  view: 'vacantes', detalleId: null, slotSeleccionado: null, agendarPostulacionId: null, editandoPerfil: false, toast: null,
+  registrado: false, registro: null,
+  ui: { theme: leerThemeGuardado() },
+};
+
+function vacanteDe(p) { return VACANTES.find(v => v.id === p.vacanteId); }
+function yaPostuloA(vacanteId) { return POSTULACIONES.some(p => p.vacanteId === vacanteId); }
+
+function showToast(msg) { state.toast = msg; render(); setTimeout(() => { state.toast = null; render(); }, 2600); }
+
+/* =========================================================================
+   ACCIONES
+   ========================================================================= */
+/* Atajo de prototipo -- entra con la cuenta demo (perfil + 2 postulaciones
+   ya en curso) para poder ver el resto del portal sin pasar por el
+   registro. No es parte del flujo real, solo conveniencia para revisar. */
+function continuarComoDemo() {
+  YO = { ...YO_DEMO };
+  POSTULACIONES = POSTULACIONES_DEMO.map(p => ({ ...p, horarioAgendado: p.horarioAgendado ? { ...p.horarioAgendado } : null }));
+  nextPostulacionId = POSTULACIONES.length + 1;
+  state.registrado = true;
+  irA('postulaciones');
+}
+/* Postular es el único gatillo del Registro (ver iniciarRegistro): si ya
+   hay sesión, aplica directo; si no, no se pide "crear cuenta" en
+   abstracto -- se arranca el flujo de registro CON la vacante de interés
+   ya guardada, para aplicar automáticamente al terminarlo (ver
+   completarRegistro). */
+function aplicarAVacante(vacanteId) {
+  if (!state.registrado) { iniciarRegistro(vacanteId); return; }
+  if (yaPostuloA(vacanteId)) return;
+  POSTULACIONES.unshift({ id: nextPostulacionId++, vacanteId, etapa: 'intake', fechaPostulacion: new Date().toISOString().slice(0, 10), horarioAgendado: null });
+  const v = VACANTES.find(x => x.id === vacanteId);
+  showToast(`Postulaste a ${v.titulo} — te avisaremos por email cuando avance (simulado)`);
+  state.view = 'postulaciones';
+  render();
+}
+function abrirAgendar(postulacionId) { state.agendarPostulacionId = postulacionId; state.slotSeleccionado = null; render(); }
+function cerrarAgendar() { state.agendarPostulacionId = null; state.slotSeleccionado = null; render(); }
+function elegirSlot(idx) { state.slotSeleccionado = idx; render(); }
+function confirmarAgendamiento() {
+  const p = POSTULACIONES.find(x => x.id === state.agendarPostulacionId);
+  const slot = slotsDisponibles()[state.slotSeleccionado];
+  if (!p || !slot) return;
+  p.horarioAgendado = { label: slot.label, hora: slot.hora };
+  p.etapa = p.etapa === 'agenda_enviada' ? 'screening' : 'entrevista_tecnica';
+  state.agendarPostulacionId = null; state.slotSeleccionado = null;
+  showToast(`Agendado para el ${slot.label} · ${slot.hora}`);
+  render();
+}
+function toggleTheme() {
+  state.ui.theme = state.ui.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('rb-cand-theme', state.ui.theme); } catch (e) {}
+  render();
+}
+function irA(view) { state.view = view; state.detalleId = null; render(); }
+function abrirDetalle(id) { state.view = 'detalle'; state.detalleId = id; render(); }
+
+/* =========================================================================
+   REGISTRO -- flujo de 4 pasos que termina postulando a la vacante que lo
+   disparó (ver aplicarAVacante). Captura: (1) datos personales/contacto +
+   LinkedIn, (2) ubicación (país + ciudad -- país es un select real, ver
+   PAISES, porque los candidatos no son todos de Perú), (3) CV adjunto,
+   (4) confirmación. state.registro guarda el form en progreso; se
+   descarta si se cancela, se vuelca a YO recién al completar (ver
+   completarRegistro) -- así un registro a medias nunca deja media cuenta
+   creada.
+   ========================================================================= */
+const REGISTRO_STEPS = [
+  { key: 'datos', label: 'Tus datos' },
+  { key: 'ubicacion', label: 'Ubicación' },
+  { key: 'cv', label: 'Currículum' },
+  { key: 'confirmar', label: 'Confirmar' },
+];
+function iniciarRegistro(vacanteId) {
+  state.registro = { vacanteId, step: 0, form: { nombre: '', email: '', telefono: '', linkedin: '', pais: PAISES[0], ciudad: '', cvNombre: '' } };
+  state.view = 'registro';
+  render();
+}
+function cancelarRegistro() { state.registro = null; irA('vacantes'); }
+/* Validación mínima por paso -- no deja avanzar sin lo esencial de ESE
+   paso (mismo criterio que ya usan los botones "Continuar" deshabilitados
+   en el resto del portal), pero no exige de más (ej. LinkedIn es opcional,
+   coherente con que no todo candidato tiene uno armado). */
+function registroPasoValido() {
+  const f = state.registro.form;
+  const paso = REGISTRO_STEPS[state.registro.step].key;
+  if (paso === 'datos') return f.nombre.trim() && f.email.trim() && f.telefono.trim();
+  if (paso === 'ubicacion') return f.pais && f.ciudad.trim();
+  if (paso === 'cv') return !!f.cvNombre;
+  return true;
+}
+function registroSiguientePaso() {
+  if (!registroPasoValido()) return;
+  state.registro.step++;
+  render();
+}
+function registroPasoAnterior() { state.registro.step--; render(); }
+/* Adjuntar CV: input file real (no solo un botón decorativo) -- se lee el
+   nombre del archivo elegido con la propia API del input, sin necesidad
+   de backend para "simular" la subida; el archivo en sí nunca se envía a
+   ningún lado, es un prototipo estático. */
+function adjuntarCvRegistro(input) {
+  const file = input.files && input.files[0];
+  if (file) { state.registro.form.cvNombre = file.name; render(); }
+}
+function quitarCvRegistro() { state.registro.form.cvNombre = ''; render(); }
+function completarRegistro() {
+  const f = state.registro.form;
+  const vacanteId = state.registro.vacanteId;
+  YO = {
+    nombre: f.nombre.trim(), rol: '', seniority: '', ubicacion: `${f.ciudad.trim()}, ${f.pais}`, pais: f.pais,
+    email: f.email.trim(), telefono: f.telefono.trim(), linkedin: f.linkedin.trim(),
+    expectativa: 0, disponibilidad: 'Por definir', skills: [],
+    cv: { nombre: f.cvNombre, actualizado: new Date().toISOString().slice(0, 10) },
+  };
+  state.registrado = true;
+  state.registro = null;
+  /* showToast (llamado dentro de aplicarAVacante) dispara un render()
+     intermedio antes de que aplicarAVacante llegue a fijar
+     state.view='postulaciones' -- si en ese instante state.view siguiera
+     en 'registro' con state.registro ya en null, renderRegistro rompe.
+     Se deja en un valor válido de antemano para ese render de paso. */
+  state.view = 'vacantes';
+  aplicarAVacante(vacanteId);
+}
+
+let editForm = null;
+function abrirEditarPerfil() {
+  editForm = { expectativa: YO.expectativa, disponibilidad: YO.disponibilidad, skills: [...YO.skills], nuevoSkill: '' };
+  state.editandoPerfil = true; render();
+}
+function cerrarEditarPerfil() { state.editandoPerfil = false; editForm = null; render(); }
+function agregarSkillForm() {
+  const s = editForm.nuevoSkill.trim();
+  if (s && !editForm.skills.includes(s)) editForm.skills.push(s);
+  editForm.nuevoSkill = ''; render();
+}
+function quitarSkillForm(s) { editForm.skills = editForm.skills.filter(x => x !== s); render(); }
+function guardarPerfil() {
+  YO.expectativa = Number(editForm.expectativa) || YO.expectativa;
+  YO.disponibilidad = editForm.disponibilidad;
+  YO.skills = editForm.skills;
+  state.editandoPerfil = false; editForm = null;
+  showToast('Perfil actualizado');
+  render();
+}
+function simularSubirCv() {
+  YO.cv = { nombre: 'CV_Renata_Salcedo.pdf', actualizado: new Date().toISOString().slice(0, 10) };
+  showToast('CV actualizado (simulado)');
+  render();
+}
+
+/* =========================================================================
+   RENDER: tracker de fases + estado de una postulación
+
+   Reparto deliberado entre resumen y detalle (pedido explícito): el
+   RESUMEN (Mis postulaciones) solo muestra las 4 fases grandes + un aviso
+   liviano si hay algo pendiente, sin exponer el nombre de la etapa
+   técnica ni la acción de agendar en sí -- eso vive únicamente en el
+   DETALLE de esa postulación (ver renderDetalle/estadoDetalleHtml). Así
+   el resumen se lee de un vistazo y el detalle es donde se resuelve.
+   ========================================================================= */
+function faseTrackerHtml(p) {
+  const idxActual = faseIdx(p.etapa);
+  return `<div class="rb-fase-tracker">${FASES.map((f, i) => {
+    const completo = i < idxActual;
+    const actual = i === idxActual;
+    return `<div class="rb-fase-pill${completo ? ' done' : actual ? ' actual' : ''}">
+      <span class="rb-fase-pill-dot">${completo ? icon('check', 9) : ''}</span>
+      ${esc(f.label)}
+    </div>`;
+  }).join('')}</div>`;
+}
+/* Aviso liviano en el resumen -- nunca dice a qué etapa corresponde ni
+   ofrece agendar directo, solo señala que hay algo por resolver y manda
+   al detalle. */
+function accionPendienteNudgeHtml(p) {
+  if (p.etapa !== 'agenda_enviada' && p.etapa !== 'agenda_tecnica_enviada') return '';
+  return `<div class="rb-accion-pendiente">
+    <span class="rb-accion-pendiente-txt">${icon('sparkles', 14)} Tienes una acción pendiente</span>
+    <button class="btn sm" onclick="event.stopPropagation(); abrirDetalle(${p.id})">Ver detalle ${icon('chevronRight', 12)}</button>
+  </div>`;
+}
+/* CTA real de agendar -- solo se cuelga en el detalle (ver renderDetalle). */
+function accionAgendarHtml(p) {
+  if (p.etapa !== 'agenda_enviada' && p.etapa !== 'agenda_tecnica_enviada') return '';
+  const esTecnica = p.etapa === 'agenda_tecnica_enviada';
+  return `<div class="rb-accion-pendiente">
+    <span class="rb-accion-pendiente-txt">${icon('sparkles', 14)} Te toca agendar tu ${esTecnica ? 'Entrevista Técnica' : 'Screening'}</span>
+    <button class="btn sm" onclick="abrirAgendar(${p.id})">${icon('calendar', 12)} Elegir horario</button>
+  </div>`;
+}
+function agendadoInfoHtml(p) {
+  if (!p.horarioAgendado) return '';
+  const label = p.etapa === 'screening' ? 'Screening' : (p.etapa === 'entrevista_tecnica' ? 'Entrevista Técnica' : null);
+  if (!label) return '';
+  return `<div class="rb-agendado-info">${icon('check', 13)} ${label} agendado para el ${esc(p.horarioAgendado.label)} · ${esc(p.horarioAgendado.hora)}</div>`;
+}
+/* Estado del detalle: exactamente una de las tres — CTA de agendar,
+   info de ya agendado, o la descripción genérica de la fase (fallback
+   cuando no hay nada puntual que accionar/mostrar). */
+function estadoDetalleHtml(p) {
+  const accion = accionAgendarHtml(p);
+  if (accion) return accion;
+  const agendado = agendadoInfoHtml(p);
+  if (agendado) return agendado;
+  return `<p style="color:var(--text-muted);margin-top:var(--sp-3);line-height:1.5">${esc(faseDescripcion(p))}</p>`;
+}
+
+/* =========================================================================
+   RENDER: vistas
+   ========================================================================= */
+function renderPostulaciones() {
+  if (POSTULACIONES.length === 0) {
+    return `<div class="rb-empty card">
+      <p style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--sp-2)">Todavía no postulaste a nada</p>
+      <p style="margin-bottom:var(--sp-4)">Explora las vacantes abiertas y postula a la que más te interese.</p>
+      <button class="btn" onclick="irA('vacantes')">${icon('briefcase', 14)} Buscar vacantes</button>
+    </div>`;
+  }
+  return POSTULACIONES.map(p => {
+    const v = vacanteDe(p);
+    return `<div class="card rb-postulacion-card">
+      <div class="rb-postulacion-head" onclick="abrirDetalle(${p.id})">
+        <div>
+          <div class="rb-postulacion-title">${esc(v.titulo)}</div>
+          <div class="rb-postulacion-sub">${icon('clock', 12)} Postulaste el ${esc(new Date(p.fechaPostulacion + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }))}</div>
+        </div>
+        <span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">${esc(faseDe(p.etapa).label)}</span>
+      </div>
+      ${faseTrackerHtml(p)}
+      ${accionPendienteNudgeHtml(p)}
+    </div>`;
+  }).join('');
+}
+
+function renderDetalle() {
+  const p = POSTULACIONES.find(x => x.id === state.detalleId);
+  if (!p) { state.view = 'postulaciones'; return renderPostulaciones(); }
+  const v = vacanteDe(p);
+  return `
+    <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="irA('postulaciones')">${icon('chevronLeft', 12)} Volver</button>
+    <div class="card">
+      <div class="rb-vacante-top">
+        <div>
+          <h2 class="rb-vacante-titulo">${esc(v.titulo)}</h2>
+          <div class="rb-postulacion-sub" style="margin-top:4px">${icon('mapPin', 12)} ${esc(v.ubicacion)} · ${esc(v.modalidad)}</div>
+        </div>
+        <span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">${esc(faseDe(p.etapa).label)}</span>
+      </div>
+      ${faseTrackerHtml(p)}
+      ${estadoDetalleHtml(p)}
+      <div style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--border)">
+        <h3 class="rb-page-sub" style="font-size:var(--fs-sm);color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:var(--sp-2)">Sobre la posición</h3>
+        <p style="line-height:1.6;color:var(--text-muted);margin-bottom:var(--sp-3)">${esc(v.descripcion)}</p>
+        <div class="rb-tags">${v.skillsMustHave.map(s => `<span class="rb-tag">${esc(s)}</span>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+function renderVacantes() {
+  return VACANTES.map(v => {
+    const aplicado = yaPostuloA(v.id);
+    return `<div class="card rb-vacante-card">
+      <div class="rb-vacante-top">
+        <div>
+          <div class="rb-vacante-titulo">${esc(v.titulo)}</div>
+          <div class="rb-vacante-meta">
+            <span>${icon('mapPin', 12)} ${esc(v.ubicacion)}</span>
+            <span>${icon('coin', 12)} ${esc(v.bandaLabel)}</span>
+          </div>
+        </div>
+        ${aplicado
+          ? `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Ya postulaste</span>`
+          : `<button class="btn sm" onclick="aplicarAVacante(${v.id})">Postular</button>`}
+      </div>
+      <p style="color:var(--text-muted);line-height:1.5;margin-bottom:var(--sp-3)">${esc(v.descripcion)}</p>
+      <div class="rb-tags">${v.skillsMustHave.map(s => `<span class="rb-tag">${esc(s)}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function registroStepIndicatorHtml() {
+  const actual = state.registro.step;
+  return `<div class="rb-registro-steps">${REGISTRO_STEPS.map((s, i) => `
+    <div class="rb-registro-step${i < actual ? ' done' : i === actual ? ' actual' : ''}">
+      <span class="rb-registro-step-dot">${i < actual ? icon('check', 10) : i + 1}</span>
+      ${esc(s.label)}
+    </div>`).join('')}</div>`;
+}
+function registroPasoHtml() {
+  const f = state.registro.form;
+  const paso = REGISTRO_STEPS[state.registro.step].key;
+  if (paso === 'datos') return `
+    <label class="field">Nombre completo
+      <input id="reg-nombre" class="input" value="${esc(f.nombre)}" oninput="state.registro.form.nombre=this.value; render()" placeholder="Ej. Renata Salcedo">
+    </label>
+    <label class="field">Email
+      <input id="reg-email" class="input" type="email" value="${esc(f.email)}" oninput="state.registro.form.email=this.value; render()" placeholder="tu@email.com">
+    </label>
+    <label class="field">Teléfono
+      <input id="reg-telefono" class="input" value="${esc(f.telefono)}" oninput="state.registro.form.telefono=this.value; render()" placeholder="+51 999 999 999">
+    </label>
+    <label class="field">LinkedIn <span style="font-weight:400;color:var(--text-dim)">(opcional)</span>
+      <input id="reg-linkedin" class="input" value="${esc(f.linkedin)}" oninput="state.registro.form.linkedin=this.value; render()" placeholder="linkedin.com/in/tu-usuario">
+    </label>`;
+  if (paso === 'ubicacion') return `
+    <label class="field">País
+      <select id="reg-pais" class="select" onchange="state.registro.form.pais=this.value; render()">${PAISES.map(p => `<option value="${esc(p)}" ${f.pais === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>
+    </label>
+    <label class="field">Ciudad
+      <input id="reg-ciudad" class="input" value="${esc(f.ciudad)}" oninput="state.registro.form.ciudad=this.value; render()" placeholder="Ej. Lima">
+    </label>`;
+  if (paso === 'cv') return `
+    <label class="field">Currículum (PDF o Word)</label>
+    ${f.cvNombre
+      ? `<div class="rb-file-row"><span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(f.cvNombre)}</span><button class="btn ghost sm" onclick="quitarCvRegistro()">${icon('x', 12)} Quitar</button></div>`
+      : `<label class="rb-upload-box">
+          ${icon('upload', 20)}
+          <span>Arrastra tu CV acá o hace click para elegir el archivo</span>
+          <input type="file" accept=".pdf,.doc,.docx" style="display:none" onchange="adjuntarCvRegistro(this)">
+        </label>`}`;
+  /* Confirmar */
+  return `
+    <div class="rb-registro-resumen">
+      <div><span>Nombre</span><b>${esc(f.nombre)}</b></div>
+      <div><span>Email</span><b>${esc(f.email)}</b></div>
+      <div><span>Teléfono</span><b>${esc(f.telefono)}</b></div>
+      ${f.linkedin ? `<div><span>LinkedIn</span><b>${esc(f.linkedin)}</b></div>` : ''}
+      <div><span>Ubicación</span><b>${esc(f.ciudad)}, ${esc(f.pais)}</b></div>
+      <div><span>CV</span><b>${esc(f.cvNombre)}</b></div>
+    </div>`;
+}
+function renderRegistro() {
+  const v = VACANTES.find(x => x.id === state.registro.vacanteId);
+  const paso = REGISTRO_STEPS[state.registro.step].key;
+  const esUltimo = state.registro.step === REGISTRO_STEPS.length - 1;
+  return `
+    <div class="card" style="max-width:480px;margin:0 auto">
+      <p class="rb-postulacion-sub" style="justify-content:center;margin-bottom:var(--sp-2)">${icon('sparkles', 12)} Postulando a <b style="color:var(--text)">${esc(v.titulo)}</b></p>
+      ${registroStepIndicatorHtml()}
+      <h3 style="margin:var(--sp-4) 0 var(--sp-3)">${esc(REGISTRO_STEPS[state.registro.step].label)}</h3>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-4)">${registroPasoHtml()}</div>
+      <div style="display:flex;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-6)">
+        ${state.registro.step === 0
+          ? `<button class="btn secondary" onclick="cancelarRegistro()">Cancelar</button>`
+          : `<button class="btn secondary" onclick="registroPasoAnterior()">${icon('chevronLeft', 12)} Atrás</button>`}
+        ${esUltimo
+          ? `<button class="btn" onclick="completarRegistro()">${icon('check', 13)} Confirmar y postular</button>`
+          : `<button class="btn" ${registroPasoValido() ? '' : 'disabled'} onclick="registroSiguientePaso()">Continuar ${icon('chevronRight', 12)}</button>`}
+      </div>
+    </div>`;
+}
+
+function renderPerfil() {
+  return `<div class="card">
+    <div style="display:flex;gap:var(--sp-4);align-items:center;margin-bottom:var(--sp-5)">
+      <div class="avatar" style="width:56px;height:56px;font-size:var(--fs-lg)">${esc(initials(YO.nombre))}</div>
+      <div>
+        <h2>${esc(YO.nombre)}</h2>
+        <p style="color:var(--text-muted)">${esc(YO.rol)} · ${esc(YO.seniority)} · ${esc(YO.ubicacion)}</p>
+      </div>
+      <button class="btn secondary sm" style="margin-left:auto" onclick="abrirEditarPerfil()">Editar</button>
+    </div>
+    <div class="rb-perfil-grid">
+      <div><label class="field">Email</label><p style="margin-top:4px">${esc(YO.email)}</p></div>
+      <div><label class="field">Teléfono</label><p style="margin-top:4px">${esc(YO.telefono)}</p></div>
+      <div><label class="field">Expectativa salarial</label><p style="margin-top:4px">S/ ${YO.expectativa.toLocaleString('es-PE')}/mes</p></div>
+      <div><label class="field">Disponibilidad</label><p style="margin-top:4px">${esc(YO.disponibilidad)}</p></div>
+    </div>
+    <div style="margin-top:var(--sp-5)">
+      <label class="field" style="margin-bottom:var(--sp-2)">Skills</label>
+      <div class="rb-tags">${YO.skills.map(s => `<span class="rb-tag">${esc(s)}</span>`).join('')}</div>
+    </div>
+    <div style="margin-top:var(--sp-5)">
+      <label class="field" style="margin-bottom:var(--sp-2)">Documentos</label>
+      <div class="rb-file-row">
+        <span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(YO.cv.nombre)} <span style="color:var(--text-dim);font-size:var(--fs-xs)">· actualizado ${esc(new Date(YO.cv.actualizado + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }))}</span></span>
+        <button class="btn ghost sm" onclick="simularSubirCv()">${icon('upload', 12)} Reemplazar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function editarPerfilModalHtml() {
+  if (!state.editandoPerfil) return '';
+  return `
+    <div class="rb-modal-overlay" onclick="cerrarEditarPerfil()"></div>
+    <div class="rb-modal">
+      <h3 style="margin-bottom:var(--sp-4)">Editar perfil</h3>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-4)">
+        <label class="field">Expectativa salarial (S/ mes)
+          <input class="input" type="number" value="${editForm.expectativa}" oninput="editForm.expectativa=this.value">
+        </label>
+        <label class="field">Disponibilidad
+          <input class="input" value="${esc(editForm.disponibilidad)}" oninput="editForm.disponibilidad=this.value">
+        </label>
+        <label class="field">Skills
+          <div class="rb-tags" style="margin-bottom:var(--sp-2)">${editForm.skills.map(s => `<span class="rb-skill-chip">${esc(s)}<button onclick="quitarSkillForm('${esc(s)}')">${icon('x', 10)}</button></span>`).join('')}</div>
+          <div style="display:flex;gap:8px">
+            <input class="input" placeholder="Agregar skill" value="${esc(editForm.nuevoSkill)}" oninput="editForm.nuevoSkill=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarSkillForm();}">
+            <button class="btn secondary sm" onclick="agregarSkillForm()">Agregar</button>
+          </div>
+        </label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:var(--sp-2);margin-top:var(--sp-5)">
+        <button class="btn secondary" onclick="cerrarEditarPerfil()">Cancelar</button>
+        <button class="btn" onclick="guardarPerfil()">Guardar</button>
+      </div>
+    </div>`;
+}
+
+function agendarModalHtml() {
+  if (state.agendarPostulacionId === null) return '';
+  const p = POSTULACIONES.find(x => x.id === state.agendarPostulacionId);
+  const v = vacanteDe(p);
+  const esTecnica = p.etapa === 'agenda_tecnica_enviada';
+  const slots = slotsDisponibles();
+  return `
+    <div class="rb-modal-overlay" onclick="cerrarAgendar()"></div>
+    <div class="rb-modal" style="width:min(560px,92vw)">
+      <h3>Agenda tu ${esTecnica ? 'Entrevista Técnica' : 'Screening'}</h3>
+      <p style="color:var(--text-muted);margin:6px 0 0">${esc(v.titulo)}</p>
+      <p style="color:var(--text-muted);margin-top:var(--sp-2)">Elige el horario que más te acomode. Te llegará la confirmación por email (simulado).</p>
+      <div class="rb-slot-grid">${slots.map((s, i) => `
+        <div class="rb-slot${state.slotSeleccionado === i ? ' selected' : ''}" onclick="elegirSlot(${i})">
+          <div class="rb-slot-dia">${esc(s.label.split(' ')[0])}</div>
+          <div class="rb-slot-fecha">${esc(s.label.split(' ').slice(1).join(' '))}</div>
+          <div class="rb-slot-hora">${esc(s.hora)}</div>
+        </div>`).join('')}</div>
+      <div style="display:flex;justify-content:flex-end;gap:var(--sp-2);margin-top:var(--sp-4)">
+        <button class="btn secondary" onclick="cerrarAgendar()">Cancelar</button>
+        <button class="btn" ${state.slotSeleccionado === null ? 'disabled' : ''} onclick="confirmarAgendamiento()">${icon('check', 13)} Confirmar horario</button>
+      </div>
+    </div>`;
+}
+
+/* =========================================================================
+   SHELL + RENDER PRINCIPAL
+   ========================================================================= */
+const TABS_SESION = [
+  { key: 'postulaciones', label: 'Mis postulaciones' },
+  { key: 'vacantes', label: 'Buscar vacantes' },
+  { key: 'perfil', label: 'Mi perfil' },
+];
+const TABS_PUBLICO = [{ key: 'vacantes', label: 'Buscar vacantes' }];
+function render() {
+  /* Preservar foco+selección a través del re-render -- mismo criterio que
+     ya usa rumbo_prototype.html: al reemplazar innerHTML completo en cada
+     tecla (necesario acá para que el botón "Continuar" del registro
+     reaccione en vivo a si el paso ya es válido), el input enfocado se
+     destruye y se crea uno nuevo, así que sin esto se perdía el foco a
+     cada letra. Requiere que el input tenga `id` (ver los del registro). */
+  const active = document.activeElement;
+  const activeId = active && active.id ? active.id : null;
+  const selStart = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+  const selEnd = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : null;
+  document.documentElement.setAttribute('data-theme', state.ui.theme);
+  /* Sin sesión, las únicas vistas alcanzables son "vacantes" (pública) y
+     "registro" (mientras hay un registro en curso) -- Mis postulaciones/
+     Mi perfil/detalle requieren YO, así que cualquier otro estado
+     residual cae de vuelta a vacantes en vez de romper. */
+  if (!state.registrado && !['vacantes', 'registro'].includes(state.view)) state.view = 'vacantes';
+  const view = state.view === 'detalle' ? 'detalle' : state.view;
+  const activeTab = view === 'detalle' ? 'postulaciones' : view;
+  const TABS = state.registrado ? TABS_SESION : TABS_PUBLICO;
+  const body = view === 'registro' ? renderRegistro()
+    : view === 'postulaciones' ? renderPostulaciones()
+    : view === 'vacantes' ? renderVacantes()
+    : view === 'perfil' ? renderPerfil()
+    : renderDetalle();
+  const titulos = {
+    postulaciones: ['Mis postulaciones', 'El estado de tus procesos, de un vistazo.'],
+    vacantes: ['Vacantes abiertas', 'Postula a la posición que más te interese.'],
+    perfil: ['Mi perfil', 'Así te ven los recruiters de Rumbo.'],
+  };
+  const [titulo, sub] = titulos[view] || ['', ''];
+  document.getElementById('root').innerHTML = `
+    <header class="rb-topbar">
+      <div class="rb-brand">${LOGO_SVG} <span style="color:var(--text-muted);font-weight:400;font-size:var(--fs-sm)">· Portal de Candidatos</span></div>
+      <nav class="rb-nav">${TABS.map(t => `<button class="${activeTab === t.key ? 'active' : ''}" onclick="irA('${t.key}')">${esc(t.label)}</button>`).join('')}</nav>
+      <div class="rb-user">
+        <button class="rb-theme-btn" onclick="toggleTheme()" aria-label="Cambiar tema" title="Cambiar tema">${icon(state.ui.theme === 'dark' ? 'sun' : 'moon', 15)}</button>
+        ${state.registrado
+          ? `<div class="avatar">${esc(initials(YO.nombre))}</div>`
+          : `<button class="btn ghost sm" onclick="continuarComoDemo()">Continuar como demo</button>`}
+      </div>
+    </header>
+    <main class="rb-main">
+      ${view !== 'detalle' && view !== 'registro' ? `<h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>` : ''}
+      ${body}
+    </main>
+    ${agendarModalHtml()}
+    ${editarPerfilModalHtml()}
+    ${state.toast ? `<div class="rb-toast">${esc(state.toast)}</div>` : ''}
+  `;
+  if (activeId) {
+    const el = document.getElementById(activeId);
+    if (el && typeof el.focus === 'function') {
+      el.focus({ preventScroll: true });
+      if (selStart !== null && el.setSelectionRange) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} }
+    }
+  }
+}
+render();
+</script>
+</body>
+</html>
