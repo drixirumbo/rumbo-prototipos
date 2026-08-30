@@ -519,12 +519,21 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-archive-card.rb-highlight { border-color: var(--cyan-text); opacity: 1; box-shadow: 0 0 0 3px rgba(71,235,235,.3); }
 .rb-archive-reason { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; margin-top: 4px; }
 
-.rb-verdict-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px dashed rgba(71,235,235,.35); }
-.rb-verdict-row .btn { flex: 1; }
+/* flex-wrap:wrap + flex-basis (en vez de flex:1 a secas) -- los botones de
+   este row tienen texto largo ("Aprobar entrevista técnica", "Culminar
+   participación") que nunca hace wrap (.btn tiene white-space:nowrap), así
+   que con solo flex:1 no podían achicarse más que su propio contenido: en
+   el drawer angosto de mobile se salían del ancho y, con overflow-x:hidden
+   en .rb-side-drawer, quedaban directamente inalcanzables (ni scrolleando
+   se llegaba). Con flex-basis fijo + wrap, en desktop se siguen repartiendo
+   el ancho igual que antes (hay lugar de sobra), y en mobile el segundo
+   botón simplemente baja a su propia línea en vez de recortarse. */
+.rb-verdict-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px dashed rgba(71,235,235,.35); }
+.rb-verdict-row .btn { flex: 1 1 160px; }
 .rb-verdict-row .btn[disabled] { opacity: .35; }
 .rb-verdict-form textarea { width: 100%; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-2); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding: var(--sp-2); resize: none; margin-top: var(--sp-2); }
-.rb-verdict-confirm { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
-.rb-verdict-confirm button { flex: 1; }
+.rb-verdict-confirm { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+.rb-verdict-confirm button { flex: 1 1 120px; }
 
 .rb-toast { position: fixed; bottom: var(--sp-6); right: var(--sp-6); background: var(--surface); border: 1px solid var(--cyan-text); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); box-shadow: var(--shadow-3); z-index: 80; animation: rb-toast-in var(--dur-3) var(--ease-out); max-width: 340px; }
 @keyframes rb-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -558,12 +567,7 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
    detrás del overlay), dando el efecto de que "salta" o se ve mal. Se
    complementa con el body-scroll-lock de render() (ver más abajo), que
    directamente congela la página de fondo mientras el drawer está abierto. */
-/* overflow-x:hidden explícito -- sin esto, tener solo overflow-y:auto hace
-   que overflow-x compute a "auto" igual (regla del spec de CSS), así que
-   cualquier contenido que se pase por poco del ancho (una línea larga sin
-   wrap, un SVG, etc.) habilitaba drag/scroll horizontal no deseado. El
-   drawer queda fijo en X, solo scrollea verticalmente. */
-.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
 @keyframes rb-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 /* Ver comentario en renderPostulacionDrawer(): suprime la animación de
    entrada en los re-renders del drawer ya abierto (tipear, apretar
