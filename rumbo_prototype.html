@@ -558,7 +558,12 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
    detrás del overlay), dando el efecto de que "salta" o se ve mal. Se
    complementa con el body-scroll-lock de render() (ver más abajo), que
    directamente congela la página de fondo mientras el drawer está abierto. */
-.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+/* overflow-x:hidden explícito -- sin esto, tener solo overflow-y:auto hace
+   que overflow-x compute a "auto" igual (regla del spec de CSS), así que
+   cualquier contenido que se pase por poco del ancho (una línea larga sin
+   wrap, un SVG, etc.) habilitaba drag/scroll horizontal no deseado. El
+   drawer queda fijo en X, solo scrollea verticalmente. */
+.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
 @keyframes rb-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 /* Ver comentario en renderPostulacionDrawer(): suprime la animación de
    entrada en los re-renders del drawer ya abierto (tipear, apretar
