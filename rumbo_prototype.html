@@ -489,6 +489,10 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-cliente-lane-group { margin-bottom: var(--sp-2); }
 .rb-cliente-lane-group .rb-group-header { margin: 0 0 var(--sp-3) 0; }
 .rb-cliente-lane-group .rb-lanes { overflow-y: visible; padding-bottom: 0; }
+/* Agrupado por tier en la lista de Clientes -- mismo componente de header
+   colapsable que ya usan los swimlanes de cliente en Pipeline. */
+.rb-cliente-tier-group { margin-bottom: var(--sp-4); }
+.rb-cliente-tier-group .rb-group-header { margin: 0 0 var(--sp-3) 0; }
 .rb-board-lane { margin-top: var(--sp-3); }
 .rb-board { display: flex; gap: 0; align-items: stretch; flex: 1; min-height: 0; overflow-x: auto; }
 .rb-phase { display: flex; flex-direction: column; min-width: 260px; flex: 1.2; border-right: 1px solid var(--border); padding: 0 var(--sp-3); }
@@ -1785,7 +1789,7 @@ const state = {
         (arrays -- match "OR" dentro de cada categoría). */
   td: { query: '', estado: '', origen: '', seniority: '', practicas: [], especialidades: [], roles: [], skills: [], panelOpen: true, sortCol: '', sortDir: 'asc', vista: 'estado', collapsed: {}, selectedId: null },
   va: { clienteF: '', estadoF: '', engagementF: '', priorityF: '', sortBy: 'priority', collapsed: {}, terminalOpen: {}, selectedId: null, editando: false, wizardOpen: false, wizardKey: 0, estadoMenuFor: null },
-  cl: { selectedId: null, query: '', industriaF: '', tierF: '', activoF: '', amF: '', cerradasOpen: false },
+  cl: { selectedId: null, query: '', industriaF: '', activoF: '', amF: '', cerradasOpen: false, tiersCollapsed: {} },
   pl: { scope: 'todo', cliente: '', query: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
   editForm: null,
@@ -2360,31 +2364,19 @@ function lineaBadges(lineas) {
     return `<span class="rb-badge" style="background:${c}22;color:${c}">${icon('compass',11)} ${esc(l)}</span>`;
   }).join('');
 }
-function renderClientesList() {
-  const industriasUnicas = [...new Set(CLIENTES.map(c => c.industria))].sort();
-  const amsUnicos = [...new Set(CLIENTES.flatMap(c => c.accountManagers))].sort();
-  const q = normalizarBusqueda(state.cl.query);
-  const filtered = CLIENTES.filter(c => {
-    if (state.cl.industriaF && c.industria !== state.cl.industriaF) return false;
-    if (state.cl.tierF && String(c.tier) !== state.cl.tierF) return false;
-    if (state.cl.activoF && String(c.activo) !== state.cl.activoF) return false;
-    if (state.cl.amF && !c.accountManagers.includes(state.cl.amF)) return false;
-    if (q && !normalizarBusqueda(c.nombre).includes(q)) return false;
-    return true;
-  });
-  const cards = filtered.map(c => {
-    const abiertas = abiertasDeCliente(c.id).length;
-    const colocados = colocadosDeCliente(c.id).length;
-    const recruiters = recruitersDeCliente(c.id);
-    const enRiesgo = vacantesEnRiesgoDeCliente(c.id);
-    return `
+function renderClienteCard(c) {
+  const abiertas = abiertasDeCliente(c.id).length;
+  const colocados = colocadosDeCliente(c.id).length;
+  const recruiters = recruitersDeCliente(c.id);
+  const enRiesgo = vacantesEnRiesgoDeCliente(c.id);
+  return `
     <div class="card rb-vac-card${c.activo ? '' : ' rb-terminal-item'}" onclick="selectCliente(${c.id})">
       <div class="rb-vac-card-top">
         <div style="display:flex;align-items:center;gap:var(--sp-3)">
           ${clienteLogo(c.nombre, 'md')}
           <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-role">${esc(c.industria)}</p></div>
         </div>
-        <div class="rb-vac-badges">${lineaBadges(lineasDeCliente(c))}${tierBadge(c.tier)}${clienteActivoBadge(c.activo)}</div>
+        <div class="rb-vac-badges">${lineaBadges(lineasDeCliente(c))}${clienteActivoBadge(c.activo)}</div>
       </div>
       ${enRiesgo.length ? `<p class="rb-card-meta-row rb-cliente-riesgo">${icon('alertTriangle',12)} ${enRiesgo.length} ${enRiesgo.length === 1 ? 'posición' : 'posiciones'} con SLA en riesgo</p>` : ''}
       <div class="rb-card-meta">
@@ -2393,6 +2385,40 @@ function renderClientesList() {
         <div class="rb-card-meta-row">${icon('briefcase',12)} ${abiertas} posiciones abiertas</div>
         <div class="rb-card-meta-row">${icon('users',12)} ${colocados} talento colocado</div>
       </div>
+    </div>`;
+}
+function toggleTierCollapse(tier) { state.cl.tiersCollapsed[tier] = !state.cl.tiersCollapsed[tier]; render(); }
+function renderClientesList() {
+  const industriasUnicas = [...new Set(CLIENTES.map(c => c.industria))].sort();
+  const amsUnicos = [...new Set(CLIENTES.flatMap(c => c.accountManagers))].sort();
+  const q = normalizarBusqueda(state.cl.query);
+  const filtered = CLIENTES.filter(c => {
+    if (state.cl.industriaF && c.industria !== state.cl.industriaF) return false;
+    if (state.cl.activoF && String(c.activo) !== state.cl.activoF) return false;
+    if (state.cl.amF && !c.accountManagers.includes(state.cl.amF)) return false;
+    if (q && !normalizarBusqueda(c.nombre).includes(q)) return false;
+    return true;
+  });
+  /* Agrupado por tier -- con 19 clientes un solo grid plano se sentía como
+     "muchas cards de golpe" (mismo problema que ya resolvimos en Pipeline
+     con los swimlanes de cliente colapsables). El tier ya reemplaza al
+     filtro de Tier que existía antes (quedaría redundante con el
+     agrupamiento: para ver solo un tier ahora se colapsan los otros dos). */
+  const gruposHtml = [1, 2, 3].map(tier => {
+    const items = filtered.filter(c => c.tier === tier).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    if (!items.length) return '';
+    /* Con una búsqueda activa, el grupo se auto-expande aunque esté
+       colapsado -- si no, buscar a alguien de un tier colapsado lo
+       dejaría fuera de la vista aunque sí haya matcheado (mismo criterio
+       que ya usa el buscador de Pipeline con sus swimlanes). */
+    const colapsado = q ? false : !!state.cl.tiersCollapsed[tier];
+    return `<div class="rb-cliente-tier-group">
+      <div class="rb-group-header" onclick="toggleTierCollapse(${tier})">
+        <span class="rb-group-chevron">${colapsado ? icon('chevronRight',11) : icon('chevronDown',11)}</span>
+        ${tierBadge(tier)}
+        <span class="rb-phase-count">${items.length} ${items.length === 1 ? 'cliente' : 'clientes'}</span>
+      </div>
+      ${colapsado ? '' : `<div class="rb-grid">${items.map(renderClienteCard).join('')}</div>`}
     </div>`;
   }).join('');
   return `
@@ -2404,12 +2430,11 @@ function renderClientesList() {
         ${state.cl.query ? `<button type="button" class="rb-inline-search-clear" aria-label="Limpiar búsqueda" onclick="state.cl.query=''; render()">${icon('x', 12)}</button>` : ''}
       </div>
       ${renderSelect('cl-industria-f', [{ value: '', label: 'Todas' }, ...industriasUnicas.map(i => ({ value: i, label: i }))], state.cl.industriaF, 'Todas', 'state.cl.industriaF=value; render();', null, 'Industria')}
-      ${renderSelect('cl-tier-f', [{ value: '', label: 'Todos' }, ...[1, 2, 3].map(t => ({ value: String(t), label: 'Tier ' + t }))], state.cl.tierF, 'Todos', 'state.cl.tierF=value; render();', null, 'Tier')}
       ${renderSelect('cl-activo-f', [{ value: '', label: 'Todos' }, { value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }], state.cl.activoF, 'Todos', 'state.cl.activoF=value; render();', null, 'Estado')}
       ${renderSelect('cl-am-f', [{ value: '', label: 'Todos' }, ...amsUnicos.map(am => ({ value: am, label: am }))], state.cl.amF, 'Todos', 'state.cl.amF=value; render();', null, 'Account Manager')}
     </div>
     <div class="rb-results-count">${filtered.length} clientes</div>
-    ${filtered.length === 0 ? `<div class="rb-empty">${icon('users',28)}<p>${q ? `Sin resultados para "${esc(state.cl.query)}".` : 'Ningún cliente calza con este filtro.'}</p></div>` : `<div class="rb-grid">${cards}</div>`}`;
+    ${filtered.length === 0 ? `<div class="rb-empty">${icon('users',28)}<p>${q ? `Sin resultados para "${esc(state.cl.query)}".` : 'Ningún cliente calza con este filtro.'}</p></div>` : gruposHtml}`;
 }
 
 /* Widget de avance por vacante abierta: mini-funnel + prioridad/SLA + top
