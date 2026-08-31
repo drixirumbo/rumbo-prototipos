@@ -442,6 +442,10 @@ h3.rb-subsection-label { font-size: var(--fs-sm); color: var(--text-muted); font
 
 .rb-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-1); color: var(--text-muted); cursor: pointer; transition: color var(--dur-1), border-color var(--dur-1); }
 .rb-icon-btn:hover { color: var(--warning-text); border-color: var(--warning-text); }
+/* Blacklist es una acción más severa que "Se retira" (exclusión
+   definitiva, no un simple fin de proceso) -- mismo botón, pero hover en
+   danger en vez de warning para diferenciar el nivel de severidad. */
+.rb-icon-btn-danger:hover { color: var(--danger-text); border-color: var(--danger-text); }
 
 /* Switch: reemplaza los pares de botones "Colapsar todo"/"Expandir todo"
    -- un solo control biestable en vez de 2 acciones separadas para el
@@ -1805,6 +1809,7 @@ const state = {
   retiroAbierto: null, retiroMotivo: null, retiroMotivoOtro: '',
   aprobarAbierto: null,
   culminarAbierto: null, culminarMotivo: null, culminarMotivoOtro: '',
+  blacklistAbierto: null, blacklistMotivo: null, blacklistMotivoOtro: '',
   toast: null,
 };
 
@@ -1951,7 +1956,7 @@ function closeDrawer() {
   if (state.view === 'talent-database') state.td.selectedId = null;
   if (state.view === 'vacantes') { state.va.selectedId = null; state.va.editando = false; state.va.wizardOpen = false; }
   if (state.view === 'clientes') state.cl.selectedId = null;
-  if (esPipeline) { state.pl.selectedId = null; state.postVerdictDraft = null; state.postVerdictFb = ''; state.docAbierto = null; state.retiroAbierto = null; state.retiroMotivo = null; state.retiroMotivoOtro = ''; state.aprobarAbierto = null; state.culminarAbierto = null; state.culminarMotivo = null; state.culminarMotivoOtro = ''; }
+  if (esPipeline) { state.pl.selectedId = null; state.postVerdictDraft = null; state.postVerdictFb = ''; state.docAbierto = null; state.retiroAbierto = null; state.retiroMotivo = null; state.retiroMotivoOtro = ''; state.aprobarAbierto = null; state.culminarAbierto = null; state.culminarMotivo = null; state.culminarMotivoOtro = ''; state.blacklistAbierto = null; state.blacklistMotivo = null; state.blacklistMotivoOtro = ''; }
   render();
   if (!esPipeline) window.scrollTo(0, 0);
 }
@@ -3763,6 +3768,53 @@ function confirmarCulminar() {
   render();
 }
 
+/* Blacklist ya existía, pero solo como una de las 3 opciones de veredicto
+   del gate de Identificado (ver VEREDICTO[GATE_INTAKE]) -- un candidato
+   con una señal grave (mintió en el CV, no se presentó reiteradas veces,
+   uso indebido de información confidencial) puede aparecer en cualquier
+   fase del proceso, no solo al inicio. Se agrega como acción universal,
+   disponible desde cualquier etapa activa (mismo criterio que "Se
+   retira", ver puedeRetirarse) e independiente del veredicto de gate --
+   mismo patrón de modal + motivo obligatorio que Se retira/Culminar
+   participación, pero con motivos propios de una exclusión definitiva,
+   no de un simple "no avanza". Termina siempre en 'blacklisted' (ya
+   existente como etapa SALIDA), nunca en rechazado_rumbo -- son
+   naturalezas distintas: rechazado_rumbo es "no calzó para este rol",
+   blacklisted es "no debería volver a aparecer en ningún proceso". */
+const MOTIVO_BLACKLIST_OTRO = 'otro';
+const MOTIVOS_BLACKLIST = [
+  { id: 'informacion_falsa', label: 'Información falsa o inconsistente en el CV/perfil' },
+  { id: 'conducta', label: 'Conducta poco profesional o falta de respeto durante el proceso' },
+  { id: 'no_presentado', label: 'No se presentó a una entrevista o evaluación, de forma reiterada' },
+  { id: 'confidencialidad', label: 'Uso indebido de información confidencial del cliente' },
+  { id: MOTIVO_BLACKLIST_OTRO, label: 'Otro motivo' },
+];
+function abrirBlacklistModal(id) {
+  state.blacklistAbierto = id; state.blacklistMotivo = null; state.blacklistMotivoOtro = '';
+  render();
+}
+function cerrarBlacklistModal() {
+  state.blacklistAbierto = null; state.blacklistMotivo = null; state.blacklistMotivoOtro = '';
+  render();
+}
+function seleccionarMotivoBlacklist(motivoId) {
+  state.blacklistMotivo = motivoId;
+  render();
+}
+function confirmarBlacklist() {
+  const id = state.blacklistAbierto;
+  const motivoObj = MOTIVOS_BLACKLIST.find(m => m.id === state.blacklistMotivo);
+  const motivo = state.blacklistMotivo === MOTIVO_BLACKLIST_OTRO ? state.blacklistMotivoOtro.trim() : (motivoObj ? motivoObj.label : null);
+  if (!motivo) return;
+  const p = POSTULACIONES.find(x => x.id === id);
+  const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+  state.blacklistAbierto = null; state.blacklistMotivo = null; state.blacklistMotivoOtro = '';
+  moveTo(id, 'blacklisted');
+  p.extraNotes = motivo;
+  showToast(`${c.nombre} fue puesto en blacklist`);
+  render();
+}
+
 /* Aprobar un gate ya no pide sustento escrito -- a diferencia de
    descartar/rechazar (que sí necesitan una razón registrada), aprobar es
    una decisión que solo necesita confirmarse: se reemplaza el textarea
@@ -4351,6 +4403,10 @@ function renderPostulacionDrawerBody() {
      termina el proceso y no debería tomarse con un click apurado desde el
      tablero. Solo tiene sentido si el proceso sigue activo. */
   const puedeRetirarse = !SALIDAS.includes(p.etapa) && p.etapa !== 'contratado';
+  /* Blacklist comparte exactamente la misma elegibilidad que "Se retira"
+     -- cualquier fase activa del proceso, nunca sobre algo ya terminal
+     (ya en blacklist/rechazado/contratado/etc). */
+  const puedeBlacklistear = puedeRetirarse;
   /* Transición de etapa desde el detalle: mismo criterio que ya usa la
      tarjeta del kanban (handleAdvance / SIGUIENTE) -- nunca salta etapas ni
      evita un gate, solo avanza a la inmediata siguiente. No se muestra si
@@ -4569,7 +4625,11 @@ function renderPostulacionDrawerBody() {
   const identificadoRechazadoTipo = p.etapa === 'blacklisted' ? 'blacklist' : (p.etapa === 'rechazado_rumbo' ? 'descartar' : null);
   const tipoIdentificado = p.veredictoIdentificado || (idx === FULL_ORDER.indexOf(GATE_INTAKE) && identificadoRechazadoTipo ? identificadoRechazadoTipo : (identificadoAprobado ? 'aprobar' : null));
 
-  const tipoGoInterno = (p.etapa === 'rechazado_rumbo' && idx >= FULL_ORDER.indexOf('entrevista_tecnica')) ? 'rechazar'
+  /* Blacklist se agrega a la condición -- un candidato puesto en blacklist
+     estando ya en Entrevista Técnica o después nunca llegó a pasar por
+     GO Interno, mismo caso que "Culminar participación" en esa etapa (que
+     también resuelve en rechazado_rumbo, ver VEREDICTO[GATE_GO_INTERNO]). */
+  const tipoGoInterno = ((p.etapa === 'rechazado_rumbo' || p.etapa === 'blacklisted') && idx >= FULL_ORDER.indexOf('entrevista_tecnica')) ? 'rechazar'
     : (idx > FULL_ORDER.indexOf(GATE_GO_INTERNO) ? 'aprobar' : null);
 
   const tipoCliente = p.veredictoCliente || (p.etapa === 'rechazado_cliente' ? 'rechazar' : (idx > FULL_ORDER.indexOf(GATE_CLIENTE) ? 'aprobar' : null));
@@ -4775,6 +4835,7 @@ function renderPostulacionDrawerBody() {
       <div><h1 class="rb-detail-name" style="display:flex;align-items:center;gap:6px">
         <button class="rb-link" onclick="goToTalentDatabase(${candidato.id})">${esc(candidato.nombre)} ${icon('arrowUpRight',16)}</button>
         ${puedeRetirarse ? `<button class="rb-icon-btn" title="Se retira del proceso" onclick="abrirRetiroModal(${p.id})">${icon('logOut',14)}</button>` : ''}
+        ${puedeBlacklistear ? `<button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>` : ''}
       </h1>
       <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter: ${esc(recruiterDePostulacion(p) || 'Sin asignar')}</p></div>
       <div class="rb-detail-header-actions">
@@ -5039,6 +5100,38 @@ function renderCulminarModal() {
     </div>`;
 }
 
+/* Modal de confirmación para "Poner en blacklist" -- mismo patrón que
+   renderRetiroModal()/renderCulminarModal(), disponible desde cualquier
+   etapa activa (ver puedeBlacklistear), no solo desde el gate de
+   Identificado. */
+function renderBlacklistModal() {
+  if (!state.blacklistAbierto || state.view !== 'pipeline') return '';
+  const p = POSTULACIONES.find(x => x.id === state.blacklistAbierto);
+  if (!p) return '';
+  const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+  const esOtro = state.blacklistMotivo === MOTIVO_BLACKLIST_OTRO;
+  const puedeConfirmar = esOtro ? state.blacklistMotivoOtro.trim().length > 0 : !!state.blacklistMotivo;
+  const opcionesHtml = MOTIVOS_BLACKLIST.map(m => `
+    <div class="rb-assignee-option ${state.blacklistMotivo === m.id ? 'selected' : ''}" onclick="seleccionarMotivoBlacklist('${m.id}')">
+      <span>${esc(m.label)}</span>
+      ${state.blacklistMotivo === m.id ? icon('check', 12) : ''}
+    </div>`).join('');
+  return `
+    <div class="rb-drawer-overlay" style="z-index:65" onclick="cerrarBlacklistModal()"></div>
+    <div class="modal-preview">
+      <div class="mhead">
+        <span class="ic">${icon('ban', 18)}</span>
+        <div><h5>Poner en blacklist</h5><p>${esc(c.nombre)} · ¿Cuál fue el motivo?</p></div>
+      </div>
+      ${opcionesHtml}
+      ${esOtro ? `<textarea class="input" rows="2" placeholder="Especifica el motivo (obligatorio)" style="margin-top:var(--sp-3)" oninput="state.blacklistMotivoOtro=this.value; render()">${esc(state.blacklistMotivoOtro)}</textarea>` : ''}
+      <div class="mactions">
+        <button class="btn secondary sm" onclick="cerrarBlacklistModal()">Cancelar</button>
+        <button class="btn danger sm" ${puedeConfirmar ? '' : 'disabled'} onclick="confirmarBlacklist()">Confirmar blacklist</button>
+      </div>
+    </div>`;
+}
+
 /* Modal de confirmación para "Aprobar" en un gate -- mismo patrón de
    portal que renderRetiroModal()/renderDocModal(). A diferencia de
    descartar/rechazar (que sí piden una razón escrita, ver verdictFormHtml),
@@ -5223,7 +5316,7 @@ function render() {
      scroll interno del overlay llega a su tope/fondo, dando el efecto de
      que la página salta o se ve mal (se suma a overscroll-behavior:contain
      en .rb-side-drawer/.modal-preview, que ataca lo mismo desde el CSS). */
-  const hayOverlayFijo = (state.view === 'pipeline' && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto;
+  const hayOverlayFijo = (state.view === 'pipeline' && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto;
   document.body.style.overflow = hayOverlayFijo ? 'hidden' : '';
   /* El side drawer tiene su propio scroll interno (overflow-y: auto) --
      sin esto, cualquier render() disparado mientras el drawer está
@@ -5245,6 +5338,7 @@ function render() {
     ${renderRetiroModal()}
     ${renderAprobarModal()}
     ${renderCulminarModal()}
+    ${renderBlacklistModal()}
     ${renderFloatingMenus()}
     ${toastHtml()}
   `;
