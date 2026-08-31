@@ -355,6 +355,55 @@ h3.rb-subsection-label { font-size: var(--fs-sm); color: var(--text-muted); font
 .rb-funnel-legend .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
 .rb-evolucion-svg { display: block; width: 100%; height: auto; }
 .rb-evolucion-axis { display: flex; justify-content: space-between; margin-top: var(--sp-1); font-family: ui-monospace, monospace; font-size: var(--fs-xs); color: var(--text-dim); }
+
+/* ---------- Dashboard premium ----------
+   KPI hero con delta, layout en columna principal (graficos, mas ancho) +
+   rail (listas cortas), y un componente de barra apilada con gap real,
+   textura para gates y tooltip on-hover -- reemplaza el bento denso
+   generico que trataba todos los widgets como del mismo peso visual. */
+.rb-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.rb-kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-4) var(--sp-5); }
+.rb-kpi-card .n { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-style: italic; font-size: 32px; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rb-kpi-card .l { font-size: var(--fs-xs); color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; font-family: ui-monospace, monospace; margin-top: 6px; }
+.rb-kpi-delta { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: 600; margin-top: var(--sp-2); font-variant-numeric: tabular-nums; }
+.rb-kpi-delta.up { color: var(--success-text); }
+.rb-kpi-delta.down { color: var(--danger-text); }
+.rb-kpi-delta.flat { color: var(--text-dim); }
+@media (max-width: 860px) { .rb-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.rb-dash-cols { display: grid; grid-template-columns: minmax(0,2fr) minmax(260px,1fr); gap: var(--sp-4); align-items: start; }
+.rb-dash-col-main, .rb-dash-col-rail { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.rb-dash-col-main .card, .rb-dash-col-rail .card { margin: 0; }
+@media (max-width: 980px) { .rb-dash-cols { grid-template-columns: 1fr; } }
+
+/* Barra apilada: extremos redondeados por segmento (nunca en el medio,
+   el radio pequeño + gap ya da la separación), textura diagonal para los
+   gates (is-gate) en vez de un color de estado prestado, y un label
+   directo en blanco (con text-shadow, no depende del hue del segmento
+   para seguir siendo legible sobre el cian claro) para no depender solo
+   de la leyenda. */
+.rb-stackbar { display: flex; height: 22px; gap: 2px; }
+.rb-stackbar-seg { position: relative; border-radius: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden; min-width: 3px; transition: flex-basis var(--dur-2) var(--ease-out); }
+.rb-stackbar-seg.is-gate { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 3px, transparent 3px 7px); }
+.rb-stackbar-seg .rb-stackbar-label { font-size: 10px; font-weight: 700; font-family: ui-monospace, monospace; color: #fff; white-space: nowrap; padding: 0 4px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+
+/* Tooltip CSS-only (sin listeners JS por marca): cualquier elemento con
+   data-tooltip muestra un globo oscuro fijo (mismo tratamiento en ambos
+   temas, no depende de --surface) arriba de la marca al hacer hover.
+   Reusado por los segmentos de la barra apilada y por los puntos del
+   gráfico de evolución. */
+.rb-stackbar-seg[data-tooltip]:hover::after, .rb-chart-point[data-tooltip]:hover::after {
+  content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: var(--rb-ink); color: #fff; font-size: var(--fs-xs); font-family: ui-monospace, monospace;
+  padding: 4px 8px; border-radius: var(--radius-1); white-space: nowrap; pointer-events: none; z-index: 20; box-shadow: var(--shadow-2);
+}
+.rb-stackbar-seg[data-tooltip]:hover::before, .rb-chart-point[data-tooltip]:hover::before {
+  content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  border: 4px solid transparent; border-top-color: var(--rb-ink); z-index: 20;
+}
+.rb-evolucion-wrap { position: relative; }
+.rb-chart-point { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; cursor: default; }
+.rb-evolucion-endlabel { font-family: ui-monospace, monospace; font-size: 9px; font-weight: 600; }
 .rb-historial-item { padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
 .rb-historial-item:last-child { border-bottom: none; }
 .rb-historial-top { display: flex; justify-content: space-between; font-size: var(--fs-sm); font-weight: 600; gap: var(--sp-2); }
@@ -1516,6 +1565,22 @@ const SOFT_SKILL_LABELS = { comunicacion: 'Comunicación', liderazgo: 'Liderazgo
    del candidato+skill (nunca aleatorio de verdad, para que sea estable
    entre renders). Rango 3-5 porque son skills que el propio candidato ya
    declara tener -- no tendría sentido mostrar una que domina poco. */
+/* Delta simulado vs. la semana pasada para las KPI del Dashboard -- no hay
+   series historicas reales todavia, asi que se deriva un valor estable
+   (mismo criterio hash que hardSkillScore) a partir del label + valor
+   actual, nunca aleatorio en cada render. */
+function deltaSimulado(label, valorActual) {
+  const str = label + valorActual;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return (hash % 9) - 4; // rango -4..+4
+}
+function kpiDeltaHtml(label, valorActual) {
+  const d = deltaSimulado(label, valorActual);
+  const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+  const arrow = d > 0 ? '▲' : d < 0 ? '▼' : '▬';
+  return `<div class="rb-kpi-delta ${cls}">${arrow} ${d > 0 ? '+' : ''}${d} vs. semana pasada</div>`;
+}
 function hardSkillScore(candidato, skill) {
   const str = candidato.id + skill;
   let hash = 0;
@@ -1845,10 +1910,34 @@ function progresoGlobal(postulaciones) {
     const esSourcing = phase.id === 'sourcing';
     const count = postulaciones.filter(p => phase.sub.includes(p.etapa)).length + (esSourcing ? postulaciones.filter(p => p.etapa === GATE_INTAKE).length : 0);
     buckets.push({ label: phase.label, color: phase.color, count });
-    if (i === 1) buckets.push({ label: 'Gate GO Interno', color: 'var(--danger-text)', count: postulaciones.filter(p => p.etapa === GATE_GO_INTERNO).length });
-    if (i === 2) buckets.push({ label: 'Gate Decisión Cliente', color: 'var(--warning-text)', count: postulaciones.filter(p => p.etapa === GATE_CLIENTE).length });
+    /* Los gates ya no piden prestado un color de estado (--danger-text/
+       --warning-text) -- un gate es un checkpoint DENTRO de la fase que lo
+       precede, no una categoria propia ni una alerta, asi que hereda el
+       color de esa fase y se distingue con una textura (is-gate en
+       stackedBarHtml) en vez de un hue distinto. */
+    if (i === 1) buckets.push({ label: 'Gate GO Interno', color: phase.color, isGate: true, count: postulaciones.filter(p => p.etapa === GATE_GO_INTERNO).length });
+    if (i === 2) buckets.push({ label: 'Gate Decisión Cliente', color: phase.color, isGate: true, count: postulaciones.filter(p => p.etapa === GATE_CLIENTE).length });
   });
   return buckets;
+}
+
+/* Barra apilada premium (funnel global, origen del talent pool): gap real
+   entre segmentos, extremos redondeados, tooltip on-hover (CSS-only via
+   data-tooltip, sin listeners JS por segmento) y label directo de % en los
+   segmentos que tienen ancho suficiente para mostrarlo sin que se corte.
+   Ver skill de dataviz: color por funcion (categorico = identidad),
+   leyenda siempre presente para 2+ series, texto nunca en el color de la
+   serie (el label va en blanco sobre el segmento, no en el color mismo). */
+function stackedBarHtml(buckets) {
+  const activos = buckets.filter(b => b.count > 0);
+  if (!activos.length) return `<div class="rb-stackbar"><div class="rb-stackbar-seg" style="flex:1;background:var(--border)"></div></div><p class="rb-resumen" style="color:var(--text-muted);margin:8px 0 0">Sin datos por ahora.</p>`;
+  const total = activos.reduce((s, b) => s + b.count, 0);
+  const segs = activos.map(b => {
+    const pct = Math.round((b.count / total) * 100);
+    return `<div class="rb-stackbar-seg${b.isGate ? ' is-gate' : ''}" style="flex:${b.count};background:${b.color}" data-tooltip="${esc(b.label)}: ${b.count} (${pct}%)">${pct >= 8 ? `<span class="rb-stackbar-label">${pct}%</span>` : ''}</div>`;
+  }).join('');
+  const legend = activos.map(b => `<span><span class="dot" style="background:${b.color}"></span>${b.count} ${esc(b.label)}</span>`).join('');
+  return `<div class="rb-stackbar">${segs}</div><div class="rb-funnel-legend">${legend}</div>`;
 }
 
 /* Gráfico de líneas a mano (sin librerías -- mismo criterio "SVG a mano"
@@ -1877,15 +1966,29 @@ function renderEvolucionChart(data, clienteNombre) {
   const x = f => PAD + ((new Date(f).getTime() - t0) / spanT) * (W - PAD * 2);
   const y = v => H - PAD - (v / maxY) * (H - PAD * 2);
   const linea = campo => puntos.map(p => `${x(p.fecha).toFixed(1)},${y(p[campo]).toFixed(1)}`).join(' ');
-  const dots = (campo, color) => data.map(p => `<circle cx="${x(p.fecha).toFixed(1)}" cy="${y(p[campo]).toFixed(1)}" r="2.5" fill="${color}"><title>${esc(p.fecha)}: ${p[campo]} ${campo}</title></circle>`).join('');
+  const dots = (campo, color) => data.map(p => `<circle cx="${x(p.fecha).toFixed(1)}" cy="${y(p[campo]).toFixed(1)}" r="2.5" fill="${color}"></circle>`).join('');
+  /* Tooltip real on-hover por punto: un marker invisible posicionado en %
+     (mismo sistema x/y que ya calcula el SVG) superpuesto sobre el punto,
+     con el mismo mecanismo CSS-only data-tooltip que usa stackedBarHtml --
+     evita tener que instrumentar mousemove/crosshair sobre el SVG. */
+  const puntosTooltip = (campo, color, nombreCampo) => data.map(p => `<div class="rb-chart-point" style="left:${(x(p.fecha) / W * 100).toFixed(2)}%;top:${(y(p[campo]) / H * 100).toFixed(2)}%;background:${color}" data-tooltip="${esc(p.fecha)} · ${nombreCampo}: ${p[campo]}"></div>`).join('');
+  const ultimo = puntos[puntos.length - 1];
 
   return `
-    <svg viewBox="0 0 ${W} ${H}" class="rb-evolucion-svg" role="img" aria-label="Evolución acumulada de posiciones solicitadas y cerradas para ${esc(clienteNombre)}">
-      <polyline points="${linea('solicitadas')}" fill="none" stroke="var(--cyan-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      <polyline points="${linea('cerradas')}" fill="none" stroke="var(--purple-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      ${dots('solicitadas', 'var(--cyan-text)')}
-      ${dots('cerradas', 'var(--purple-text)')}
-    </svg>
+    <div class="rb-evolucion-wrap">
+      <svg viewBox="0 0 ${W} ${H}" class="rb-evolucion-svg" role="img" aria-label="Evolución acumulada de posiciones solicitadas y cerradas para ${esc(clienteNombre)}">
+        <line x1="${PAD}" y1="${(H / 3).toFixed(1)}" x2="${W - PAD}" y2="${(H / 3).toFixed(1)}" stroke="var(--border)" stroke-width="1" />
+        <line x1="${PAD}" y1="${(H * 2 / 3).toFixed(1)}" x2="${W - PAD}" y2="${(H * 2 / 3).toFixed(1)}" stroke="var(--border)" stroke-width="1" />
+        <polyline points="${linea('solicitadas')}" fill="none" stroke="var(--cyan-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline points="${linea('cerradas')}" fill="none" stroke="var(--purple-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        ${dots('solicitadas', 'var(--cyan-text)')}
+        ${dots('cerradas', 'var(--purple-text)')}
+        <text x="${(W - PAD - 4).toFixed(1)}" y="${(y(ultimo.solicitadas) - 6).toFixed(1)}" text-anchor="end" class="rb-evolucion-endlabel" fill="var(--cyan-text)">${ultimo.solicitadas}</text>
+        <text x="${(W - PAD - 4).toFixed(1)}" y="${(y(ultimo.cerradas) + 13).toFixed(1)}" text-anchor="end" class="rb-evolucion-endlabel" fill="var(--purple-text)">${ultimo.cerradas}</text>
+      </svg>
+      ${puntosTooltip('solicitadas', 'var(--cyan-text)', 'Solicitadas')}
+      ${puntosTooltip('cerradas', 'var(--purple-text)', 'Cerradas')}
+    </div>
     <div class="rb-funnel-legend">
       <span><span class="dot" style="background:var(--cyan-text)"></span>Solicitadas (${data[data.length - 1].solicitadas})</span>
       <span><span class="dot" style="background:var(--purple-text)"></span>Cerradas (${data[data.length - 1].cerradas})</span>
@@ -1925,12 +2028,12 @@ function renderDashboard() {
   const evolucionData = clienteEvolucion ? evolucionClienteData(clienteEvolucion.id) : [];
   const evolucionSelector = renderSelect('dash-evolucion-cliente', CLIENTES.filter(c => c.activo).map(c => ({ value: c.id, label: c.nombre })), state.ui.dashboardClienteId, 'Cliente', 'state.ui.dashboardClienteId=parseInt(value,10); render();', 'Cliente');
 
-  const statGrid = `
-    <div class="rb-stat-grid">
-      <div class="rb-stat"><div class="n">${vacantesAbiertas.length}</div><div class="l">Posiciones abiertas</div></div>
-      <div class="rb-stat"><div class="n">${enProceso.length}</div><div class="l">En pipeline activo</div></div>
-      <div class="rb-stat"><div class="n">${colocadosHistorico.length}</div><div class="l">Colocaciones (histórico)</div></div>
-      <div class="rb-stat" style="${topTalentActivo.length ? 'color:var(--cyan-text)' : ''}"><div class="n">${topTalentActivo.length}</div><div class="l">Top talent activo</div></div>
+  const kpiGrid = `
+    <div class="rb-kpi-grid">
+      <div class="rb-kpi-card"><div class="n">${vacantesAbiertas.length}</div><div class="l">Posiciones abiertas</div>${kpiDeltaHtml('Posiciones abiertas', vacantesAbiertas.length)}</div>
+      <div class="rb-kpi-card"><div class="n">${enProceso.length}</div><div class="l">En pipeline activo</div>${kpiDeltaHtml('En pipeline activo', enProceso.length)}</div>
+      <div class="rb-kpi-card"><div class="n">${colocadosHistorico.length}</div><div class="l">Colocaciones (histórico)</div>${kpiDeltaHtml('Colocaciones histórico', colocadosHistorico.length)}</div>
+      <div class="rb-kpi-card"><div class="n" style="${topTalentActivo.length ? 'color:var(--cyan-text)' : ''}">${topTalentActivo.length}</div><div class="l">Top talent activo</div>${kpiDeltaHtml('Top talent activo', topTalentActivo.length)}</div>
     </div>`;
 
   /* ---- Riesgo de SLA, a nivel de todo el negocio (no solo un cliente) ---- */
@@ -1950,13 +2053,7 @@ function renderDashboard() {
     </div>`;
 
   /* ---- Funnel global (mismo agrupamiento por fase que usa Pipeline) ---- */
-  const buckets = progresoGlobal(enProceso).filter(b => b.count > 0);
-  const funnelSegs = buckets.length === 0
-    ? `<div class="rb-funnel-seg" style="flex:1;background:var(--border)"></div>`
-    : buckets.map(b => `<div class="rb-funnel-seg" style="flex:${b.count};background:${b.color}" title="${esc(b.label)}: ${b.count}"></div>`).join('');
-  const funnelLegend = buckets.length
-    ? buckets.map(b => `<span><span class="dot" style="background:${b.color}"></span>${b.count} en ${esc(b.label)}</span>`).join('')
-    : '<span>Sin pipeline activo por ahora</span>';
+  const funnelHtml = stackedBarHtml(progresoGlobal(enProceso));
 
   /* ---- Prioridad de vacantes abiertas ---- */
   const porPrioridad = { High: 0, Medium: 0, Low: 0 };
@@ -1968,10 +2065,13 @@ function renderDashboard() {
      que alguien quede sobrecargado mientras otro recruiter tiene aire. ---- */
   const cargaPorRecruiter = RECRUITERS_DISPONIBLES.map(r => ({ r, n: enProceso.filter(p => recruiterDePostulacion(p) === r).length }));
   const maxCarga = Math.max(1, ...cargaPorRecruiter.map(x => x.n));
+  /* Ramp secuencial de un solo hue (azul) segun carga relativa -- es
+     magnitud, no categoria, asi que la codificacion correcta es
+     luminosidad sobre un mismo hue, no un color por recruiter. */
   const cargaRows = cargaPorRecruiter.map(({ r, n }) => `
     <div class="rb-dash-row">
       <div class="lbl">${icon('user', 13)}<span class="txt">${esc(r)}</span></div>
-      <div class="bar rb-score-bar"><div class="rb-score-fill" style="width:${(n / maxCarga) * 100}%"></div></div>
+      <div class="bar rb-score-bar"><div class="rb-score-fill" style="width:${(n / maxCarga) * 100}%;background:color-mix(in oklab, var(--rb-blue) ${Math.round((0.35 + (n / maxCarga) * 0.65) * 100)}%, var(--bg-elev))"></div></div>
       <div class="val">${n}</div>
     </div>`).join('');
 
@@ -1979,10 +2079,8 @@ function renderDashboard() {
      Metrica que propongo -- si Outbound domina, el equipo depende de
      sourcing activo; si Inbound/Referido crecen, el employer brand y el
      boca a boca estan funcionando. ---- */
-  const origenCounts = ['Inbound', 'Referido', 'Outbound', 'Base de datos'].map(o => ({ o, n: CANDIDATOS.filter(c => c.origen === o).length }));
-  const origenTotal = CANDIDATOS.length || 1;
-  const origenBar = origenCounts.filter(x => x.n > 0).map(x => `<div class="rb-funnel-seg" style="flex:${x.n};background:${ORIGEN_COLOR[x.o]}" title="${x.o}: ${x.n}"></div>`).join('');
-  const origenLegend = origenCounts.map(x => `<span><span class="dot" style="background:${ORIGEN_COLOR[x.o]}"></span>${esc(x.o)} · ${Math.round((x.n / origenTotal) * 100)}%</span>`).join('');
+  const origenBuckets = ['Inbound', 'Referido', 'Outbound', 'Base de datos'].map(o => ({ label: o, color: ORIGEN_COLOR[o], count: CANDIDATOS.filter(c => c.origen === o).length }));
+  const origenHtml = stackedBarHtml(origenBuckets);
 
   /* ---- Top talent en proceso: senales "Strong Yes" activas ahora mismo,
      para que un lead no tenga que ir a buscarlas dentro del board. ---- */
@@ -2031,27 +2129,27 @@ function renderDashboard() {
 
   return `
     <h1 class="rb-title rb-display">Dashboard</h1>
-    ${statGrid}
+    ${kpiGrid}
     ${riesgoWidget}
-    <div class="rb-dash-grid">
-      <div class="card rb-detail-section rb-bento-lg"><h3>Clientes con más actividad</h3>${clientesHtml}</div>
-      <div class="card rb-detail-section rb-bento-wide">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)">
-          <h3 style="margin:0">Evolución: solicitadas vs. cerradas</h3>
-          ${evolucionSelector}
+    <div class="rb-dash-cols">
+      <div class="rb-dash-col-main">
+        <div class="card rb-detail-section"><h3>Funnel global de pipeline</h3>${funnelHtml}</div>
+        <div class="card rb-detail-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+            <h3 style="margin:0">Evolución: solicitadas vs. cerradas</h3>
+            ${evolucionSelector}
+          </div>
+          ${renderEvolucionChart(evolucionData, clienteEvolucion ? clienteEvolucion.nombre : '')}
         </div>
-        ${renderEvolucionChart(evolucionData, clienteEvolucion ? clienteEvolucion.nombre : '')}
+        <div class="card rb-detail-section"><h3>Origen del talent pool</h3>${origenHtml}</div>
       </div>
-      <div class="card rb-detail-section rb-bento-wide"><h3>Funnel global de pipeline</h3>
-        <div class="rb-funnel-bar" style="height:10px;margin-bottom:8px">${funnelSegs}</div>
-        <div class="rb-funnel-legend">${funnelLegend}</div>
+      <div class="rb-dash-col-rail">
+        <div class="card rb-detail-section"><h3>Clientes con más actividad</h3>${clientesHtml}</div>
+        <div class="card rb-detail-section"><h3>Carga por recruiter</h3>${cargaRows}</div>
+        <div class="card rb-detail-section"><h3>Prioridad de posiciones abiertas</h3>${prioridadRows}</div>
       </div>
-      <div class="card rb-detail-section rb-bento-wide"><h3>Origen del talent pool</h3>
-        <div class="rb-funnel-bar" style="height:10px;margin-bottom:8px">${origenBar}</div>
-        <div class="rb-funnel-legend">${origenLegend}</div>
-      </div>
-      <div class="card rb-detail-section rb-bento-sm"><h3>Prioridad de posiciones abiertas</h3>${prioridadRows}</div>
-      <div class="card rb-detail-section rb-bento-sm"><h3>Carga por recruiter</h3>${cargaRows}</div>
+    </div>
+    <div class="rb-dash-grid" style="margin-top:var(--sp-4)">
       <div class="card rb-detail-section rb-bento-lg"><h3>Top talent en proceso</h3>${topTalentRows}</div>
       <div class="card rb-detail-section rb-bento-lg"><h3>Pipeline estancado (${UMBRAL_ESTANCADO}+ días sin avanzar)</h3>${estancadasRows}</div>
       <div class="card rb-detail-section rb-bento-full"><h3>Skills más demandadas (posiciones abiertas)</h3>${skillsHtml}</div>
