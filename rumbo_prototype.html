@@ -2406,7 +2406,22 @@ function renderClientesList() {
      filtro de Tier que existía antes (quedaría redundante con el
      agrupamiento: para ver solo un tier ahora se colapsan los otros dos). */
   const gruposHtml = [1, 2, 3].map(tier => {
-    const items = filtered.filter(c => c.tier === tier).sort((a, b) => a.nombre.localeCompare(b.nombre));
+    /* Orden dentro de cada tier: activo antes que inactivo siempre (mismo
+       criterio que ya aplica el resto de la app a estados terminales --
+       ver .rb-terminal-item/.rb-terminal-divider: "visibles como
+       referencia pero con menor peso visual y al final del orden, nunca
+       se ocultan, solo se les baja la prioridad"), y dentro de los
+       activos, primero los que tienen alguna posición con SLA en riesgo
+       -- misma lógica de "lo urgente primero" que ya usa el widget de
+       riesgo del Dashboard. Alfabético como último criterio, para que
+       dentro de cada grupo sea fácil encontrar un cliente puntual. */
+    const items = filtered.filter(c => c.tier === tier).sort((a, b) => {
+      if (a.activo !== b.activo) return a.activo ? -1 : 1;
+      const riesgoA = vacantesEnRiesgoDeCliente(a.id).length > 0;
+      const riesgoB = vacantesEnRiesgoDeCliente(b.id).length > 0;
+      if (riesgoA !== riesgoB) return riesgoA ? -1 : 1;
+      return a.nombre.localeCompare(b.nombre);
+    });
     if (!items.length) return '';
     /* Con una búsqueda activa, el grupo se auto-expande aunque esté
        colapsado -- si no, buscar a alguien de un tier colapsado lo
