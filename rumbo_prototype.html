@@ -160,7 +160,7 @@ body {
 .rb-inline-search input:focus { outline: 0; border-color: var(--accent); }
 .rb-inline-search-clear { all: unset; position: absolute; right: 8px; cursor: pointer; color: var(--text-dim); display: flex; padding: 2px; border-radius: var(--radius-full); }
 .rb-inline-search-clear:hover { color: var(--text); background: var(--surface-2); }
-.rb-filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-full); cursor: pointer; outline: none; transition: border-color var(--dur-1), background var(--dur-1); }
+.rb-filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-3); cursor: pointer; outline: none; transition: border-color var(--dur-1), background var(--dur-1); }
 .rb-filter-select:hover { border-color: var(--border-strong); background: var(--surface-2); }
 .rb-filter-select:focus { border-color: var(--accent); }
 /* Quick filter chips: selección única por categoría, pensados para los
@@ -1730,8 +1730,10 @@ function renderSelect(id, options, currentValue, placeholder, onCommitBody, aria
   /* `wide`: variante a ancho completo (100%, clase `.select.input`) para
      campos de formulario, donde las opciones son nombres/etiquetas largas
      (clientes, prácticas, especialidades). Sin `wide` usa el mismo look
-     de píldora compacta (`.rb-filter-select`) que ya usaban los filtros
-     rápidos de Talent Database. */
+     compacto (`.rb-filter-select`) que ya usaban los filtros rápidos de
+     Talent Database -- antes con esquinas full pill, ahora con el mismo
+     radio moderado que `.input`/`.select` (ver referencia visual del
+     usuario: rectangular con esquinas redondeadas, no una cápsula). */
   const field = `<select id="${id}" class="${wide ? 'select input' : 'rb-filter-select'}" ${ariaLabel ? `aria-label="${esc(ariaLabel)}"` : ''} onchange="(function(value){ ${onCommitBody} })(this.value)">${optionsHtml}</select>`;
   return groupLabel
     ? `<div class="rb-quick-filter-group"><span class="lbl">${esc(groupLabel)}</span>${field}</div>`
