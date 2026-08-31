@@ -1104,100 +1104,96 @@ POSTULACIONES.forEach(p => {
    de los 5 clientes que ya existían se mantienen intactos (VACANTES los
    referencia por clienteId), solo cambió su posición en el array.
 
-   `lineaAsignada` es SOLO una clasificación de arranque para cuentas que
-   todavía no tienen ninguna vacante real (los 14 clientes nuevos, todos
-   con pipeline en cero) -- un cliente puede trabajar Staffing y
-   Recruiting a la vez (un cliente real, no exclusivo), así que en cuanto
-   una cuenta tiene vacantes, la línea que se muestra ya no sale de este
-   campo sino que se DERIVA de esas vacantes (ver lineasDeCliente), que es
-   la fuente de verdad real -- mismo criterio que ya usaba
-   engagementBreakdownCliente ("la modalidad es una propiedad de la
-   posición, no del cliente"). Por eso Niubiz, con vacantes de ambos
-   engagementModel, termina mostrando los dos badges aunque el roster
-   original solo la ponía en la columna "Staffing". Molitalia no figuraba
-   en el roster (probablemente porque ya está inactiva/en pausa), así que
-   se deja sin `lineaAsignada` en vez de inventarle una. */
+   Ningún cliente trae acá una clasificación manual de línea: si un
+   cliente es Recruiting o Staffing (o ambos a la vez) se determina
+   ÚNICAMENTE en base a las posiciones (vacantes) que tiene -- ver
+   lineasDeCliente/engagementBreakdownCliente, que leen el engagementModel
+   real de cada vacante. Por eso Niubiz, con vacantes de ambos
+   engagementModel, muestra los dos badges aunque el roster original solo
+   la ponía en la columna "Staffing", y los 14 clientes nuevos (todavía
+   sin ninguna vacante) no muestran ninguna línea hasta que se les cargue
+   su primera posición. */
 const CLIENTES = [
-  { id: 6, nombre: 'Prestamype', industria: 'Fintech / Crowdfunding', tier: 3, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Lucía Bravo'],
+  { id: 6, nombre: 'Prestamype', industria: 'Fintech / Crowdfunding', tier: 3, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-05', tipo: 'Reunión', nota: 'Kickoff de cuenta, alineación de necesidades de contratación para el equipo de producto.' },
     ] },
-  { id: 7, nombre: 'Vadimar', industria: 'Consumo masivo', tier: 2, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+  { id: 7, nombre: 'Vadimar', industria: 'Consumo masivo', tier: 2, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-07-18', tipo: 'Email', nota: 'Primer contacto comercial, envío de propuesta de servicio de Recruiting.' },
     ] },
-  { id: 8, nombre: 'Ligo', industria: 'Fintech / Pagos', tier: 3, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Lucía Bravo'],
+  { id: 8, nombre: 'Ligo', industria: 'Fintech / Pagos', tier: 3, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-02', tipo: 'Llamada', nota: 'Alineación de perfil técnico para su primera búsqueda con Rumbo.' },
     ] },
-  { id: 9, nombre: 'Apuesta Total', industria: 'Entretenimiento / Apuestas', tier: 2, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+  { id: 9, nombre: 'Apuesta Total', industria: 'Entretenimiento / Apuestas', tier: 2, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-06-25', tipo: 'Reunión', nota: 'Presentación del equipo de Rumbo y modelo de trabajo de Recruiting.' },
     ] },
-  { id: 10, nombre: 'Rumbo', industria: 'Turismo y viajes', tier: 3, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Lucía Bravo'],
+  { id: 10, nombre: 'Rumbo', industria: 'Turismo y viajes', tier: 3, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-07-30', tipo: 'Email', nota: 'Confirmación de alcance del servicio y siguientes pasos de la cuenta.' },
     ] },
-  { id: 11, nombre: 'Delosi', industria: 'Restaurantes / Franquicias', tier: 2, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+  { id: 11, nombre: 'Delosi', industria: 'Restaurantes / Franquicias', tier: 2, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-08-12', tipo: 'Reunión', nota: 'Kickoff de cuenta para posiciones corporativas de sus marcas de franquicia.' },
     ] },
-  { id: 12, nombre: 'Jockey Plaza', industria: 'Retail / Real estate', tier: 1, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+  { id: 12, nombre: 'Jockey Plaza', industria: 'Retail / Real estate', tier: 1, activo: true, accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-07-22', tipo: 'Llamada', nota: 'Revisión trimestral de cuenta, sin bloqueos abiertos.' },
     ] },
-  { id: 13, nombre: 'Leasy', industria: 'Fintech / Leasing', tier: 3, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+  { id: 13, nombre: 'Leasy', industria: 'Fintech / Leasing', tier: 3, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-08-08', tipo: 'Email', nota: 'Primer intake recibido para una posición de tecnología.' },
     ] },
-  { id: 1, nombre: 'Interbank', industria: 'Banca', tier: 1, activo: true, lineaAsignada: 'Recruiting', accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
+  { id: 1, nombre: 'Interbank', industria: 'Banca', tier: 1, activo: true, accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-12', tipo: 'Reunión', nota: 'Kickoff de Site Reliability Engineer, revisamos banda salarial y perfil.' },
       { fecha: '2026-07-28', tipo: 'Email', nota: 'Envío de shortlist para Sr. Program Manager.' },
       { fecha: '2026-07-10', tipo: 'Llamada', nota: 'Alineación trimestral de cuenta con el AM, sin bloqueos abiertos.' },
     ] },
-  { id: 14, nombre: 'EFC', industria: 'Financiera', tier: 2, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Lucía Bravo'],
+  { id: 14, nombre: 'EFC', industria: 'Financiera', tier: 2, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-07-14', tipo: 'Reunión', nota: 'Kickoff de cuenta de Staffing para el área de operaciones.' },
     ] },
-  { id: 15, nombre: 'CAPAC', industria: 'Servicios financieros', tier: 3, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+  { id: 15, nombre: 'CAPAC', industria: 'Servicios financieros', tier: 3, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-06-30', tipo: 'Email', nota: 'Primer contacto comercial, en evaluación de alcance del servicio.' },
     ] },
-  { id: 16, nombre: 'VISA', industria: 'Fintech / Pagos', tier: 1, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+  { id: 16, nombre: 'VISA', industria: 'Fintech / Pagos', tier: 1, activo: true, accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-08-01', tipo: 'Reunión', nota: 'Alineación de necesidades de staffing para el equipo local.' },
     ] },
-  { id: 17, nombre: 'Inetum', industria: 'Tecnología / Consultoría IT', tier: 2, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+  { id: 17, nombre: 'Inetum', industria: 'Tecnología / Consultoría IT', tier: 2, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-07-10', tipo: 'Llamada', nota: 'Revisión de condiciones comerciales para ampliar la cuenta.' },
     ] },
-  { id: 18, nombre: 'Diners Club', industria: 'Banca / Tarjetas', tier: 1, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Lucía Bravo'],
+  { id: 18, nombre: 'Diners Club', industria: 'Banca / Tarjetas', tier: 1, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-15', tipo: 'Reunión', nota: 'Kickoff de cuenta de Staffing, alineación con el equipo de Interbank Group.' },
     ] },
-  { id: 19, nombre: 'Astay', industria: 'Retail', tier: 3, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+  { id: 19, nombre: 'Astay', industria: 'Retail', tier: 3, activo: true, accountManagers: ['Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-07-05', tipo: 'Email', nota: 'Primer contacto comercial, envío de propuesta de servicio de Staffing.' },
     ] },
-  { id: 3, nombre: 'Protecta Security', industria: 'Seguros', tier: 2, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+  { id: 3, nombre: 'Protecta Security', industria: 'Seguros', tier: 2, activo: true, accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-08-01', tipo: 'Llamada', nota: 'Pidió acelerar el cierre de Tech Lead (PS) por presión de negocio.' },
       { fecha: '2026-07-15', tipo: 'Reunión', nota: 'Intake de Business Analyst con el Hiring Manager.' },
       { fecha: '2026-05-02', tipo: 'Email', nota: 'Feedback positivo tras cierre de Product Designer Mid.' },
     ] },
-  { id: 2, nombre: 'Laive', industria: 'Consumo masivo', tier: 2, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Lucía Bravo'],
+  { id: 2, nombre: 'Laive', industria: 'Consumo masivo', tier: 2, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2026-07-29', tipo: 'Email', nota: 'Confirmó apertura de Backend Ssr. para reemplazo de baja.' },
       { fecha: '2026-06-15', tipo: 'Reunión', nota: 'Revisión de satisfacción post-cierre de Fullstack .Net.' },
     ] },
-  { id: 4, nombre: 'Niubiz', industria: 'Fintech / Pagos', tier: 1, activo: true, lineaAsignada: 'Staffing', accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
+  { id: 4, nombre: 'Niubiz', industria: 'Fintech / Pagos', tier: 1, activo: true, accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-10', tipo: 'Reunión', nota: 'Kickoff de Cloud Security Engineer, aún falta aprobar JD.' },
       { fecha: '2026-07-25', tipo: 'Llamada', nota: 'Priorización de Arquitecto de Datos sobre Delivery Manager.' },
       { fecha: '2026-07-08', tipo: 'Email', nota: 'Confirmación de banda salarial para Product Owner.' },
     ] },
-  { id: 5, nombre: 'Molitalia', industria: 'Consumo masivo', tier: 3, activo: false, lineaAsignada: null, accountManagers: ['Lucía Bravo'],
+  { id: 5, nombre: 'Molitalia', industria: 'Consumo masivo', tier: 3, activo: false, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2025-11-20', tipo: 'Email', nota: 'Cuenta puesta en pausa indefinida por freeze de contrataciones.' },
     ] },
@@ -2344,18 +2340,18 @@ function progresoVacante(vacanteId) {
 }
 function selectCliente(id) { state.cl.selectedId = id; render(); window.scrollTo(0, 0); }
 
-/* Qué línea(s) de servicio mostrar para un cliente en la lista -- un
-   cliente real puede trabajar Staffing y Recruiting a la vez, así que
-   esto nunca es un solo valor exclusivo. Con vacantes reales, se derivan
-   de ellas (fuente de verdad, ver engagementBreakdownCliente); recién
-   si todavía no tiene ninguna vacante se usa lineaAsignada como
-   clasificación provisional de arranque. */
+/* Qué línea(s) de servicio mostrar para un cliente en la lista -- se
+   determina ÚNICAMENTE en base a las posiciones (vacantes) que tiene, sin
+   ninguna clasificación manual de por medio (ver engagementBreakdownCliente,
+   que ya lee el engagementModel real de cada vacante). Un cliente real
+   puede trabajar Staffing y Recruiting a la vez, así que esto nunca es un
+   solo valor exclusivo -- y un cliente sin ninguna vacante todavía
+   simplemente no muestra ninguna línea, en vez de inventarle una. */
 function lineasDeCliente(c) {
   const b = engagementBreakdownCliente(c.id);
   const lineas = [];
   if (b.recruiting > 0) lineas.push('Recruiting');
   if (b.staffing > 0) lineas.push('Staffing');
-  if (lineas.length === 0 && c.lineaAsignada) lineas.push(c.lineaAsignada);
   return lineas;
 }
 function lineaBadges(lineas) {
