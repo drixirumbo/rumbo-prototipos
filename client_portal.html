@@ -318,7 +318,6 @@ function briefHtml(p) {
     statChip('briefcase', `${c.experiencia} de experiencia`),
     statChip('mapPin', `${c.ubicacion} · ${c.modalidad}`),
     statChip('clock', c.disponibilidad),
-    statChip('coin', `S/ ${c.expectativa.toLocaleString('es-PE')}/mes`),
   ].join('');
   const softSkillsHtml = Object.keys(SOFT_SKILL_LABELS).map(k => `<div class="rb-detail-row"><span>${esc(SOFT_SKILL_LABELS[k])}</span>${dotsHtml(c.softSkills[k])}</div>`).join('');
   const hardSkillsHtml = c.skills.map(s => `<div class="rb-detail-row"><span>${esc(s)}</span>${dotsHtml(4)}</div>`).join('');

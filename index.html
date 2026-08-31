@@ -24,6 +24,16 @@
   --ease-out: cubic-bezier(.2,.7,.2,1); --dur-2: 200ms;
   color-scheme: dark;
 }
+/* Mismo criterio que los otros 3 prototipos: solo redefine los tokens
+   semánticos de superficie/texto, los primitivos de marca se mantienen. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--rb-paper); --surface: #FFFFFF; --surface-2: #F0EDE5;
+  --border: rgba(10,10,11,.08); --border-strong: rgba(10,10,11,.16);
+  --text: var(--rb-ink); --text-muted: rgba(10,10,11,.64);
+  --accent-soft: rgba(56,46,220,.10);
+  --shadow-2: 0 4px 12px rgba(10,10,11,.1); --shadow-3: 0 12px 32px rgba(10,10,11,.14), 0 2px 6px rgba(10,10,11,.08);
+}
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -36,6 +46,7 @@ body {
 .rb-hub { width: 100%; max-width: 1100px; }
 .rb-hub-brand { display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-2); }
 .rb-hub-brand svg { height: 30px; width: auto; color: var(--text); }
+.rb-theme-btn { position: fixed; top: var(--sp-5); right: var(--sp-5); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-2); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); }
 .rb-hub-sub { text-align: center; color: var(--text-muted); margin-bottom: var(--sp-6); font-size: var(--fs-base); }
 .rb-hub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); }
 @media (max-width: 640px) { .rb-hub-grid { grid-template-columns: 1fr; } }
@@ -71,6 +82,9 @@ body {
 </style>
 </head>
 <body>
+<button class="rb-theme-btn" id="rb-theme-btn" onclick="toggleTheme()" aria-label="Cambiar tema" title="Cambiar tema">
+  <svg id="rb-theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></svg>
+</button>
 <div class="rb-hub">
   <div class="rb-hub-brand"><svg viewBox="0 0 144 42" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M32.634 6.70557C25.47 6.70557 19.026 12.582 18.774 19.7202C17.28 15.0695 12.906 11.6987 7.758 11.6807V34.9159H19.332V28.03L19.386 26.588C19.386 24.7493 20.124 23.109 21.33 21.9013C22.536 20.6936 24.174 19.9545 26.01 19.9545H32.634C39.942 19.9545 45.864 14.024 45.864 6.70557H32.634Z" fill="#382EDC"/>
@@ -150,5 +164,28 @@ body {
     </div>
   </div>
 </div>
+<script>
+/* Mismo criterio que los otros 3 prototipos: default 'light', try/catch
+   por si localStorage está bloqueado. Este hub es HTML estático (sin
+   render() propio), así que el toggle solo actualiza el atributo + el
+   ícono a mano en vez de re-renderizar todo. */
+const SUN_PATH = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const MOON_PATH = '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>';
+function leerThemeGuardado() {
+  try { return localStorage.getItem('rb-hub-theme') === 'dark' ? 'dark' : 'light'; }
+  catch (e) { return 'light'; }
+}
+function aplicarTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('rb-theme-icon').innerHTML = theme === 'dark' ? SUN_PATH : MOON_PATH;
+}
+function toggleTheme() {
+  const actual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const nuevo = actual === 'dark' ? 'light' : 'dark';
+  aplicarTheme(nuevo);
+  try { localStorage.setItem('rb-hub-theme', nuevo); } catch (e) {}
+}
+aplicarTheme(leerThemeGuardado());
+</script>
 </body>
 </html>
