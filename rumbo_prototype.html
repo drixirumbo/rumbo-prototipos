@@ -160,8 +160,13 @@ body {
 .rb-inline-search input:focus { outline: 0; border-color: var(--accent); }
 .rb-inline-search-clear { all: unset; position: absolute; right: 8px; cursor: pointer; color: var(--text-dim); display: flex; padding: 2px; border-radius: var(--radius-full); }
 .rb-inline-search-clear:hover { color: var(--text); background: var(--surface-2); }
-.rb-filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-3); cursor: pointer; outline: none; transition: border-color var(--dur-1), background var(--dur-1); }
-.rb-filter-select:hover { border-color: var(--border-strong); background: var(--surface-2); }
+/* Sin appearance:none + su propio chevron, este <select> nativo renderiza
+   la flecha del navegador pegada al borde derecho (con poco padding no
+   hay lugar para separarla) -- mismo chevron SVG y misma reserva de
+   espacio que ya usa `.select` (línea ~472), para que quede consistente
+   con los selects de formulario. */
+.rb-filter-select { background-color: var(--surface); background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding-top: var(--sp-2); padding-bottom: var(--sp-2); padding-left: var(--sp-3); padding-right: 32px; border-radius: var(--radius-3); cursor: pointer; outline: none; transition: border-color var(--dur-1), background-color var(--dur-1); }
+.rb-filter-select:hover { border-color: var(--border-strong); background-color: var(--surface-2); }
 .rb-filter-select:focus { border-color: var(--accent); }
 /* Quick filter chips: selección única por categoría, pensados para los
    filtros de pocos valores fijos (estado/origen/seniority). */
