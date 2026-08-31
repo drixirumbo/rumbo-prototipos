@@ -142,7 +142,11 @@ body {
 .rb-search-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-4); margin-bottom: var(--sp-4); box-shadow: var(--shadow-1); transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
 .rb-search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }444
 .rb-search-row { display: flex; align-items: center; gap: var(--sp-3); }
-.rb-search-row input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: inherit; font-size: var(--fs-md); }
+/* min-width:0 para que el input pueda encoger dentro de la fila flex en
+   vez de forzar su ancho de contenido, y elipsis en vez de un corte seco
+   cuando el placeholder (bastante largo, es un ejemplo de búsqueda) no
+   entra en una pantalla angosta. */
+.rb-search-row input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text); font-family: inherit; font-size: var(--fs-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rb-search-row input::placeholder { color: var(--text-dim); }
 .rb-search-hint { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); display: flex; align-items: center; gap: var(--sp-1); }
 
