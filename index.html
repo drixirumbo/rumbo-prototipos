@@ -37,13 +37,14 @@ body {
 .rb-hub-brand { display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-2); }
 .rb-hub-brand svg { height: 30px; width: auto; color: var(--text); }
 .rb-hub-sub { text-align: center; color: var(--text-muted); margin-bottom: var(--sp-6); font-size: var(--fs-base); }
-.rb-hub-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
-@media (max-width: 900px) { .rb-hub-grid { grid-template-columns: 1fr 1fr; } }
+.rb-hub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-4); }
 @media (max-width: 640px) { .rb-hub-grid { grid-template-columns: 1fr; } }
 .rb-hub-card { display: block; text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-4); padding: var(--sp-6); transition: border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
 .rb-hub-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-3); }
 .rb-hub-card.expert .rb-hub-ic { background: rgba(132,82,253,.14); color: var(--rb-purple); }
 .rb-hub-card.expert .rb-hub-tag { color: var(--rb-purple); }
+.rb-hub-card.client .rb-hub-ic { background: rgba(255,176,32,.14); color: #FFB020; }
+.rb-hub-card.client .rb-hub-tag { color: #FFB020; }
 .rb-hub-ic { width: 44px; height: 44px; border-radius: var(--radius-3); background: var(--accent-soft); color: var(--rb-blue-300); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-4); }
 .rb-hub-card.cand .rb-hub-ic { background: rgba(71,235,235,.14); color: var(--rb-cyan); }
 .rb-hub-title { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 6px; }
@@ -87,6 +88,14 @@ body {
       <div class="rb-hub-title">Plataforma del Experto</div>
       <p class="rb-hub-desc">La vista de quien conduce la Entrevista Técnica: cola de entrevistas asignadas, referencia del candidato (hard skills, matching) y formulario de evaluación.</p>
       <span class="rb-hub-tag">Entrar a la plataforma <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+    <a class="rb-hub-card client" href="client_portal.html">
+      <div class="rb-hub-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/></svg>
+      </div>
+      <div class="rb-hub-title">Portal del Cliente</div>
+      <p class="rb-hub-desc">La vista del hiring manager: candidatos presentados con su Brief completo (resumen, skills, matching, recomendación técnica) y su decisión de avanzar a oferta o rechazar.</p>
+      <span class="rb-hub-tag">Entrar al portal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </a>
   </div>
 </div>
