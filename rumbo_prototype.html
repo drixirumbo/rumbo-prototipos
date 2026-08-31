@@ -1107,12 +1107,11 @@ POSTULACIONES.forEach(p => {
    Ningún cliente trae acá una clasificación manual de línea: si un
    cliente es Recruiting o Staffing (o ambos a la vez) se determina
    ÚNICAMENTE en base a las posiciones (vacantes) que tiene -- ver
-   lineasDeCliente/engagementBreakdownCliente, que leen el engagementModel
-   real de cada vacante. Por eso Niubiz, con vacantes de ambos
-   engagementModel, muestra los dos badges aunque el roster original solo
-   la ponía en la columna "Staffing", y los 14 clientes nuevos (todavía
-   sin ninguna vacante) no muestran ninguna línea hasta que se les cargue
-   su primera posición. */
+   lineaResumenTexto, que lee el engagementModel real de cada vacante
+   abierta. Por eso Niubiz, con vacantes abiertas de ambos engagementModel,
+   muestra las dos aunque el roster original solo la ponía en la columna
+   "Staffing", y los 14 clientes nuevos (todavía sin ninguna vacante) no
+   muestran nada hasta que se les cargue su primera posición. */
 const CLIENTES = [
   { id: 6, nombre: 'Prestamype', industria: 'Fintech / Crowdfunding', tier: 3, activo: true, accountManagers: ['Lucía Bravo'],
     interacciones: [
@@ -2340,31 +2339,36 @@ function progresoVacante(vacanteId) {
 }
 function selectCliente(id) { state.cl.selectedId = id; render(); window.scrollTo(0, 0); }
 
-/* Qué línea(s) de servicio mostrar para un cliente en la lista -- se
+/* Mezcla Recruiting/Staffing de un cliente, como texto con conteo -- se
    determina ÚNICAMENTE en base a las posiciones (vacantes) que tiene, sin
    ninguna clasificación manual de por medio (ver engagementBreakdownCliente,
-   que ya lee el engagementModel real de cada vacante). Un cliente real
-   puede trabajar Staffing y Recruiting a la vez, así que esto nunca es un
-   solo valor exclusivo -- y un cliente sin ninguna vacante todavía
-   simplemente no muestra ninguna línea, en vez de inventarle una. */
-function lineasDeCliente(c) {
-  const b = engagementBreakdownCliente(c.id);
-  const lineas = [];
-  if (b.recruiting > 0) lineas.push('Recruiting');
-  if (b.staffing > 0) lineas.push('Staffing');
-  return lineas;
-}
-function lineaBadges(lineas) {
-  return lineas.map(l => {
-    const c = l === 'Recruiting' ? 'var(--rb-blue)' : 'var(--purple-text)';
-    return `<span class="rb-badge" style="background:${c}22;color:${c}">${icon('compass',11)} ${esc(l)}</span>`;
-  }).join('');
+   que ya lee el engagementModel real de cada vacante). Antes esto se
+   probó como 2 badges de color aparte (uno por línea); se descartó
+   porque en un cliente con ambas líneas terminaban compitiendo por
+   atención con los badges de Tier/Activo sin aportar más que un sí/no.
+   Como fila de metadata (mismo estilo que AM/Recruiters/posiciones
+   abiertas) se lee de corrido con el resto de la card y de paso muestra
+   CUÁNTAS vacantes tiene en cada modalidad, no solo si las tiene. Un
+   cliente sin ninguna vacante todavía no muestra esta fila. */
+function lineaResumenTexto(c) {
+  /* Se cuenta solo sobre vacantes ABIERTAS (no engagementBreakdownCliente,
+     que incluye históricas) -- así el desglose siempre suma exactamente
+     lo mismo que "X posiciones abiertas" en la fila de abajo, en vez de
+     un total que parece no cuadrar con el resto de la card. */
+  const abiertas = abiertasDeCliente(c.id);
+  const recruiting = abiertas.filter(v => v.engagementModel === 'Recruiting').length;
+  const staffing = abiertas.filter(v => v.engagementModel === 'Staffing').length;
+  const partes = [];
+  if (recruiting > 0) partes.push(`${recruiting} Recruiting`);
+  if (staffing > 0) partes.push(`${staffing} Staffing`);
+  return partes.join(' · ');
 }
 function renderClienteCard(c) {
   const abiertas = abiertasDeCliente(c.id).length;
   const colocados = colocadosDeCliente(c.id).length;
   const recruiters = recruitersDeCliente(c.id);
   const enRiesgo = vacantesEnRiesgoDeCliente(c.id);
+  const lineaResumen = lineaResumenTexto(c);
   return `
     <div class="card rb-vac-card${c.activo ? '' : ' rb-terminal-item'}" onclick="selectCliente(${c.id})">
       <div class="rb-vac-card-top">
@@ -2372,12 +2376,13 @@ function renderClienteCard(c) {
           ${clienteLogo(c.nombre, 'md')}
           <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-role">${esc(c.industria)}</p></div>
         </div>
-        <div class="rb-vac-badges">${lineaBadges(lineasDeCliente(c))}${clienteActivoBadge(c.activo)}</div>
+        <div class="rb-vac-badges">${clienteActivoBadge(c.activo)}</div>
       </div>
       ${enRiesgo.length ? `<p class="rb-card-meta-row rb-cliente-riesgo">${icon('alertTriangle',12)} ${enRiesgo.length} ${enRiesgo.length === 1 ? 'posición' : 'posiciones'} con SLA en riesgo</p>` : ''}
       <div class="rb-card-meta">
         <div class="rb-card-meta-row">${icon('user',12)} AM: ${esc(c.accountManagers.join(', '))}</div>
         <div class="rb-card-meta-row">${icon('compass',12)} Recruiters: ${recruiters.length ? esc(recruiters.join(', ')) : 'sin posiciones abiertas'}</div>
+        ${lineaResumen ? `<div class="rb-card-meta-row">${icon('barChart',12)} ${esc(lineaResumen)}</div>` : ''}
         <div class="rb-card-meta-row">${icon('briefcase',12)} ${abiertas} posiciones abiertas</div>
         <div class="rb-card-meta-row">${icon('users',12)} ${colocados} talento colocado</div>
       </div>
