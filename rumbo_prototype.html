@@ -147,6 +147,19 @@ body {
 .rb-search-hint { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--text-muted); display: flex; align-items: center; gap: var(--sp-1); }
 
 .rb-filters { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-6); align-items: center; }
+
+/* Buscador compacto para el toolbar del Pipeline -- a diferencia de
+   .rb-search-box (caja grande, "IA interpretó tu búsqueda" de Talent
+   Database), este vive en línea con el resto de los filtros (segmented,
+   selects), mismo alto que ellos, sin pretender ser semántico: es un
+   filtro literal por nombre/posición/cliente (ver postulacionesFiltradas). */
+.rb-inline-search { position: relative; display: flex; align-items: center; }
+.rb-inline-search svg { position: absolute; left: 10px; color: var(--text-dim); pointer-events: none; }
+.rb-inline-search input { width: 220px; font-family: 'Space Grotesk', sans-serif; font-size: var(--fs-sm); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2); padding: 8px 30px; transition: border-color var(--dur-1); }
+.rb-inline-search input::placeholder { color: var(--text-dim); }
+.rb-inline-search input:focus { outline: 0; border-color: var(--accent); }
+.rb-inline-search-clear { all: unset; position: absolute; right: 8px; cursor: pointer; color: var(--text-dim); display: flex; padding: 2px; border-radius: var(--radius-full); }
+.rb-inline-search-clear:hover { color: var(--text); background: var(--surface-2); }
 .rb-filter-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: inherit; font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-full); cursor: pointer; outline: none; transition: border-color var(--dur-1), background var(--dur-1); }
 .rb-filter-select:hover { border-color: var(--border-strong); background: var(--surface-2); }
 .rb-filter-select:focus { border-color: var(--accent); }
@@ -3641,11 +3654,25 @@ function handleVerdict(postulacionId, gateId, tipo, sustento) {
    pantalla completa. */
 function openPostulacionDetail(id) { state.pl.selectedId = id; render(); }
 
+/* Normaliza para comparar sin importar mayúsculas ni tildes -- "salcedo"
+   debe encontrar a "Salcedo" y "gomez" debe encontrar a "Gómez". */
+function normalizarBusqueda(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
 function postulacionesFiltradas() {
+  const q = normalizarBusqueda(state.pl.query);
   return POSTULACIONES.filter(p => {
     if (state.pl.scope === 'mias' && recruiterDePostulacion(p) !== 'Ana Ruiz') return false;
     if (state.pl.cliente && p.cliente !== state.pl.cliente) return false;
     if (state.pl.recruiterFilter && recruiterDePostulacion(p) !== state.pl.recruiterFilter) return false;
+    /* El buscador matchea por candidato O por posición/cliente -- así
+       buscar "Site Reliability" trae a todos los candidatos de esa
+       vacante, no solo a quien se llame así. */
+    if (q) {
+      const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+      const haystack = normalizarBusqueda(`${c ? c.nombre : ''} ${p.vacante} ${p.cliente}`);
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 }
@@ -3829,6 +3856,11 @@ function renderPipelineBoard() {
   const filtered = postulacionesFiltradas();
   const activas = filtered.filter(p => !SALIDAS.includes(p.etapa));
   const archivadas = filtered.filter(p => SALIDAS.includes(p.etapa));
+  /* Con el buscador activo, cualquier swimlane de cliente/vacante que sí
+     tenga resultados se auto-expande (ignora el colapso guardado) -- si
+     no, buscar a alguien seguiría requiriendo abrir cliente por cliente
+     para encontrarlo, que es justo la fricción que el buscador resuelve. */
+  const q = normalizarBusqueda(state.pl.query);
 
   /* Lanes: una fila de tablero por vacante, para ver de un vistazo a qué
      vacantes está postulando cada candidato y cómo avanza cada búsqueda
@@ -3850,6 +3882,11 @@ function renderPipelineBoard() {
     if (state.pl.scope === 'mias' && v.recruiter !== 'Ana Ruiz') return false;
     if (state.pl.cliente && v.cliente !== state.pl.cliente) return false;
     if (state.pl.recruiterFilter && v.recruiter !== state.pl.recruiterFilter) return false;
+    /* Buscando texto no tiene sentido mostrar vacantes vacías que ni
+       siquiera calzan con lo buscado -- solo se cuelan las que sí matchean
+       por título/cliente (nunca tienen candidato que matchear, están
+       vacías). */
+    if (q && !normalizarBusqueda(`${v.titulo} ${v.cliente}`).includes(q)) return false;
     return true;
   });
   vacantesVacias.forEach(v => { porVacante[v.id] = []; });
@@ -3882,7 +3919,7 @@ function renderPipelineBoard() {
   const renderLane = (vacanteId) => {
     const items = porVacante[vacanteId];
     const v = VACANTES.find(x => x.id === vacanteId);
-    const colapsado = !!state.pl.lanesCollapsed[vacanteId];
+    const colapsado = q ? false : !!state.pl.lanesCollapsed[vacanteId];
     const titulo = v ? v.titulo : items[0].vacante;
     const vacio = items.length === 0;
     return `<div class="rb-lane${vacio ? ' rb-lane-empty' : ''}" data-vacante-id="${vacanteId}">
@@ -3910,7 +3947,7 @@ function renderPipelineBoard() {
     /* Swimlanes de cliente colapsados por defecto: si la key no existe
        todavía en clientesCollapsed se trata como colapsado (true), no
        expandido -- solo queda expandido si se guardó explícitamente false. */
-    const colapsadoCliente = state.pl.clientesCollapsed[clienteId] !== false;
+    const colapsadoCliente = q ? false : state.pl.clientesCollapsed[clienteId] !== false;
     return `<div class="rb-cliente-lane-group">
       <div class="rb-group-header" onclick="toggleClienteLaneCollapse(${clienteId})">
         <span class="rb-group-chevron">${colapsadoCliente ? icon('chevronRight',11) : icon('chevronDown',11)}</span>
@@ -3937,6 +3974,11 @@ function renderPipelineBoard() {
   return `
     <h1 class="rb-title rb-display">Pipeline</h1>
     <div class="rb-filters">
+      <div class="rb-inline-search">
+        ${icon('search', 14)}
+        <input id="pl-search" value="${esc(state.pl.query)}" placeholder="Buscar candidato o posición…" oninput="state.pl.query=this.value; render()" />
+        ${state.pl.query ? `<button type="button" class="rb-inline-search-clear" aria-label="Limpiar búsqueda" onclick="state.pl.query=''; render()">${icon('x', 12)}</button>` : ''}
+      </div>
       <div class="segmented">
         <button aria-pressed="${state.pl.scope === 'todo'}" onclick="state.pl.scope='todo'; render()">Todo el equipo</button>
         <button aria-pressed="${state.pl.scope === 'mias'}" onclick="state.pl.scope='mias'; render()">Mis postulaciones</button>
@@ -3958,7 +4000,7 @@ function renderPipelineBoard() {
         return renderCollapseSwitch('pl-collapse', plAllCollapsed, `collapseAllLanes(${!plAllCollapsed}, ${JSON.stringify(laneIds)}, ${JSON.stringify(clienteIds)})`);
       })() : ''}
     </div>
-    ${laneIds.length === 0 ? `<div class="rb-empty">${icon('columns',28)}<p>No hay posiciones ni postulaciones que calcen con este filtro.</p></div>` : `<div class="rb-lanes">${clientesHtml}</div>`}
+    ${laneIds.length === 0 ? `<div class="rb-empty">${icon('columns',28)}<p>${q ? `Sin resultados para "${esc(state.pl.query)}" — probá con el nombre del candidato o el título de la posición.` : 'No hay posiciones ni postulaciones que calcen con este filtro.'}</p></div>` : `<div class="rb-lanes">${clientesHtml}</div>`}
     <div class="rb-archive">
       <div class="rb-archive-header" onclick="state.pl.archiveOpen=!state.pl.archiveOpen; render()">${state.pl.archiveOpen ? icon('chevronDown',11) : icon('chevronRight',11)} Salidas recientes (${archivadas.length}) — fuera del flujo activo</div>
       ${state.pl.archiveOpen ? `<div class="rb-archive-list">${archiveList}</div>` : ''}
