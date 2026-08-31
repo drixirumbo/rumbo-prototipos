@@ -1785,7 +1785,7 @@ const state = {
   td: { query: '', estado: '', origen: '', seniority: '', practicas: [], especialidades: [], roles: [], skills: [], panelOpen: true, sortCol: '', sortDir: 'asc', vista: 'estado', collapsed: {}, selectedId: null },
   va: { clienteF: '', estadoF: '', engagementF: '', priorityF: '', sortBy: 'priority', collapsed: {}, terminalOpen: {}, selectedId: null, editando: false, wizardOpen: false, wizardKey: 0, estadoMenuFor: null },
   cl: { selectedId: null, query: '', industriaF: '', activoF: '', amF: '', cerradasOpen: false, tiersCollapsed: {} },
-  pl: { scope: 'todo', cliente: '', query: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
+  pl: { scope: 'todo', cliente: '', query: '', prioridadFiltro: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
   editForm: null,
   postVerdictDraft: null, postVerdictFb: '',
@@ -3487,6 +3487,14 @@ function recruiterDeVacante(vacanteId) {
   return (v && v.recruiter) || '';
 }
 function recruiterDePostulacion(p) { return recruiterDeVacante(p.vacanteId); }
+/* Prioridad: también vive a nivel de Vacante, nunca de Postulación --
+   mismo criterio que recruiterDeVacante/recruiterDePostulacion, para
+   poder filtrar el tablero por prioridad de la posición. */
+function prioridadDeVacante(vacanteId) {
+  const v = VACANTES.find(x => x.id === vacanteId);
+  return v ? v.priority : null;
+}
+function prioridadDePostulacion(p) { return prioridadDeVacante(p.vacanteId); }
 
 /* Filtro rápido por recruiter, estilo Jira: fila de avatares (mismo
    componente visual que el avatar de asignación, .rb-assignee-avatar) que
@@ -3824,6 +3832,7 @@ function postulacionesFiltradas() {
     if (state.pl.scope === 'mias' && recruiterDePostulacion(p) !== 'Ana Ruiz') return false;
     if (state.pl.cliente && p.cliente !== state.pl.cliente) return false;
     if (state.pl.recruiterFilter && recruiterDePostulacion(p) !== state.pl.recruiterFilter) return false;
+    if (state.pl.prioridadFiltro && prioridadDePostulacion(p) !== state.pl.prioridadFiltro) return false;
     /* El buscador matchea por candidato O por posición/cliente -- así
        buscar "Site Reliability" trae a todos los candidatos de esa
        vacante, no solo a quien se llame así. */
@@ -4041,6 +4050,7 @@ function renderPipelineBoard() {
     if (state.pl.scope === 'mias' && v.recruiter !== 'Ana Ruiz') return false;
     if (state.pl.cliente && v.cliente !== state.pl.cliente) return false;
     if (state.pl.recruiterFilter && v.recruiter !== state.pl.recruiterFilter) return false;
+    if (state.pl.prioridadFiltro && v.priority !== state.pl.prioridadFiltro) return false;
     /* Buscando texto no tiene sentido mostrar vacantes vacías que ni
        siquiera calzan con lo buscado -- solo se cuelan las que sí matchean
        por título/cliente (nunca tienen candidato que matchear, están
@@ -4143,6 +4153,7 @@ function renderPipelineBoard() {
         <button aria-pressed="${state.pl.scope === 'mias'}" onclick="state.pl.scope='mias'; render()">Mis postulaciones</button>
       </div>
       ${renderSelect('pl-cliente-f', [{ value: '', label: 'Todos' }, ...clientes.map(c => ({ value: c, label: c }))], state.pl.cliente, 'Todos', 'state.pl.cliente=value; render();', null, 'Cliente')}
+      ${renderSelect('pl-prioridad-f', [{ value: '', label: 'Todas' }, ...['High', 'Medium', 'Low'].map(p => ({ value: p, label: p }))], state.pl.prioridadFiltro, 'Todas', 'state.pl.prioridadFiltro=value; render();', null, 'Prioridad')}
       ${renderRecruiterFilterFacepile()}
     </div>
     <div class="rb-toolbar-row">
