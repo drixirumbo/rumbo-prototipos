@@ -4922,7 +4922,13 @@ function render() {
 
   if (activeId) {
     const el = document.getElementById(activeId);
-    if (el && typeof el.focus === 'function') {
+    /* Nunca re-enfocar un <select> -- a diferencia de un input/textarea (que
+       sí necesitan recuperar el foco+cursor tras el re-render para poder
+       seguir tipeando), en mobile hacer .focus() sobre un <select> reabre
+       el picker nativo del sistema operativo. Como el onchange que eligió
+       la opción ya disparó el render() que lo reemplaza, el resultado era
+       que el dropdown se volvía a abrir solo apenas elegías algo. */
+    if (el && typeof el.focus === 'function' && el.tagName !== 'SELECT') {
       el.focus({ preventScroll: true });
       if (selStart !== null && el.setSelectionRange) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} }
     }

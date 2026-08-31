@@ -474,7 +474,11 @@ function render() {
   `;
   if (activeId) {
     const el = document.getElementById(activeId);
-    if (el && typeof el.focus === 'function') {
+    /* Nunca re-enfocar un <select> -- en mobile, .focus() sobre un <select>
+       reabre el picker nativo del sistema operativo (mismo fix aplicado en
+       los otros 3 prototipos, acá preventivo ya que este archivo no tiene
+       ninguno todavía). */
+    if (el && typeof el.focus === 'function' && el.tagName !== 'SELECT') {
       el.focus({ preventScroll: true });
       if (selStart !== null && el.setSelectionRange) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} }
     }

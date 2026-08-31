@@ -810,7 +810,11 @@ function render() {
   `;
   if (activeId) {
     const el = document.getElementById(activeId);
-    if (el && typeof el.focus === 'function') {
+    /* Nunca re-enfocar un <select> (ver #reg-pais) -- en mobile, hacer
+       .focus() sobre un <select> reabre el picker nativo del sistema
+       operativo, así que sin este guard el dropdown de país se volvía a
+       abrir solo apenas elegías una opción. */
+    if (el && typeof el.focus === 'function' && el.tagName !== 'SELECT') {
       el.focus({ preventScroll: true });
       if (selStart !== null && el.setSelectionRange) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} }
     }
