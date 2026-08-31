@@ -3523,13 +3523,13 @@ function prioridadDePostulacion(p) { return prioridadDeVacante(p.vacanteId); }
    clientDeadline de la Vacante, nunca en un campo propio de la
    Postulación (antes existía p.sla en los mocks, con valores que podían
    quedar inconsistentes entre 2 candidatos de la MISMA vacante, ver
-   commit que lo retiró). Todo el resto de la app ya leía el SLA desde
-   deadlineInfo(v.clientDeadline); esto solo faltaba acá. */
+   commit que lo retiró). Se muestra una sola vez, en el header de la
+   lane (a nivel de posición) -- ya no se repite en cada card individual
+   del kanban, que es candidato, no posición. */
 function slaDeVacante(vacanteId) {
   const v = VACANTES.find(x => x.id === vacanteId);
   return deadlineInfo(v ? v.clientDeadline : null).slaStatus;
 }
-function slaDePostulacion(p) { return slaDeVacante(p.vacanteId); }
 
 /* Filtro rápido por recruiter, estilo Jira: fila de avatares (mismo
    componente visual que el avatar de asignación, .rb-assignee-avatar) que
@@ -3971,10 +3971,7 @@ function renderPipelineCard(p, phase) {
       <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
       ${signalBadge(p.signal)}
       <div class="rb-card-footer">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd'}</span>
-          ${slaBadge(slaDePostulacion(p))}
-        </div>
+        <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd'}</span>
         ${advanceBtn}
       </div>
       ${esTerminal ? `<div class="rb-terminal-tag">${icon('check',12)} Colocado — activa Service Management</div>` : ''}
@@ -4012,7 +4009,6 @@ function renderGateCard(p, gateId) {
       ${signalBadge(p.signal)}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
-        ${slaBadge(slaDePostulacion(p))}
       </div>
       ${matchingInfo}
       ${warnChecklist}
@@ -4179,6 +4175,7 @@ function renderPipelineBoard() {
         <span class="rb-lane-title">${esc(titulo)}</span>
         <div style="display:flex;align-items:center;gap:var(--sp-3);margin-left:auto">
           ${v ? priorityBadge(v.priority) : ''}
+          ${v ? slaBadge(slaDeVacante(v.id)) : ''}
           <span class="rb-phase-count" style="margin-left:0">${vacio ? 'Sin candidatos todavía' : items.length + ' en pipeline'}</span>
           <button class="rb-link sm" onclick="event.stopPropagation(); goToVacante(${vacanteId})">Ver posición ${icon('arrowUpRight',12)}</button>
         </div>
