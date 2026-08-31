@@ -281,6 +281,10 @@ body {
 .rb-card-role { font-size: var(--fs-sm); color: var(--text-muted); margin: 2px 0 var(--sp-3) 0; }
 .rb-card-meta { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: var(--sp-3); }
 .rb-card-meta-row { display: flex; align-items: center; gap: 6px; }
+/* Señal de "necesita atención" en el card de la lista de Clientes -- para
+   que un Account Manager con varias cuentas note un riesgo de SLA sin
+   tener que entrar al detalle de cada cliente (ver vacantesEnRiesgoDeCliente). */
+.rb-cliente-riesgo { color: var(--danger-text); font-weight: 600; margin: 0 0 var(--sp-2); }
 .rb-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-3); }
 .rb-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); font-size: var(--fs-xs); padding: 3px 8px; border-radius: var(--radius-1); color: var(--text-muted); line-height: 1; }
 .rb-score-row { display: flex; align-items: center; gap: var(--sp-3); }
@@ -2178,6 +2182,16 @@ function vacantesDeCliente(clienteId) {
 function abiertasDeCliente(clienteId) {
   return vacantesDeCliente(clienteId).filter(v => v.estado === 'Abierta' || v.estado === 'Pending kickoff' || v.estado === 'On hold');
 }
+/* Posiciones abiertas de este cliente con el deadline vencido o a 3 días
+   o menos -- mismo criterio de deadlineInfo que ya usa el widget de riesgo
+   del Dashboard, acá a nivel de un cliente puntual para poder marcarlo en
+   su card de la lista (ver renderClientesList). */
+function vacantesEnRiesgoDeCliente(clienteId) {
+  return abiertasDeCliente(clienteId).filter(v => {
+    const dl = deadlineInfo(v.clientDeadline);
+    return dl.slaStatus === 'urgente' || dl.slaStatus === 'vencido';
+  });
+}
 function colocadosDeCliente(clienteId) {
   const vacIds = vacantesDeCliente(clienteId).map(v => v.id);
   return POSTULACIONES.filter(p => vacIds.includes(p.vacanteId) && p.etapa === 'contratado').map(p => ({ postulacion: p, candidato: CANDIDATOS.find(c => c.id === p.candidatoId) }));
@@ -2265,6 +2279,7 @@ function renderClientesList() {
     const abiertas = abiertasDeCliente(c.id).length;
     const colocados = colocadosDeCliente(c.id).length;
     const recruiters = recruitersDeCliente(c.id);
+    const enRiesgo = vacantesEnRiesgoDeCliente(c.id);
     return `
     <div class="card rb-vac-card${c.activo ? '' : ' rb-terminal-item'}" onclick="selectCliente(${c.id})">
       <div class="rb-vac-card-top">
@@ -2274,6 +2289,7 @@ function renderClientesList() {
         </div>
         <div class="rb-vac-badges">${tierBadge(c.tier)}${clienteActivoBadge(c.activo)}</div>
       </div>
+      ${enRiesgo.length ? `<p class="rb-card-meta-row rb-cliente-riesgo">${icon('alertTriangle',12)} ${enRiesgo.length} ${enRiesgo.length === 1 ? 'posición' : 'posiciones'} con SLA en riesgo</p>` : ''}
       <div class="rb-card-meta">
         <div class="rb-card-meta-row">${icon('user',12)} AM: ${esc(c.accountManagers.join(', '))}</div>
         <div class="rb-card-meta-row">${icon('compass',12)} Recruiters: ${recruiters.length ? esc(recruiters.join(', ')) : 'sin posiciones abiertas'}</div>
