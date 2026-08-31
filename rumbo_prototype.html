@@ -1094,31 +1094,98 @@ POSTULACIONES.forEach(p => {
   p.matchmaking = { dims: matchmakingBaseline(p, candidato, vacante) };
 });
 
+/* Roster completo de clientes provisto por el usuario, agrupado por línea
+   de servicio (Recruiting/Staffing) -- se agrega el campo `linea` a nivel
+   de CLIENTE para reflejar esa clasificación comercial (distinta del
+   `engagementModel` que ya vive por VACANTE: una cuenta clasificada como
+   "Staffing" puede igual tener alguna búsqueda puntual de Recruiting, ver
+   Niubiz más abajo). El array queda ordenado Recruiting primero, luego
+   Staffing, mismo orden que el roster original -- los `id` de los 5
+   clientes que ya existían se mantienen intactos (VACANTES los referencia
+   por clienteId), solo cambió su posición en el array. Molitalia no
+   figuraba en el roster (probablemente porque ya está inactiva/en pausa),
+   así que se deja sin `linea` en vez de inventarle una. */
 const CLIENTES = [
-  { id: 1, nombre: 'Interbank', industria: 'Banca', tier: 1, activo: true, accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
+  { id: 6, nombre: 'Prestamype', industria: 'Fintech / Crowdfunding', tier: 3, activo: true, linea: 'Recruiting', accountManagers: ['Lucía Bravo'],
+    interacciones: [
+      { fecha: '2026-08-05', tipo: 'Reunión', nota: 'Kickoff de cuenta, alineación de necesidades de contratación para el equipo de producto.' },
+    ] },
+  { id: 7, nombre: 'Vadimar', industria: 'Consumo masivo', tier: 2, activo: true, linea: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-07-18', tipo: 'Email', nota: 'Primer contacto comercial, envío de propuesta de servicio de Recruiting.' },
+    ] },
+  { id: 8, nombre: 'Ligo', industria: 'Fintech / Pagos', tier: 3, activo: true, linea: 'Recruiting', accountManagers: ['Lucía Bravo'],
+    interacciones: [
+      { fecha: '2026-08-02', tipo: 'Llamada', nota: 'Alineación de perfil técnico para su primera búsqueda con Rumbo.' },
+    ] },
+  { id: 9, nombre: 'Apuesta Total', industria: 'Entretenimiento / Apuestas', tier: 2, activo: true, linea: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-06-25', tipo: 'Reunión', nota: 'Presentación del equipo de Rumbo y modelo de trabajo de Recruiting.' },
+    ] },
+  { id: 10, nombre: 'Rumbo', industria: 'Turismo y viajes', tier: 3, activo: true, linea: 'Recruiting', accountManagers: ['Lucía Bravo'],
+    interacciones: [
+      { fecha: '2026-07-30', tipo: 'Email', nota: 'Confirmación de alcance del servicio y siguientes pasos de la cuenta.' },
+    ] },
+  { id: 11, nombre: 'Delosi', industria: 'Restaurantes / Franquicias', tier: 2, activo: true, linea: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-08-12', tipo: 'Reunión', nota: 'Kickoff de cuenta para posiciones corporativas de sus marcas de franquicia.' },
+    ] },
+  { id: 12, nombre: 'Jockey Plaza', industria: 'Retail / Real estate', tier: 1, activo: true, linea: 'Recruiting', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-07-22', tipo: 'Llamada', nota: 'Revisión trimestral de cuenta, sin bloqueos abiertos.' },
+    ] },
+  { id: 13, nombre: 'Leasy', industria: 'Fintech / Leasing', tier: 3, activo: true, linea: 'Recruiting', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-08-08', tipo: 'Email', nota: 'Primer intake recibido para una posición de tecnología.' },
+    ] },
+  { id: 1, nombre: 'Interbank', industria: 'Banca', tier: 1, activo: true, linea: 'Recruiting', accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-12', tipo: 'Reunión', nota: 'Kickoff de Site Reliability Engineer, revisamos banda salarial y perfil.' },
       { fecha: '2026-07-28', tipo: 'Email', nota: 'Envío de shortlist para Sr. Program Manager.' },
       { fecha: '2026-07-10', tipo: 'Llamada', nota: 'Alineación trimestral de cuenta con el AM, sin bloqueos abiertos.' },
     ] },
-  { id: 2, nombre: 'Laive', industria: 'Consumo masivo', tier: 2, activo: true, accountManagers: ['Lucía Bravo'],
+  { id: 14, nombre: 'EFC', industria: 'Financiera', tier: 2, activo: true, linea: 'Staffing', accountManagers: ['Lucía Bravo'],
     interacciones: [
-      { fecha: '2026-07-29', tipo: 'Email', nota: 'Confirmó apertura de Backend Ssr. para reemplazo de baja.' },
-      { fecha: '2026-06-15', tipo: 'Reunión', nota: 'Revisión de satisfacción post-cierre de Fullstack .Net.' },
+      { fecha: '2026-07-14', tipo: 'Reunión', nota: 'Kickoff de cuenta de Staffing para el área de operaciones.' },
     ] },
-  { id: 3, nombre: 'Protecta Security', industria: 'Seguros', tier: 2, activo: true, accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+  { id: 15, nombre: 'CAPAC', industria: 'Servicios financieros', tier: 3, activo: true, linea: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-06-30', tipo: 'Email', nota: 'Primer contacto comercial, en evaluación de alcance del servicio.' },
+    ] },
+  { id: 16, nombre: 'VISA', industria: 'Fintech / Pagos', tier: 1, activo: true, linea: 'Staffing', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-08-01', tipo: 'Reunión', nota: 'Alineación de necesidades de staffing para el equipo local.' },
+    ] },
+  { id: 17, nombre: 'Inetum', industria: 'Tecnología / Consultoría IT', tier: 2, activo: true, linea: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-07-10', tipo: 'Llamada', nota: 'Revisión de condiciones comerciales para ampliar la cuenta.' },
+    ] },
+  { id: 18, nombre: 'Diners Club', industria: 'Banca / Tarjetas', tier: 1, activo: true, linea: 'Staffing', accountManagers: ['Lucía Bravo'],
+    interacciones: [
+      { fecha: '2026-08-15', tipo: 'Reunión', nota: 'Kickoff de cuenta de Staffing, alineación con el equipo de Interbank Group.' },
+    ] },
+  { id: 19, nombre: 'Astay', industria: 'Retail', tier: 3, activo: true, linea: 'Staffing', accountManagers: ['Renzo Ibáñez'],
+    interacciones: [
+      { fecha: '2026-07-05', tipo: 'Email', nota: 'Primer contacto comercial, envío de propuesta de servicio de Staffing.' },
+    ] },
+  { id: 3, nombre: 'Protecta Security', industria: 'Seguros', tier: 2, activo: true, linea: 'Staffing', accountManagers: ['Lucía Bravo', 'Renzo Ibáñez'],
     interacciones: [
       { fecha: '2026-08-01', tipo: 'Llamada', nota: 'Pidió acelerar el cierre de Tech Lead (PS) por presión de negocio.' },
       { fecha: '2026-07-15', tipo: 'Reunión', nota: 'Intake de Business Analyst con el Hiring Manager.' },
       { fecha: '2026-05-02', tipo: 'Email', nota: 'Feedback positivo tras cierre de Product Designer Mid.' },
     ] },
-  { id: 4, nombre: 'Niubiz', industria: 'Fintech / Pagos', tier: 1, activo: true, accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
+  { id: 2, nombre: 'Laive', industria: 'Consumo masivo', tier: 2, activo: true, linea: 'Staffing', accountManagers: ['Lucía Bravo'],
+    interacciones: [
+      { fecha: '2026-07-29', tipo: 'Email', nota: 'Confirmó apertura de Backend Ssr. para reemplazo de baja.' },
+      { fecha: '2026-06-15', tipo: 'Reunión', nota: 'Revisión de satisfacción post-cierre de Fullstack .Net.' },
+    ] },
+  { id: 4, nombre: 'Niubiz', industria: 'Fintech / Pagos', tier: 1, activo: true, linea: 'Staffing', accountManagers: ['Renzo Ibáñez', 'Lucía Bravo'],
     interacciones: [
       { fecha: '2026-08-10', tipo: 'Reunión', nota: 'Kickoff de Cloud Security Engineer, aún falta aprobar JD.' },
       { fecha: '2026-07-25', tipo: 'Llamada', nota: 'Priorización de Arquitecto de Datos sobre Delivery Manager.' },
       { fecha: '2026-07-08', tipo: 'Email', nota: 'Confirmación de banda salarial para Product Owner.' },
     ] },
-  { id: 5, nombre: 'Molitalia', industria: 'Consumo masivo', tier: 3, activo: false, accountManagers: ['Lucía Bravo'],
+  { id: 5, nombre: 'Molitalia', industria: 'Consumo masivo', tier: 3, activo: false, linea: null, accountManagers: ['Lucía Bravo'],
     interacciones: [
       { fecha: '2025-11-20', tipo: 'Email', nota: 'Cuenta puesta en pausa indefinida por freeze de contrataciones.' },
     ] },
@@ -1710,7 +1777,7 @@ const state = {
         (arrays -- match "OR" dentro de cada categoría). */
   td: { query: '', estado: '', origen: '', seniority: '', practicas: [], especialidades: [], roles: [], skills: [], panelOpen: true, sortCol: '', sortDir: 'asc', vista: 'estado', collapsed: {}, selectedId: null },
   va: { clienteF: '', estadoF: '', engagementF: '', priorityF: '', sortBy: 'priority', collapsed: {}, terminalOpen: {}, selectedId: null, editando: false, wizardOpen: false, wizardKey: 0, estadoMenuFor: null },
-  cl: { selectedId: null, industriaF: '', tierF: '', activoF: '', amF: '', cerradasOpen: false },
+  cl: { selectedId: null, query: '', industriaF: '', tierF: '', activoF: '', amF: '', cerradasOpen: false },
   pl: { scope: 'todo', cliente: '', query: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
   editForm: null,
@@ -2265,14 +2332,21 @@ function progresoVacante(vacanteId) {
 }
 function selectCliente(id) { state.cl.selectedId = id; render(); window.scrollTo(0, 0); }
 
+function lineaBadge(linea) {
+  if (!linea) return '';
+  const c = linea === 'Recruiting' ? 'var(--rb-blue)' : 'var(--purple-text)';
+  return `<span class="rb-badge" style="background:${c}22;color:${c}">${icon('compass',11)} ${esc(linea)}</span>`;
+}
 function renderClientesList() {
   const industriasUnicas = [...new Set(CLIENTES.map(c => c.industria))].sort();
   const amsUnicos = [...new Set(CLIENTES.flatMap(c => c.accountManagers))].sort();
+  const q = normalizarBusqueda(state.cl.query);
   const filtered = CLIENTES.filter(c => {
     if (state.cl.industriaF && c.industria !== state.cl.industriaF) return false;
     if (state.cl.tierF && String(c.tier) !== state.cl.tierF) return false;
     if (state.cl.activoF && String(c.activo) !== state.cl.activoF) return false;
     if (state.cl.amF && !c.accountManagers.includes(state.cl.amF)) return false;
+    if (q && !normalizarBusqueda(c.nombre).includes(q)) return false;
     return true;
   });
   const cards = filtered.map(c => {
@@ -2287,7 +2361,7 @@ function renderClientesList() {
           ${clienteLogo(c.nombre, 'md')}
           <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-role">${esc(c.industria)}</p></div>
         </div>
-        <div class="rb-vac-badges">${tierBadge(c.tier)}${clienteActivoBadge(c.activo)}</div>
+        <div class="rb-vac-badges">${lineaBadge(c.linea)}${tierBadge(c.tier)}${clienteActivoBadge(c.activo)}</div>
       </div>
       ${enRiesgo.length ? `<p class="rb-card-meta-row rb-cliente-riesgo">${icon('alertTriangle',12)} ${enRiesgo.length} ${enRiesgo.length === 1 ? 'posición' : 'posiciones'} con SLA en riesgo</p>` : ''}
       <div class="rb-card-meta">
@@ -2301,13 +2375,18 @@ function renderClientesList() {
   return `
     <h1 class="rb-title rb-display">Clientes</h1>
     <div class="rb-filters">
+      <div class="rb-inline-search">
+        ${icon('search', 14)}
+        <input id="cl-search" value="${esc(state.cl.query)}" placeholder="Buscar cliente…" oninput="state.cl.query=this.value; render()" />
+        ${state.cl.query ? `<button type="button" class="rb-inline-search-clear" aria-label="Limpiar búsqueda" onclick="state.cl.query=''; render()">${icon('x', 12)}</button>` : ''}
+      </div>
       ${renderSelect('cl-industria-f', [{ value: '', label: 'Todas' }, ...industriasUnicas.map(i => ({ value: i, label: i }))], state.cl.industriaF, 'Todas', 'state.cl.industriaF=value; render();', null, 'Industria')}
       ${renderSelect('cl-tier-f', [{ value: '', label: 'Todos' }, ...[1, 2, 3].map(t => ({ value: String(t), label: 'Tier ' + t }))], state.cl.tierF, 'Todos', 'state.cl.tierF=value; render();', null, 'Tier')}
       ${renderSelect('cl-activo-f', [{ value: '', label: 'Todos' }, { value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }], state.cl.activoF, 'Todos', 'state.cl.activoF=value; render();', null, 'Estado')}
       ${renderSelect('cl-am-f', [{ value: '', label: 'Todos' }, ...amsUnicos.map(am => ({ value: am, label: am }))], state.cl.amF, 'Todos', 'state.cl.amF=value; render();', null, 'Account Manager')}
     </div>
     <div class="rb-results-count">${filtered.length} clientes</div>
-    <div class="rb-grid">${cards}</div>`;
+    ${filtered.length === 0 ? `<div class="rb-empty">${icon('users',28)}<p>${q ? `Sin resultados para "${esc(state.cl.query)}".` : 'Ningún cliente calza con este filtro.'}</p></div>` : `<div class="rb-grid">${cards}</div>`}`;
 }
 
 /* Widget de avance por vacante abierta: mini-funnel + prioridad/SLA + top
