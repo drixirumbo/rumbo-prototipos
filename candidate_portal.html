@@ -283,7 +283,15 @@ const YO_DEMO = {
 };
 const POSTULACIONES_DEMO = [
   { id: 1, vacanteId: 6, etapa: 'agenda_enviada', fechaPostulacion: '2026-08-20', horarioAgendado: null },
-  { id: 2, vacanteId: 17, etapa: 'screening', fechaPostulacion: '2026-08-05', horarioAgendado: { label: 'mié 20 ago', hora: '11:00' } },
+  /* Site Reliability Engineer @ Interbank -- deliberadamente el mismo
+     candidato/vacante/fecha que la entrevista de Renata Salcedo en
+     expert_portal.html (id 1 ahí) y que la postulación id 1 en
+     rumbo_prototype.html (misma vacanteId 17). No hay backend real detrás
+     -- es la misma persona/historia contada a mano en los 3 archivos, para
+     que se sienta un solo pipeline visto desde 3 ángulos en vez de 3 demos
+     sueltas. Si se edita la fecha/vacante acá, actualizar también los
+     otros dos. */
+  { id: 2, vacanteId: 17, etapa: 'entrevista_tecnica', fechaPostulacion: '2026-08-05', horarioAgendado: { label: 'mié 2 sep', hora: '15:00' } },
 ];
 
 /* Países de origen soportados en el registro -- los candidatos no son

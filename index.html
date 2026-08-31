@@ -51,6 +51,23 @@ body {
 .rb-hub-desc { color: var(--text-muted); font-size: var(--fs-base); line-height: 1.5; margin-bottom: var(--sp-4); }
 .rb-hub-tag { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--rb-blue-300); }
 .rb-hub-card.cand .rb-hub-tag { color: var(--rb-cyan); }
+
+/* ---- Recorrido sugerido -- los 4 portales son prototipos aislados (sin
+   backend compartido, ver comentario en cada archivo), pero comparten a
+   propósito la misma protagonista (Renata Salcedo) en los primeros 3
+   pasos, para que se sienta un solo pipeline visto desde 4 ángulos en vez
+   de 4 demos sueltas. El 4to paso usa candidatos distintos a propósito --
+   representan un capítulo más adelante en el tiempo de esa misma
+   historia (ya pasaron la Entrevista Técnica), no una desconexión. ---- */
+.rb-tour { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-4); padding: var(--sp-6); margin-top: var(--sp-5); }
+.rb-tour h2 { font-size: var(--fs-base); font-weight: 700; margin: 0 0 var(--sp-2); }
+.rb-tour > p { color: var(--text-muted); font-size: var(--fs-sm); line-height: 1.5; margin: 0 0 var(--sp-4); }
+.rb-tour-steps { display: flex; flex-direction: column; gap: var(--sp-4); }
+.rb-tour-step { display: flex; gap: var(--sp-3); align-items: flex-start; }
+.rb-tour-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--rb-blue-300); display: flex; align-items: center; justify-content: center; font-size: var(--fs-sm); font-weight: 700; flex-shrink: 0; }
+.rb-tour-step-title { font-weight: 600; font-size: var(--fs-sm); margin-bottom: 2px; }
+.rb-tour-step-desc { color: var(--text-muted); font-size: var(--fs-sm); line-height: 1.5; }
+.rb-tour-step-desc b { color: var(--text); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -97,6 +114,40 @@ body {
       <p class="rb-hub-desc">La vista del hiring manager: candidatos presentados con su Brief completo (resumen, skills, matching, recomendación técnica) y su decisión de avanzar a oferta o rechazar.</p>
       <span class="rb-hub-tag">Entrar al portal <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </a>
+  </div>
+  <div class="rb-tour">
+    <h2>Recorrido sugerido: seguí a Renata Salcedo</h2>
+    <p>Los 4 portales son prototipos aislados (no comparten datos entre sí), pero cuentan a propósito la misma historia desde 4 ángulos. Probá navegarlos en este orden:</p>
+    <div class="rb-tour-steps">
+      <div class="rb-tour-step">
+        <span class="rb-tour-num">1</span>
+        <div>
+          <div class="rb-tour-step-title">Portal de Candidatos → Mis postulaciones</div>
+          <div class="rb-tour-step-desc"><b>Renata Salcedo</b> ya agendó su Entrevista Técnica para <b>Site Reliability Engineer @ Interbank</b> — 2 sep · 15:00.</div>
+        </div>
+      </div>
+      <div class="rb-tour-step">
+        <span class="rb-tour-num">2</span>
+        <div>
+          <div class="rb-tour-step-title">Pipeline (Recruiter) → columna Vetting</div>
+          <div class="rb-tour-step-desc">Buscá a Renata Salcedo en el kanban: mismo candidato, misma vacante, misma etapa — la vista completa del recruiter sobre ese mismo momento.</div>
+        </div>
+      </div>
+      <div class="rb-tour-step">
+        <span class="rb-tour-num">3</span>
+        <div>
+          <div class="rb-tour-step-title">Plataforma del Experto → Mis entrevistas técnicas</div>
+          <div class="rb-tour-step-desc">Su entrevista ya está en la cola del experto, pendiente de evaluar — el siguiente paso justo después de agendar.</div>
+        </div>
+      </div>
+      <div class="rb-tour-step">
+        <span class="rb-tour-num">4</span>
+        <div>
+          <div class="rb-tour-step-title">Portal del Cliente</div>
+          <div class="rb-tour-step-desc">Los candidatos que ves acá ya no son Renata — son un capítulo más adelante en la misma historia: ya pasaron su Entrevista Técnica y el hiring manager está decidiendo si avanzan a oferta.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 </body>
