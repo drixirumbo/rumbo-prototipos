@@ -527,10 +527,14 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 
 .rb-gate-column { background: var(--bg-elev); border-radius: var(--radius-3); }
 .rb-gate-column .rb-phase-title { color: var(--cyan-text); }
-.rb-gate-card { background: rgba(71,235,235,.08); border-color: rgba(71,235,235,.4); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out); }
-.rb-gate-card:hover { border-color: var(--cyan-text); }
+/* --gate-tint: color de la fase que este gate concluye (Identificado ->
+   Sourcing/azul, GO Interno -> Vetting/morado, Decisión Cliente -> Con
+   Cliente/cian) -- ver FASE_DE_GATE. Reemplaza el cian fijo que antes
+   usaban los 3 gates por igual, para que el color distinga de qué gate
+   se trata igual que ya distingue la columna del kanban. */
+.rb-gate-card { background: color-mix(in oklab, var(--gate-tint, var(--rb-cyan)) 10%, var(--surface)); border-color: color-mix(in oklab, var(--gate-tint, var(--rb-cyan)) 40%, var(--border)); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out); }
+.rb-gate-card:hover { border-color: var(--gate-tint, var(--cyan-text)); }
 .rb-gate-card.rb-highlight { box-shadow: 0 0 0 3px rgba(71,235,235,.35); }
-.rb-gate-warn { font-size: var(--fs-xs); color: var(--warning-text); margin: var(--sp-2) 0 0; }
 
 /* Piso común de alto para las 2 cards del kanban (rb-card/rb-gate-card):
    ya comparten estructura casi idéntica (nombre, 2 líneas de sub-info,
@@ -985,6 +989,13 @@ const GATE_INTAKE = 'intake';
 const GATE_GO_INTERNO = 'gate_go_interno';
 const GATE_CLIENTE = 'gate_cliente';
 const SALIDAS = ['rechazado_rumbo', 'rechazado_cliente', 'no_interesado', 'blacklisted'];
+/* Cada gate "pertenece" a la fase que concluye -- Identificado precede a
+   Sourcing, GO Interno concluye Vetting, Decisión Cliente concluye Con
+   Cliente. Se usa para que la card del gate (renderGateCard) muestre los
+   mismos dots de progreso + color de fase que ya muestran las cards
+   normales de esa fase (renderPipelineCard), en vez de tener una
+   estructura aparte solo para los gates. */
+const FASE_DE_GATE = { [GATE_INTAKE]: PHASES[0], [GATE_GO_INTERNO]: PHASES[1], [GATE_CLIENTE]: PHASES[2] };
 
 const SIGUIENTE = {
   agenda_enviada: 'screening',
@@ -4003,33 +4014,46 @@ function renderPipelineCard(p, phase) {
       ${sub2Html}
       <div class="rb-dots" style="margin-bottom:var(--sp-1)">${dotsHtml}</div>
       <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
+      ${esTerminal ? `<div class="rb-terminal-tag">${icon('check',12)} Colocado — activa Service Management</div>` : ''}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd'}</span>
         ${advanceBtn}
       </div>
-      ${esTerminal ? `<div class="rb-terminal-tag">${icon('check',12)} Colocado — activa Service Management</div>` : ''}
     </div>`;
 }
 
+/* Card de gate -- misma estructura EXACTA que renderPipelineCard (nombre,
+   salario, un segundo dato propio de este momento del proceso, dots +
+   etiqueta de etapa, footer con antigüedad siempre al final), la única
+   diferencia entre ambas es el color (--gate-tint, la fase que este gate
+   concluye -- ver FASE_DE_GATE). Antes tenían estructuras distintas: acá
+   faltaban los dots/etapa, y "Matching automático"/el aviso de checklist
+   vivían como bloques sueltos después del footer en vez de ser un dato
+   más de la card. */
 function renderGateCard(p, gateId) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
-  const checklistCompleta = Object.values(resolverChecklist(p)).every(Boolean);
   const hl = state.pl.highlightId === p.id ? 'rb-highlight' : '';
-  const warnChecklist = (gateId === GATE_GO_INTERNO && !checklistCompleta) ? `<p class="rb-gate-warn">${icon('alertTriangle',12)} Checklist incompleto — <button class="rb-link sm" onclick="event.stopPropagation(); openPostulacionDetail(${p.id})">completar</button></p>` : '';
-  /* Matching automático de Identificado: puramente informativo -- el
-     score es solo contexto. */
-  const matchingInfo = gateId === GATE_INTAKE ? (() => {
-    const m = resolverIntakeMatching(p);
-    return `<p class="rb-gate-warn" style="color:var(--text-muted)">${icon('sparkles',12)} Matching automático: <strong>${m.resultado}</strong>${m.score !== null ? ` (${m.score}%)` : ''}</p>`;
-  })() : '';
-  /* Match score (c.score) ya no se repite acá tampoco (ver el mismo
-     criterio en renderPipelineCard) -- Identificado ya tiene su propio
-     matchingInfo de arriba; GO Interno muestra el entrevistador técnico
-     (el dato real que sustenta esa decisión, no un checklist que bajo
-     el modelo actual siempre da "completo" para cualquier card que
-     pueda aparecer acá -- ver plan); Decisión Cliente muestra el
-     feedback del cliente si ya existe. */
+  const fase = FASE_DE_GATE[gateId];
+  const idxActual = FULL_ORDER.indexOf(p.etapa);
+  const dotsHtml = fase.sub.map(s => {
+    const i = FULL_ORDER.indexOf(s);
+    return `<div class="rb-dot ${i <= idxActual ? 'filled' : ''}" style="--phase-color:${fase.color}" title="${esc(ETAPA_LABELS[s])}"></div>`;
+  }).join('');
+  /* Segundo dato de la card, propio de cada gate:
+     - Identificado: Matching automático (antes vivía como un bloque
+       aparte después del footer -- ahora es un dato más, debajo del
+       salario, igual que en el resto de las fases).
+     - GO Interno: el entrevistador que hizo la Entrevista Técnica --
+       el dato real que sustenta esta decisión. (Se evaluó un badge de
+       checklist completo/incompleto acá -- se descarta: bajo el modelo
+       actual, resolverChecklist siempre da "completo" para cualquier
+       card que pueda llegar a este gate, sería puramente decorativo).
+     - Decisión Cliente: el feedback del cliente, si ya existe. */
   const sub2Html = (() => {
+    if (gateId === GATE_INTAKE) {
+      const m = resolverIntakeMatching(p);
+      return `<p class="rb-card-sub">${icon('sparkles',12)} Matching automático: <strong>${esc(m.resultado)}</strong>${m.score !== null ? ` (${m.score}%)` : ''}</p>`;
+    }
     if (gateId === GATE_GO_INTERNO) {
       const item = resolverEntrevistas(p).find(e => e.tipo === 'Entrevista Técnica');
       return (item && item.entrevistador) ? `<p class="rb-card-sub">${icon('user',12)} Entrevistador: ${esc(item.entrevistador.nombre)}</p>` : '';
@@ -4046,7 +4070,7 @@ function renderGateCard(p, gateId) {
      verdictFormHtml en renderPostulacionDrawerBody). La card acá es
      puramente informativa; el click en cualquier parte abre el detalle. */
   return `
-    <div id="post-card-${p.id}" class="card compact rb-gate-card ${esTopTalent(p) ? 'rb-top-talent' : ''} ${hl}" onclick="openPostulacionDetail(${p.id})">
+    <div id="post-card-${p.id}" class="card compact rb-gate-card ${esTopTalent(p) ? 'rb-top-talent' : ''} ${hl}" style="--gate-tint:${fase.color}" onclick="openPostulacionDetail(${p.id})">
       ${topTalentRibbon(p)}
       <div class="rb-card-name-row">
         <p class="rb-card-name">${esc(c.nombre)}</p>
@@ -4056,11 +4080,11 @@ function renderGateCard(p, gateId) {
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
       ${sub2Html}
+      <div class="rb-dots" style="margin-bottom:var(--sp-1)">${dotsHtml}</div>
+      <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
       </div>
-      ${matchingInfo}
-      ${warnChecklist}
     </div>`;
 }
 
