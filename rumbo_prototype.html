@@ -327,6 +327,12 @@ body {
 .rb-postulacion-row.rb-postulacion-contratado { background: rgba(60,203,127,.08); border-left: 3px solid var(--success); border-bottom-color: transparent; padding-left: var(--sp-3); border-radius: var(--radius-1); margin-bottom: var(--sp-1); }
 .rb-am-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px 8px; font-size: var(--fs-xs); line-height: 1; margin: 0 6px 6px 0; }
 
+/* Fijo mientras se scrollea el Historial del proceso (ver
+   renderPostulacionDrawerBody) -- .rb-side-drawer es el contenedor con
+   scroll (overflow-y:auto), así que basta con position:sticky + top:0
+   acá adentro. Mismo fondo que el drawer para que no se transparente el
+   contenido que pasa por detrás al scrollear. */
+.rb-drawer-sticky-head { position: sticky; top: 0; z-index: 5; background: var(--bg-elev); }
 .rb-detail-header { display: flex; gap: var(--sp-4); align-items: flex-start; margin-bottom: var(--sp-6); flex-wrap: wrap; }
 /* Agrupa badges + botones de acción del header en un solo bloque pegado a
    la derecha -- antes cada uno flotaba por su cuenta (solo el último
@@ -806,6 +812,12 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
   .rb-board { flex-direction: column; overflow-x: visible; }
   .rb-phase { min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
   .rb-gate-column { background: none; }
+  /* En mobile, el nombre+rol del detalle ya ocupa todo el ancho, así que
+     los badges (estado/origen) siempre caen a su propia fila -- el
+     margin-left:auto pensado para alinearlos a la derecha en la MISMA
+     fila que el nombre (desktop) ahí solo deja un hueco vacío a la
+     izquierda en vez de acercarlos al resto del header. */
+  .rb-detail-header-actions { margin-left: 0; }
   .rb-detail-grid { grid-template-columns: 1fr; }
   .rb-detail-grid-3 { grid-template-columns: 1fr; }
   .rb-td-layout { flex-direction: column; }
@@ -3923,7 +3935,29 @@ function handleVerdict(postulacionId, gateId, tipo, sustento) {
    tablero (ver dónde se usa) -- el drawer se abre encima sin mover el
    tablero de fondo, que es justo el punto de que sea un drawer y no
    pantalla completa. */
-function openPostulacionDetail(id) { state.pl.selectedId = id; render(); }
+/* Al abrir el detalle, se scrollea directo a la sección del Historial que
+   corresponde a la etapa actual (marcada con id="timeline-actual", ver
+   renderPostulacionDrawerBody) -- con el header ahora fijo (ver
+   rb-drawer-sticky-head) y un Historial que puede ser largo, no tiene
+   sentido obligar a scrollear manualmente hasta lo que ya se sabe que es
+   lo relevante ahora mismo. Nada que scrollear si la postulación ya es
+   terminal (contratado/rechazada/etc): ningún nodo queda marcado como
+   "actual" ahí, así que simplemente no se mueve. */
+function openPostulacionDetail(id) {
+  state.pl.selectedId = id;
+  render();
+  const actual = document.getElementById('timeline-actual');
+  const drawer = document.querySelector('.rb-side-drawer');
+  if (!actual || !drawer) return;
+  /* No un simple scrollIntoView: el header fijo (rb-drawer-sticky-head)
+     tapa la parte de arriba de lo que sea que quede pegado al borde
+     superior del scroll -- se descuenta su alto real (que varía según
+     el nombre/badges de cada candidato) para que el nodo quede visible
+     debajo de él, no escondido detrás. */
+  const headerEl = document.querySelector('.rb-drawer-sticky-head');
+  const headerH = headerEl ? headerEl.offsetHeight : 0;
+  drawer.scrollTop = Math.max(0, actual.offsetTop - headerH - 16);
+}
 
 /* Normaliza para comparar sin importar mayúsculas ni tildes -- "salcedo"
    debe encontrar a "Salcedo" y "gomez" debe encontrar a "Gómez". */
@@ -4863,7 +4897,7 @@ function renderPostulacionDrawerBody() {
     <div class="rb-detail-section" style="margin-bottom:var(--sp-6)">
       <h3>Historial del proceso</h3>
       <div class="rb-timeline">
-        <div class="rb-timeline-item">
+        <div class="rb-timeline-item"${sourcingActual ? ' id="timeline-actual"' : ''}>
           ${gateMarkerHtml(tipoSourcing, sourcingActual)}
           <div class="rb-timeline-name">Sourcing</div>
           ${fechaEtapaHtml(fechaEtapaSimulada(p, GATE_INTAKE), 'Identificado el')}
@@ -4873,19 +4907,19 @@ function renderPostulacionDrawerBody() {
           ${p.etapa === GATE_INTAKE ? verdictFormHtml : ''}
           ${agendamientoPaso ? `<div class="rb-subtimeline">${agendamientoPaso}</div>` : ''}
         </div>
-        <div class="rb-timeline-item">
+        <div class="rb-timeline-item"${goInternoActual ? ' id="timeline-actual"' : ''}>
           ${gateMarkerHtml(tipoGoInterno, goInternoActual)}
           <div class="rb-timeline-name">Vetting</div>
           ${tipoGoInterno ? fechaEtapaHtml(fechaEtapaSimulada(p, GATE_GO_INTERNO), tipoGoInterno === 'aprobar' ? 'Aprobado el' : 'Rechazado el') : ''}
           ${goInternoBodyHtml}
         </div>
-        <div class="rb-timeline-item">
+        <div class="rb-timeline-item"${clienteActual ? ' id="timeline-actual"' : ''}>
           ${gateMarkerHtml(tipoCliente, clienteActual)}
           <div class="rb-timeline-name">Con Cliente</div>
           ${tipoCliente ? fechaEtapaHtml(fechaEtapaSimulada(p, GATE_CLIENTE), tipoCliente === 'aprobar' ? 'Registrado el' : 'Rechazado el') : ''}
           ${clienteBodyHtml}
         </div>
-        <div class="rb-timeline-item">
+        <div class="rb-timeline-item"${ofertaActual ? ' id="timeline-actual"' : ''}>
           ${gateMarkerHtml(tipoCierre, ofertaActual)}
           <div class="rb-timeline-name">Cierre</div>
           ${tipoCierre ? fechaEtapaHtml(fechaEtapaSimulada(p, 'contratado'), 'Contratado el') : ''}
@@ -4913,22 +4947,29 @@ function renderPostulacionDrawerBody() {
       <span class="rb-quickfact">${icon('coin',12)} S/ ${candidato.expectativa.toLocaleString('es-PE')}/mes</span>
     </div>`;
 
+  /* Todo lo que va antes del Historial (volver, header, quickfacts) queda
+     fijo (position:sticky) mientras se scrollea el Historial -- es la
+     info que un recruiter quiere seguir viendo (nombre, badges, CV,
+     expectativa) sin tener que volver a subir cada vez que revisa un
+     paso más abajo en un Historial que puede ser largo. */
   return `
-    <div class="rb-back" onclick="closeDrawer()">${icon('chevronLeft',12)} Volver a Pipeline</div>
-    <div class="rb-detail-header">
-      <div class="avatar xl">${esc(initials(candidato.nombre))}</div>
-      <div><h1 class="rb-detail-name" style="display:flex;align-items:center;gap:6px">
-        <button class="rb-link" onclick="goToTalentDatabase(${candidato.id})">${esc(candidato.nombre)} ${icon('arrowUpRight',16)}</button>
-        ${puedeRetirarse ? `<button class="rb-icon-btn" title="Se retira del proceso" onclick="abrirRetiroModal(${p.id})">${icon('logOut',14)}</button>` : ''}
-        ${puedeBlacklistear ? `<button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>` : ''}
-      </h1>
-      <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter: ${esc(recruiterDePostulacion(p) || 'Sin asignar')}</p></div>
-      <div class="rb-detail-header-actions">
-        <span class="rb-badge" style="background:${ESTADO_COLOR[deriveEstado(p.etapa)]}22;color:${ESTADO_COLOR[deriveEstado(p.etapa)]}">${esc(ETAPA_LABELS[p.etapa] || deriveEstado(p.etapa))}</span>
-        ${origenBadge(candidato.origen)}
+    <div class="rb-drawer-sticky-head">
+      <div class="rb-back" onclick="closeDrawer()">${icon('chevronLeft',12)} Volver a Pipeline</div>
+      <div class="rb-detail-header">
+        <div class="avatar xl">${esc(initials(candidato.nombre))}</div>
+        <div><h1 class="rb-detail-name" style="display:flex;align-items:center;gap:6px">
+          <button class="rb-link" onclick="goToTalentDatabase(${candidato.id})">${esc(candidato.nombre)} ${icon('arrowUpRight',16)}</button>
+          ${puedeRetirarse ? `<button class="rb-icon-btn" title="Se retira del proceso" onclick="abrirRetiroModal(${p.id})">${icon('logOut',14)}</button>` : ''}
+          ${puedeBlacklistear ? `<button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>` : ''}
+        </h1>
+        <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter: ${esc(recruiterDePostulacion(p) || 'Sin asignar')}</p></div>
+        <div class="rb-detail-header-actions">
+          <span class="rb-badge" style="background:${ESTADO_COLOR[deriveEstado(p.etapa)]}22;color:${ESTADO_COLOR[deriveEstado(p.etapa)]}">${esc(ETAPA_LABELS[p.etapa] || deriveEstado(p.etapa))}</span>
+          ${origenBadge(candidato.origen)}
+        </div>
       </div>
+      ${quickFactsHtml}
     </div>
-    ${quickFactsHtml}
     ${historialHtml}`;
 }
 
