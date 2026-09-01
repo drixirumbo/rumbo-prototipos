@@ -4022,23 +4022,28 @@ function renderPipelineCard(p, phase) {
     </div>`;
 }
 
-/* Card de gate -- misma estructura EXACTA que renderPipelineCard (nombre,
-   salario, un segundo dato propio de este momento del proceso, dots +
-   etiqueta de etapa, footer con antigüedad siempre al final), la única
-   diferencia entre ambas es el color (--gate-tint, la fase que este gate
-   concluye -- ver FASE_DE_GATE). Antes tenían estructuras distintas: acá
-   faltaban los dots/etapa, y "Matching automático"/el aviso de checklist
-   vivían como bloques sueltos después del footer en vez de ser un dato
-   más de la card. */
+/* Card de gate -- mismo esqueleto que renderPipelineCard (nombre, salario,
+   un segundo dato propio de este momento del proceso, footer con
+   antigüedad siempre al final) y mismo criterio de color (--gate-tint,
+   la fase que este gate concluye -- ver FASE_DE_GATE). Sin dots de
+   progreso ni etiqueta de etapa -- a diferencia de una card de fase
+   normal, en un gate esos dos elementos nunca varían (ver el comentario
+   más abajo), así que se omiten en vez de mostrar algo que siempre dice
+   lo mismo. "Matching automático"/el resto de los datos de gate viven
+   acá como un dato más de la card (debajo del salario), no como bloques
+   sueltos después del footer. */
 function renderGateCard(p, gateId) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
   const hl = state.pl.highlightId === p.id ? 'rb-highlight' : '';
   const fase = FASE_DE_GATE[gateId];
-  const idxActual = FULL_ORDER.indexOf(p.etapa);
-  const dotsHtml = fase.sub.map(s => {
-    const i = FULL_ORDER.indexOf(s);
-    return `<div class="rb-dot ${i <= idxActual ? 'filled' : ''}" style="--phase-color:${fase.color}" title="${esc(ETAPA_LABELS[s])}"></div>`;
-  }).join('');
+  /* Dots de progreso + etiqueta de etapa (que sí tienen las cards
+     normales) NO van acá -- para cualquier card que pueda llegar a un
+     gate, los sub-pasos de su fase están siempre 100% completos (es la
+     única forma de llegar) y la etiqueta diría exactamente lo mismo que
+     ya dice el header de la columna ("Gate: GO Interno" arriba y "Gate:
+     GO Interno" en la card) -- ninguno de los dos varía nunca entre
+     cards del mismo gate, mismo defecto que ya se descartó para el
+     badge de checklist: puramente decorativo, sin información nueva. */
   /* Segundo dato de la card, propio de cada gate:
      - Identificado: Matching automático (antes vivía como un bloque
        aparte después del footer -- ahora es un dato más, debajo del
@@ -4080,8 +4085,6 @@ function renderGateCard(p, gateId) {
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
       ${sub2Html}
-      <div class="rb-dots" style="margin-bottom:var(--sp-1)">${dotsHtml}</div>
-      <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
       </div>
