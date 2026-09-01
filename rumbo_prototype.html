@@ -1598,6 +1598,13 @@ function esCandidatoTerminal(estado) { return ESTADOS_CANDIDATO_TERMINALES.inclu
 /* Orden de prioridad al agrupar por estado: lo accionable primero. */
 const ORDEN_ESTADO_CANDIDATO = ['En proceso', 'Disponible', 'Colocado', 'No interesado'];
 const SIGNAL_COLOR = { strong_yes: 'var(--cyan-text)', yes: 'var(--success-text)', soft_yes: 'var(--warning-text)', soft_no: 'var(--danger-text)', no: 'var(--danger-text)' };
+/* signalBadge() (ver más abajo) solo le ponía texto a strong_yes (el
+   trofeo) -- el resto de las señales (yes/soft_yes/soft_no/no)
+   renderizaban un badge sin ningún contenido visible, un rectángulo de
+   color que no comunicaba nada y que además hacía que la card creciera
+   una fila extra de forma inconsistente (presente o no según si el
+   candidato tenía alguna señal cargada). Se le pone label a todas. */
+const SIGNAL_LABEL = { strong_yes: 'Strong Yes', yes: 'Yes', soft_yes: 'Soft Yes', soft_no: 'Soft No', no: 'No' };
 /* "Mejor talento" del pipeline: strong_yes ya significa literalmente "Top
    del pipeline. Alto fit rol + cliente. Listo para presentar" -- es la
    señal más fuerte que ya existe en el modelo, la reusamos para destacar
@@ -1891,11 +1898,15 @@ function origenBadge(origen, compact) {
   if (compact) return `<span class="rb-badge" title="Origen: ${esc(origen)}" style="background:${c}22;color:${c}">${ORIGEN_ICON[origen]}</span>`;
   return `<span class="rb-badge" style="background:${c}22;color:${c}">${ORIGEN_ICON[origen]} ${esc(origen)}</span>`;
 }
+/* Cuando no hay señal todavía, igual se reserva el espacio de la fila
+   (visibility:hidden, no display:none) -- si no, una card sin señal
+   queda una fila más baja que una con señal, que es justo la
+   inconsistencia de alto entre cards del kanban que reportó el usuario. */
 function signalBadge(signal) {
-  if (!signal) return '';
+  if (!signal) return `<span class="rb-signal-badge" style="visibility:hidden"></span>`;
   const c = SIGNAL_COLOR[signal];
   const trofeo = signal === 'strong_yes' ? icon('trophy', 12) + ' ' : '';
-  return `<span class="rb-signal-badge" style="background:${c}22;color:${c}">${trofeo}</span>`;
+  return `<span class="rb-signal-badge" style="background:${c}22;color:${c}">${trofeo}${esc(SIGNAL_LABEL[signal] || signal)}</span>`;
 }
 
 /* ---- tags de skills: color estable por valor, tomado de la paleta del DS,
