@@ -2740,6 +2740,16 @@ function collapseAllVacantes(value) {
 }
 
 function toggleTerminalOpen(nombre) { state.va.terminalOpen[nombre] = !state.va.terminalOpen[nombre]; render(); }
+/* Headcount es informativo (no altera estado/cierre de vacante ni conteos
+   de colocaciones -- ver commit que lo introdujo). Pero mostrar el número
+   solo, sin cuántas de esas posiciones ya se cubrieron, obliga a contar
+   manualmente los "Contratado" en Postulaciones. Este helper centraliza
+   ese cálculo para reusarlo en la card, el header y el detalle. */
+function vacanteHeadcountProgreso(v) {
+  const headcount = v.jd.headcount || 1;
+  const cubiertas = POSTULACIONES.filter(p => p.vacanteId === v.id && p.etapa === 'contratado').length;
+  return { headcount, cubiertas };
+}
 function renderVacanteCard(v, terminal) {
   const count = POSTULACIONES.filter(p => p.vacanteId === v.id && !SALIDAS.includes(p.etapa)).length;
   const dl = deadlineInfo(v.clientDeadline);
@@ -2750,10 +2760,11 @@ function renderVacanteCard(v, terminal) {
      interlocutor por cliente, cada posición puede tener el suyo. */
   const hm = hiringManagerDeVacante(v);
   const hmRow = hm ? `<div class="rb-card-meta-row">${icon('user',12)} ${esc(hm.nombre)} (Hiring Manager)</div>` : '';
+  const { headcount, cubiertas } = vacanteHeadcountProgreso(v);
   return `
   <div class="card rb-vac-card${terminal ? ' rb-terminal-item' : ''}" onclick="selectVacante(${v.id})">
     <div class="rb-vac-card-top">
-      <div><p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p><p class="rb-card-role">${esc(v.seniority)}${v.jd.headcount > 1 ? ` · Headcount: ${v.jd.headcount}` : ''}</p></div>
+      <div><p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p><p class="rb-card-role">${esc(v.seniority)}${headcount > 1 ? ` · Headcount: ${cubiertas}/${headcount}` : ''}</p></div>
       <div class="rb-vac-badges">${renderEstadoVacanteTrigger(v)}</div>
     </div>
     <div class="rb-card-meta">
@@ -2822,6 +2833,7 @@ function renderVacanteDrawerBody() {
   if (state.va.editando) return renderEditVacanteForm(v);
   const dl = deadlineInfo(v.clientDeadline);
   const postulaciones = postulacionesDeVacante(v.id);
+  const hcProgreso = vacanteHeadcountProgreso(v);
   /* Quién abrió la posición del lado del cliente -- ver
      HIRING_MANAGERS_POR_CLIENTE/hiringManagerDeVacante. No hay un único
      interlocutor por cliente, cada posición puede tener el suyo. */
@@ -2847,42 +2859,67 @@ function renderVacanteDrawerBody() {
     </div>` : '';
   /* Estrategia de sourcing: campos que vienen del template de intake real
      que usa el equipo (empresas objetivo, palabras clave/Boolean, red
-     flags a considerar) más las notas adicionales del cliente. Se muestran
-     con un estado vacío explícito en vez de ocultar la fila, igual que el
-     resto de rb-detail-row en esta vista. */
+     flags a considerar) más las notas adicionales del cliente. Vive junto
+     al Job Description (misma columna, justo debajo) porque responde la
+     misma pregunta que las skills must-have/nice-to-have de ahí arriba:
+     "qué estoy buscando" -- separarlas en columnas distintas obligaba a
+     mirar dos secciones sin relación visual entre sí.
+     Si ningún campo fue completado todavía (posición recién creada, sin
+     intake de sourcing hecho aún), se colapsa a un único estado vacío con
+     una acción clara en vez de 4 filas repitiendo "No especificado" --
+     mismo idiom que .rb-empty-lane en el Pipeline. */
+  const sourcingCampos = [v.jd.industriaDeseable, v.jd.empresasObjetivo, v.jd.booleanSourcing, v.jd.redFlagsSourcing, v.jd.notasCliente];
+  const sourcingVacio = sourcingCampos.every(c => !c);
   const sourcingBlock = `
     <div class="card rb-detail-section">
       <h3>Estrategia de sourcing</h3>
-      <div class="rb-detail-row"><span>Industria deseable</span><span>${v.jd.industriaDeseable ? esc(v.jd.industriaDeseable) : 'No especificado'}</span></div>
-      <div class="rb-detail-row"><span>Empresas objetivo</span><span>${v.jd.empresasObjetivo ? esc(v.jd.empresasObjetivo) : 'No especificado'}</span></div>
-      <div class="rb-detail-row"><span>Palabras clave / Boolean</span><span>${v.jd.booleanSourcing ? esc(v.jd.booleanSourcing) : 'No especificado'}</span></div>
-      <div class="rb-detail-row"><span>Red flags a considerar</span><span>${v.jd.redFlagsSourcing ? esc(v.jd.redFlagsSourcing) : 'No especificado'}</span></div>
-      ${v.jd.notasCliente ? `<h3 class="rb-subsection-label">Notas adicionales del cliente</h3><p class="rb-resumen">${esc(v.jd.notasCliente)}</p>` : ''}
+      ${sourcingVacio ? `
+        <div class="rb-empty rb-empty-lane">${icon('compass',22)}<p>Aún no se registró la estrategia de sourcing para esta posición.</p><button class="btn secondary sm" onclick="startEditVacante(${v.id})">Completar estrategia de sourcing</button></div>
+      ` : `
+        <div class="rb-detail-row"><span>Industria deseable</span><span>${v.jd.industriaDeseable ? esc(v.jd.industriaDeseable) : 'No especificado'}</span></div>
+        <div class="rb-detail-row"><span>Empresas objetivo</span><span>${v.jd.empresasObjetivo ? esc(v.jd.empresasObjetivo) : 'No especificado'}</span></div>
+        <div class="rb-detail-row"><span>Palabras clave / Boolean</span><span>${v.jd.booleanSourcing ? esc(v.jd.booleanSourcing) : 'No especificado'}</span></div>
+        <div class="rb-detail-row"><span>Red flags a considerar</span><span>${v.jd.redFlagsSourcing ? esc(v.jd.redFlagsSourcing) : 'No especificado'}</span></div>
+        ${v.jd.notasCliente ? `<h3 class="rb-subsection-label">Notas adicionales del cliente</h3><p class="rb-resumen">${esc(v.jd.notasCliente)}</p>` : ''}
+      `}
     </div>`;
   /* En una vacante cerrada, el candidato contratado va primero y se
      destaca (borde + badge success); el resto -- rechazados/retirados en
-     el camino -- se atenúa con el mismo tratamiento que ya usan otros
-     ítems terminales en la app, para que el ganador salte a la vista. */
-  const postulacionesOrdenadas = [...postulaciones].sort((a, b) => (a.etapa === 'contratado' ? -1 : 0) - (b.etapa === 'contratado' ? -1 : 0));
+     el camino -- se agrupa aparte bajo un divisor colapsable (mismo idiom
+     que "cerradas/canceladas" en la lista de Vacantes, reusando
+     state.va.terminalOpen/toggleTerminalOpen con una clave propia para no
+     chocar con los nombres de cliente que usa esa vista), en vez de
+     mezclarse en una sola lista plana -- así el conteo del título refleja
+     pipeline realmente activo. */
+  const postActivas = postulaciones.filter(p => !SALIDAS.includes(p.etapa))
+    .sort((a, b) => (a.etapa === 'contratado' ? -1 : 0) - (b.etapa === 'contratado' ? -1 : 0));
+  const postFinalizadas = postulaciones.filter(p => SALIDAS.includes(p.etapa));
+  const renderPostRow = p => {
+    const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+    const contratado = p.etapa === 'contratado';
+    const rowClass = contratado ? 'rb-postulacion-contratado' : (SALIDAS.includes(p.etapa) ? 'rb-terminal-item' : '');
+    return `<div class="rb-postulacion-row ${rowClass}" onclick="goToDetalleProceso(${p.id})">
+      <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-sub" style="margin:0">${esc(ETAPA_LABELS[p.etapa])}</p></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${contratado ? `<span class="rb-badge" style="background:var(--success)22;color:var(--success-text)">${icon('check',11)} Contratado</span>` : ''}
+        <span>${icon('arrowUpRight',12)}</span>
+      </div>
+    </div>`;
+  };
+  const postTerminalKey = 'post-' + v.id;
+  const postTerminalAbierto = !!state.va.terminalOpen[postTerminalKey];
   const postRows = postulaciones.length === 0
     ? `<p class="rb-resumen" style="color:var(--text-muted)">Todavía no hay candidatos en el pipeline para esta posición.</p>`
-    : postulacionesOrdenadas.map(p => {
-      const c = CANDIDATOS.find(x => x.id === p.candidatoId);
-      const contratado = p.etapa === 'contratado';
-      const rowClass = contratado ? 'rb-postulacion-contratado' : (SALIDAS.includes(p.etapa) ? 'rb-terminal-item' : '');
-      return `<div class="rb-postulacion-row ${rowClass}" onclick="goToDetalleProceso(${p.id})">
-        <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-sub" style="margin:0">${esc(ETAPA_LABELS[p.etapa])}</p></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${contratado ? `<span class="rb-badge" style="background:var(--success)22;color:var(--success-text)">${icon('check',11)} Contratado</span>` : ''}
-          <span>${icon('arrowUpRight',12)}</span>
-        </div>
-      </div>`;
-    }).join('');
+    : `${postActivas.map(renderPostRow).join('') || `<p class="rb-resumen" style="color:var(--text-muted)">Sin postulaciones activas por ahora.</p>`}
+      ${postFinalizadas.length ? `
+        <div class="rb-terminal-divider" onclick="toggleTerminalOpen(${esc(JSON.stringify(postTerminalKey))})">${postTerminalAbierto ? icon('chevronDown',10) : icon('chevronRight',10)} ${postFinalizadas.length} finalizada${postFinalizadas.length === 1 ? '' : 's'}</div>
+        ${postTerminalAbierto ? postFinalizadas.map(renderPostRow).join('') : ''}
+      ` : ''}`;
   return `
     <div class="rb-back" onclick="closeDrawer()">${icon('chevronLeft',12)} Volver a Posiciones</div>
     <div class="rb-detail-header">
       <div><h1 class="rb-detail-name">${esc(v.titulo)}</h1>
-      <p class="rb-detail-role"><button class="rb-link" onclick="goToCliente(${v.clienteId})">${esc(v.cliente)}</button> · ${esc(v.seniority)} · ${esc(v.engagementModel)} · ${esc(v.modalidad)}${v.jd.headcount > 1 ? ` · Headcount: ${v.jd.headcount}` : ''}</p></div>
+      <p class="rb-detail-role"><button class="rb-link" onclick="goToCliente(${v.clienteId})">${esc(v.cliente)}</button> · ${esc(v.seniority)} · ${esc(v.engagementModel)} · ${esc(v.modalidad)}${hcProgreso.headcount > 1 ? ` · Headcount: ${hcProgreso.cubiertas}/${hcProgreso.headcount}` : ''}</p></div>
       <div class="rb-detail-header-actions">
         ${renderEstadoVacanteTrigger(v)}${priorityBadge(v.priority)}${slaBadge(dl.slaStatus)}
         <button class="btn sm" onclick="startEditVacante(${v.id})">Editar</button>
@@ -2899,7 +2936,7 @@ function renderVacanteDrawerBody() {
           <div class="rb-detail-row"><span>Account Manager</span><span>${esc(v.accountManager)}</span></div>
           <div class="rb-detail-row"><span>Intake Date</span><span>${esc(formatFecha(v.intakeDate))}</span></div>
           <div class="rb-detail-row"><span>Client Deadline</span><span style="color:${dl.color}">${v.clientDeadline ? esc(dl.label ? formatFecha(v.clientDeadline) + ' · ' + dl.label : formatFecha(v.clientDeadline)) : 'Sin deadline'}</span></div>
-          <div class="rb-detail-row"><span>Headcount</span><span>${v.jd.headcount || 1} ${(v.jd.headcount || 1) === 1 ? 'posición' : 'posiciones'}</span></div>
+          <div class="rb-detail-row"><span>Headcount</span><span>${hcProgreso.headcount} ${hcProgreso.headcount === 1 ? 'posición' : 'posiciones'}${hcProgreso.cubiertas > 0 ? ` · ${hcProgreso.cubiertas} de ${hcProgreso.headcount} cubierta${hcProgreso.headcount === 1 ? '' : 's'}` : ''}</span></div>
           <h3 class="rb-subsection-label">Clasificación</h3>
           <div class="rb-detail-row"><span>Práctica</span><span>${esc(v.practica)}</span></div>
           <div class="rb-detail-row"><span>Especialidad</span><span>${esc(v.especialidad)}</span></div>
@@ -2907,11 +2944,19 @@ function renderVacanteDrawerBody() {
           <button class="rb-link sm" style="margin-top:var(--sp-2)" onclick="goToTalentDatabaseFiltrado('${esc(v.practica)}', '${esc(v.especialidad)}')">Ver candidatos de esta especialidad ${icon('arrowUpRight',12)}</button>
         </div>
         ${bandasBlock}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-6)">
+        <div class="card rb-detail-section"><h3>Job Description</h3>${jdBlock}</div>
         ${sourcingBlock}
       </div>
-      <div class="card rb-detail-section"><h3>Job Description</h3>${jdBlock}</div>
     </div>
-    <div class="card rb-detail-section"><h3>Postulaciones (${postulaciones.length})</h3>${postRows}</div>`;
+    <div class="card rb-detail-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4)">
+        <h3 style="margin:0">Postulaciones (${postActivas.length} activa${postActivas.length === 1 ? '' : 's'}${postFinalizadas.length ? ` · ${postFinalizadas.length} finalizada${postFinalizadas.length === 1 ? '' : 's'}` : ''})</h3>
+        ${postulaciones.length ? `<button class="rb-link sm" onclick="goToPipelineVacante(${v.id})">Ver en Pipeline ${icon('arrowUpRight',12)}</button>` : ''}
+      </div>
+      ${postRows}
+    </div>`;
 }
 
 function startEditVacante(id) {
@@ -5410,6 +5455,19 @@ function goToTalentDatabaseFiltrado(practica, especialidad) {
 function goToVacante(vacanteId) { clearAllSelections(); state.view = 'vacantes'; state.va.selectedId = vacanteId; render(); window.scrollTo(0, 0); }
 function goToClienteNav(clienteId) { clearAllSelections(); state.view = 'clientes'; state.cl.selectedId = clienteId; render(); window.scrollTo(0, 0); }
 function goToDetalleProceso(postulacionId) { clearAllSelections(); state.view = 'pipeline'; state.pl.selectedId = postulacionId; render(); window.scrollTo(0, 0); }
+/* Desde el detalle de una posición no había forma de saltar al Pipeline
+   filtrado a esa vacante puntual -- había que volver a Pipeline y filtrar
+   a mano. Esta va directo al lane de la vacante (sin resaltar ninguna
+   postulación puntual, a diferencia de goToPipeline). */
+function goToPipelineVacante(vacanteId) {
+  clearAllSelections();
+  state.view = 'pipeline';
+  const v = VACANTES.find(x => x.id === vacanteId);
+  state.pl.lanesCollapsed[vacanteId] = false;
+  if (v) state.pl.clientesCollapsed[v.clienteId] = false;
+  render();
+  setTimeout(() => { const el = document.querySelector(`[data-vacante-id="${vacanteId}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+}
 function goToPipeline(postulacionId) {
   clearAllSelections();
   state.view = 'pipeline';
