@@ -653,7 +653,7 @@ function registroPasoHtml() {
       ? `<div class="rb-file-row"><span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(f.cvNombre)}</span><button class="btn ghost sm" onclick="quitarCvRegistro()">${icon('x', 12)} Quitar</button></div>`
       : `<label class="rb-upload-box">
           ${icon('upload', 20)}
-          <span>Arrastra tu CV acá o hace click para elegir el archivo</span>
+          <span>Arrastra tu CV aquí o haz clic para elegir el archivo</span>
           <input type="file" accept=".pdf,.doc,.docx" style="display:none" onchange="adjuntarCvRegistro(this)">
         </label>`}`;
   /* Confirmar */

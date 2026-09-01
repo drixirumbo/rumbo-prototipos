@@ -349,7 +349,7 @@ function fechaLabel(fecha, hora) {
 
 function renderCola() {
   if (ENTREVISTAS.length === 0) {
-    return `<div class="rb-empty card">No tenés entrevistas técnicas asignadas por ahora.</div>`;
+    return `<div class="rb-empty card">No tienes entrevistas técnicas asignadas por ahora.</div>`;
   }
   const orden = [...ENTREVISTAS].sort((a, b) => {
     if (a.estado !== b.estado) return a.estado === 'pendiente' ? -1 : 1;
