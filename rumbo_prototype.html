@@ -534,15 +534,15 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 
 /* Piso común de alto para las 2 cards del kanban (rb-card/rb-gate-card):
    ya comparten estructura casi idéntica (nombre, 2 líneas de sub-info,
-   señal, footer) desde que rb-gate-card pasó a mostrar expectativa/match
-   score en vez de vacante/cliente (redundante con el header de la lane,
-   que ya muestra la vacante, y el header del grupo de cliente arriba de
-   eso). Lo único que rb-card tiene de más son los dots de progreso de
-   fase y la etiqueta de etapa (rb-gate-card no aplica: es un solo
-   momento puntual, "esperando veredicto", no una fase con sub-pasos) --
+   footer) desde que rb-gate-card pasó a mostrar expectativa/match score
+   en vez de vacante/cliente (redundante con el header de la lane, que ya
+   muestra la vacante, y el header del grupo de cliente arriba de eso).
+   Lo único que rb-card tiene de más son los dots de progreso de fase y
+   la etiqueta de etapa (rb-gate-card no aplica: es un solo momento
+   puntual, "esperando veredicto", no una fase con sub-pasos) --
    min-height (nunca height fijo, para no recortar texto largo) absorbe
    ese resto sin inventar contenido de relleno. */
-.rb-card, .rb-gate-card { min-height: 195px; display: flex; flex-direction: column; }
+.rb-card, .rb-gate-card { min-height: 165px; display: flex; flex-direction: column; }
 .rb-card { cursor: pointer; transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-2) var(--ease-out); }
 .rb-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-2); transform: translateY(-1px); }
 .rb-card.rb-highlight { border-color: var(--cyan-text); box-shadow: 0 0 0 3px rgba(71,235,235,.3); }
@@ -578,7 +578,6 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-sla-urgente { background: rgba(255,176,32,.15); color: var(--warning-text); }
 .rb-sla-critico { background: rgba(255,90,54,.15); color: var(--danger-text); }
 .rb-sla-vencido { background: rgba(255,90,54,.15); color: var(--danger-text); }
-.rb-signal-badge { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); padding: 3px 8px; border-radius: var(--radius-1); font-weight: 600; margin-top: var(--sp-2); line-height: 1; }
 
 /* Ícono compacto de "avanzar" integrado al footer de la card (reemplaza
    la sección aparte a todo el ancho que tenía antes) -- más chico que
@@ -1612,14 +1611,6 @@ const ESTADOS_CANDIDATO_TERMINALES = ['Colocado', 'No interesado', 'Blacklisted'
 function esCandidatoTerminal(estado) { return ESTADOS_CANDIDATO_TERMINALES.includes(estado); }
 /* Orden de prioridad al agrupar por estado: lo accionable primero. */
 const ORDEN_ESTADO_CANDIDATO = ['En proceso', 'Disponible', 'Colocado', 'No interesado'];
-const SIGNAL_COLOR = { strong_yes: 'var(--cyan-text)', yes: 'var(--success-text)', soft_yes: 'var(--warning-text)', soft_no: 'var(--danger-text)', no: 'var(--danger-text)' };
-/* signalBadge() (ver más abajo) solo le ponía texto a strong_yes (el
-   trofeo) -- el resto de las señales (yes/soft_yes/soft_no/no)
-   renderizaban un badge sin ningún contenido visible, un rectángulo de
-   color que no comunicaba nada y que además hacía que la card creciera
-   una fila extra de forma inconsistente (presente o no según si el
-   candidato tenía alguna señal cargada). Se le pone label a todas. */
-const SIGNAL_LABEL = { strong_yes: 'Strong Yes', yes: 'Yes', soft_yes: 'Soft Yes', soft_no: 'Soft No', no: 'No' };
 /* "Mejor talento" del pipeline: strong_yes ya significa literalmente "Top
    del pipeline. Alto fit rol + cliente. Listo para presentar" -- es la
    señal más fuerte que ya existe en el modelo, la reusamos para destacar
@@ -1913,17 +1904,6 @@ function origenBadge(origen, compact) {
   if (compact) return `<span class="rb-badge" title="Origen: ${esc(origen)}" style="background:${c}22;color:${c}">${ORIGEN_ICON[origen]}</span>`;
   return `<span class="rb-badge" style="background:${c}22;color:${c}">${ORIGEN_ICON[origen]} ${esc(origen)}</span>`;
 }
-/* Cuando no hay señal todavía, igual se reserva el espacio de la fila
-   (visibility:hidden, no display:none) -- si no, una card sin señal
-   queda una fila más baja que una con señal, que es justo la
-   inconsistencia de alto entre cards del kanban que reportó el usuario. */
-function signalBadge(signal) {
-  if (!signal) return `<span class="rb-signal-badge" style="visibility:hidden"></span>`;
-  const c = SIGNAL_COLOR[signal];
-  const trofeo = signal === 'strong_yes' ? icon('trophy', 12) + ' ' : '';
-  return `<span class="rb-signal-badge" style="background:${c}22;color:${c}">${trofeo}${esc(SIGNAL_LABEL[signal] || signal)}</span>`;
-}
-
 /* ---- tags de skills: color estable por valor, tomado de la paleta del DS,
    para que dos tags con texto distinto se distingan a simple vista sin
    depender solo de leer la palabra. Mismo skill = siempre mismo color. ---- */
@@ -3995,7 +3975,6 @@ function renderPipelineCard(p, phase) {
       <p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>
       <div class="rb-dots" style="margin-bottom:var(--sp-1)">${dotsHtml}</div>
       <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
-      ${signalBadge(p.signal)}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd'}</span>
         ${advanceBtn}
@@ -4032,7 +4011,6 @@ function renderGateCard(p, gateId) {
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
       <p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>
-      ${signalBadge(p.signal)}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
       </div>
