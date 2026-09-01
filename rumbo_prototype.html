@@ -557,6 +557,11 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-card-name-row { display: flex; justify-content: space-between; align-items: flex-start; }
 .rb-card-name-row .rb-card-name { margin: 0 0 2px 0; }
 .rb-card-sub { font-size: var(--fs-sm); color: var(--text-muted); margin: 0 0 var(--sp-2) 0; display: flex; align-items: center; gap: 4px; }
+/* Feedback del cliente citado en la card (Con Cliente/Decisión Cliente):
+   puede ser una oración larga -- se trunca a una sola línea en vez de
+   inflar el alto de la card, mismo criterio que ya usa .rb-td-row-meta
+   span.txt. El texto completo sigue disponible en el drawer. */
+.rb-card-sub .txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 /* Sin margin-bottom por default -- ver quién la necesita (progreso de
    fases en la card del kanban) más abajo, se la pone puntual ahí en vez
    de forzar a los otros 4 usos (Hard skills, Soft skills, Matching de
@@ -3962,6 +3967,29 @@ function renderPipelineCard(p, phase) {
      visible (mismo criterio que .rb-tag-x / .rb-mobile-menu-btn). */
   const advanceBtn = esTerminal ? '' : `<button type="button" class="rb-card-advance-btn" onclick="event.stopPropagation(); handleAdvance(${p.id})" aria-label="${esc(advanceLabel)}" title="${esc(advanceLabel)}">${icon(esAgendamiento ? 'calendar' : 'chevronRight', 14)}</button>`;
   const dragAttrs = esTerminal ? '' : `draggable="true" ondragstart="onCardDragStart(event, ${p.id})" ondragend="onCardDragEnd(event)"`;
+  /* Match score (c.score) ya no se repite en cada fase del pipeline --
+     es un score general del candidato, no específico a esta vacante, y
+     mostrar siempre el mismo número fase a fase no aporta nada nuevo. En
+     su lugar, cada fase muestra una señal propia y realmente variable
+     (ver plan "Quitar Match score desde Vetting..."):
+     - Sourcing: conserva Match score (es anterior a Vetting).
+     - Vetting: el entrevistador a cargo de la sub-etapa actual.
+     - Con Cliente: el feedback del cliente, si ya existe.
+     - Cierre: nada -- no hay otro dato por postulación en el modelo. */
+  const sub2Html = (() => {
+    if (phase.id === 'sourcing') return `<p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>`;
+    if (phase.id === 'vetting') {
+      const entrevistas = resolverEntrevistas(p);
+      const item = p.etapa === 'entrevista_tecnica'
+        ? entrevistas.find(e => e.tipo === 'Entrevista Técnica')
+        : entrevistas.find(e => e.tipo === 'Screening');
+      return (item && item.entrevistador) ? `<p class="rb-card-sub">${icon('user',12)} Entrevistador: ${esc(item.entrevistador.nombre)}</p>` : '';
+    }
+    if (phase.id === 'con_cliente') {
+      return p.feedbackCliente ? `<p class="rb-card-sub"><span class="txt">${icon('chat',12)} "${esc(p.feedbackCliente)}"</span></p>` : '';
+    }
+    return '';
+  })();
   return `
     <div id="post-card-${p.id}" class="card compact rb-card ${top ? 'rb-top-talent' : ''} ${hl}" ${dragAttrs} onclick="openPostulacionDetail(${p.id})">
       ${topTalentRibbon(p)}
@@ -3972,7 +4000,7 @@ function renderPipelineCard(p, phase) {
         </div>
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
-      <p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>
+      ${sub2Html}
       <div class="rb-dots" style="margin-bottom:var(--sp-1)">${dotsHtml}</div>
       <p class="rb-card-etapa">${esc(ETAPA_LABELS[p.etapa] || p.etapa)}</p>
       <div class="rb-card-footer">
@@ -3989,16 +4017,28 @@ function renderGateCard(p, gateId) {
   const hl = state.pl.highlightId === p.id ? 'rb-highlight' : '';
   const warnChecklist = (gateId === GATE_GO_INTERNO && !checklistCompleta) ? `<p class="rb-gate-warn">${icon('alertTriangle',12)} Checklist incompleto — <button class="rb-link sm" onclick="event.stopPropagation(); openPostulacionDetail(${p.id})">completar</button></p>` : '';
   /* Matching automático de Identificado: puramente informativo -- el
-     score es solo contexto. Por eso en este gate la card NO repite
-     "Match score {c.score}%" (que sí se muestra en los otros 2 gates) --
-     serían 2 porcentajes de "matching" distintos en la misma card
-     (c.score es un score general del candidato; este es específico al
-     fit con la vacante, ver resolverIntakeMatching/matchmakingScoreFinal)
-     y confunden más de lo que aportan mostrados juntos. */
+     score es solo contexto. */
   const matchingInfo = gateId === GATE_INTAKE ? (() => {
     const m = resolverIntakeMatching(p);
     return `<p class="rb-gate-warn" style="color:var(--text-muted)">${icon('sparkles',12)} Matching automático: <strong>${m.resultado}</strong>${m.score !== null ? ` (${m.score}%)` : ''}</p>`;
   })() : '';
+  /* Match score (c.score) ya no se repite acá tampoco (ver el mismo
+     criterio en renderPipelineCard) -- Identificado ya tiene su propio
+     matchingInfo de arriba; GO Interno muestra el entrevistador técnico
+     (el dato real que sustenta esa decisión, no un checklist que bajo
+     el modelo actual siempre da "completo" para cualquier card que
+     pueda aparecer acá -- ver plan); Decisión Cliente muestra el
+     feedback del cliente si ya existe. */
+  const sub2Html = (() => {
+    if (gateId === GATE_GO_INTERNO) {
+      const item = resolverEntrevistas(p).find(e => e.tipo === 'Entrevista Técnica');
+      return (item && item.entrevistador) ? `<p class="rb-card-sub">${icon('user',12)} Entrevistador: ${esc(item.entrevistador.nombre)}</p>` : '';
+    }
+    if (gateId === GATE_CLIENTE) {
+      return p.feedbackCliente ? `<p class="rb-card-sub"><span class="txt">${icon('chat',12)} "${esc(p.feedbackCliente)}"</span></p>` : '';
+    }
+    return '';
+  })();
   /* Ningún gate tiene botones de veredicto inline en la card -- ese
      criterio, que ya existía para Identificación, se extendió a GO
      Interno y Decisión Cliente: la decisión (Aprobar/Rechazar, con
@@ -4015,7 +4055,7 @@ function renderGateCard(p, gateId) {
         </div>
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
-      ${gateId === GATE_INTAKE ? '' : `<p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>`}
+      ${sub2Html}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
       </div>
