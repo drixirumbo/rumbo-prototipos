@@ -3989,7 +3989,12 @@ function renderGateCard(p, gateId) {
   const hl = state.pl.highlightId === p.id ? 'rb-highlight' : '';
   const warnChecklist = (gateId === GATE_GO_INTERNO && !checklistCompleta) ? `<p class="rb-gate-warn">${icon('alertTriangle',12)} Checklist incompleto — <button class="rb-link sm" onclick="event.stopPropagation(); openPostulacionDetail(${p.id})">completar</button></p>` : '';
   /* Matching automático de Identificado: puramente informativo -- el
-     score es solo contexto. */
+     score es solo contexto. Por eso en este gate la card NO repite
+     "Match score {c.score}%" (que sí se muestra en los otros 2 gates) --
+     serían 2 porcentajes de "matching" distintos en la misma card
+     (c.score es un score general del candidato; este es específico al
+     fit con la vacante, ver resolverIntakeMatching/matchmakingScoreFinal)
+     y confunden más de lo que aportan mostrados juntos. */
   const matchingInfo = gateId === GATE_INTAKE ? (() => {
     const m = resolverIntakeMatching(p);
     return `<p class="rb-gate-warn" style="color:var(--text-muted)">${icon('sparkles',12)} Matching automático: <strong>${m.resultado}</strong>${m.score !== null ? ` (${m.score}%)` : ''}</p>`;
@@ -4010,7 +4015,7 @@ function renderGateCard(p, gateId) {
         </div>
       </div>
       <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
-      <p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>
+      ${gateId === GATE_INTAKE ? '' : `<p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>`}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
       </div>
