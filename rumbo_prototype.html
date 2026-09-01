@@ -933,8 +933,8 @@ const ORIGEN_ICON = { Inbound: icon('link', 12), Referido: icon('users', 12), Ou
 const ORIGEN_COLOR = { Inbound: 'var(--blue-300-text)', Referido: 'var(--purple-text)', Outbound: 'var(--cyan-text)', 'Base de datos': 'var(--warning-text)' };
 
 const ETAPA_LABELS = {
-  intake: 'Identificación', agenda_enviada: 'Agendamiento',
-  screening: 'Screening', agenda_tecnica_enviada: 'Agendamiento técnico', entrevista_tecnica: 'Entrevista técnica',
+  intake: 'Identificación', agenda_enviada: 'Agendamiento de Screening',
+  screening: 'Screening', agenda_tecnica_enviada: 'Agendamiento de entrevista técnica', entrevista_tecnica: 'Entrevista técnica',
   presentado_cliente: 'Presentado cliente', fase_cliente: 'Fase cliente',
   oferta: 'Oferta', contratado: 'Contratado',
   gate_go_interno: 'Gate: GO Interno', gate_cliente: 'Gate: Decisión Cliente',
@@ -4692,10 +4692,11 @@ function renderPostulacionDrawerBody() {
     ? `<div class="rb-entrevistador">${icon('clock',11)} Agendó para el ${esc(horarioAgendadoSimulado(p))}</div>`
     : (esAgendamientoScreening ? avanzarActionHtml : '');
   const agendamientoPaso = agendamientoAlcanzado
-    ? pasoSimpleHtml('Agendamiento', agendamientoHecho, esAgendamientoScreening, fechaEtapaSimulada(p, 'agenda_enviada'), agendamientoExtra) : '';
+    ? pasoSimpleHtml('Agendamiento de Screening', agendamientoHecho, esAgendamientoScreening, fechaEtapaSimulada(p, 'agenda_enviada'), agendamientoExtra) : '';
   const screeningAlcanzado = idx >= FULL_ORDER.indexOf('screening');
-  /* Agendamiento técnico: mismo patrón que el paso "Agendamiento" de
-     arriba, pero puente entre Screening y Entrevista Técnica (ver
+  /* Agendamiento de entrevista técnica: mismo patrón que el paso
+     "Agendamiento de Screening" de arriba, pero puente entre Screening
+     y Entrevista Técnica (ver
      esEtapaAgendamiento/SIGUIENTE). */
   const agendamientoTecnicoAlcanzado = idx >= FULL_ORDER.indexOf('agenda_tecnica_enviada');
   const agendamientoTecnicoHecho = idx > FULL_ORDER.indexOf('agenda_tecnica_enviada');
