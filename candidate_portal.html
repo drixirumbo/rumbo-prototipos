@@ -252,10 +252,20 @@ function proximosDiasHabiles(n) {
   return dias;
 }
 const HORAS_DISPONIBLES = ['09:00', '11:00', '14:00', '16:00'];
+/* Formato de fecha único DD-MM-YYYY, mismo criterio en los 4 archivos.
+   Acepta tanto un Date (ej. los días generados acá) como un string
+   'YYYY-MM-DD' (fechaPostulacion, YO.cv.actualizado). */
+function formatFecha(fecha) {
+  if (!fecha) return '';
+  const d = fecha instanceof Date ? fecha : new Date(fecha + 'T00:00:00');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}-${mm}-${d.getFullYear()}`;
+}
 function slotsDisponibles() {
   return proximosDiasHabiles(6).flatMap(dia => HORAS_DISPONIBLES.map(hora => ({
     fecha: dia, hora,
-    label: dia.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }),
+    label: formatFecha(dia),
   })));
 }
 
@@ -291,7 +301,7 @@ const POSTULACIONES_DEMO = [
      que se sienta un solo pipeline visto desde 3 ángulos en vez de 3 demos
      sueltas. Si se edita la fecha/vacante acá, actualizar también los
      otros dos. */
-  { id: 2, vacanteId: 17, etapa: 'entrevista_tecnica', fechaPostulacion: '2026-08-05', horarioAgendado: { label: 'mié 2 sep', hora: '15:00' } },
+  { id: 2, vacanteId: 17, etapa: 'entrevista_tecnica', fechaPostulacion: '2026-08-05', horarioAgendado: { label: '02-09-2026', hora: '15:00' } },
 ];
 
 /* Países de origen soportados en el registro -- los candidatos no son
@@ -551,7 +561,7 @@ function renderPostulaciones() {
       <div class="rb-postulacion-head" onclick="abrirDetalle(${p.id})">
         <div>
           <div class="rb-postulacion-title">${esc(v.titulo)}</div>
-          <div class="rb-postulacion-sub">${icon('clock', 12)} Postulaste el ${esc(new Date(p.fechaPostulacion + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }))}</div>
+          <div class="rb-postulacion-sub">${icon('clock', 12)} Postulaste el ${esc(formatFecha(p.fechaPostulacion))}</div>
         </div>
         <span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">${esc(faseDe(p.etapa).label)}</span>
       </div>
@@ -700,7 +710,7 @@ function renderPerfil() {
     <div style="margin-top:var(--sp-5)">
       <label class="field" style="margin-bottom:var(--sp-2)">Documentos</label>
       <div class="rb-file-row">
-        <span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(YO.cv.nombre)} <span style="color:var(--text-dim);font-size:var(--fs-xs)">· actualizado ${esc(new Date(YO.cv.actualizado + 'T00:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }))}</span></span>
+        <span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(YO.cv.nombre)} <span style="color:var(--text-dim);font-size:var(--fs-xs)">· actualizado ${esc(formatFecha(YO.cv.actualizado))}</span></span>
         <button class="btn ghost sm" onclick="simularSubirCv()">${icon('upload', 12)} Reemplazar</button>
       </div>
     </div>

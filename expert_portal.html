@@ -339,9 +339,12 @@ function diasDesde(fecha) {
   const d = new Date(fecha + 'T00:00:00');
   return Math.round((hoy - d) / 86400000);
 }
+/* Formato de fecha único DD-MM-YYYY, mismo criterio en los 4 archivos. */
 function fechaLabel(fecha, hora) {
   const d = new Date(fecha + 'T00:00:00');
-  return `${d.toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric', month: 'short' })} · ${hora}`;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}-${mm}-${d.getFullYear()} · ${hora}`;
 }
 
 function renderCola() {

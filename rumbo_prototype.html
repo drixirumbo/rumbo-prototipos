@@ -1314,6 +1314,21 @@ const TD_ORIGENES_OPCIONES = ['Inbound', 'Referido', 'Outbound', 'Base de datos'
 const TD_SENIORITY_OPCIONES = ['Junior', 'Mid', 'Senior'];
 const AMS_DISPONIBLES = ['Lucía Bravo', 'Renzo Ibáñez'];
 
+/* Formato de fecha único para todo el sitio: DD-MM-YYYY. Acepta tanto un
+   string 'YYYY-MM-DD' (todos los campos de fecha del modelo, ej.
+   dateIdentified/clientDeadline/intakeDate) como un objeto Date ya
+   armado (ej. horarioAgendadoSimulado/fechaEtapaSimulada, que calculan
+   una fecha simulada sumando días). Usa los getters LOCALES (no UTC) --
+   mismo criterio que ya usa el resto del archivo al construir estas
+   fechas con el sufijo 'T00:00:00', para no correr el día por huso
+   horario. */
+function formatFecha(fecha) {
+  if (!fecha) return '';
+  const d = fecha instanceof Date ? fecha : new Date(fecha + 'T00:00:00');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}-${mm}-${d.getFullYear()}`;
+}
 function diasHasta(fechaStr) {
   if (!fechaStr) return null;
   const hoy = new Date();
@@ -1409,7 +1424,7 @@ function resolverRedFlags(p) {
     flags.push({
       id: 'historial', severidad: 'media',
       label: 'Proceso previo no exitoso en Rumbo',
-      detalle: `${historialNegativo.posicion} en ${historialNegativo.cliente} (${historialNegativo.resultado}, ${historialNegativo.fecha}).`,
+      detalle: `${historialNegativo.posicion} en ${historialNegativo.cliente} (${historialNegativo.resultado}, ${formatFecha(historialNegativo.fecha)}).`,
       pregunta: `Notamos que participaste antes en un proceso para ${historialNegativo.posicion} en ${historialNegativo.cliente} que no avanzó. ¿Qué feedback recibiste en ese momento?`,
       respuesta: `Sobre el proceso previo en ${historialNegativo.cliente}: dijo que le faltó profundidad en un punto específico, que comenta haber reforzado desde entonces.`,
     });
@@ -2116,7 +2131,7 @@ function renderEvolucionChart(data, clienteNombre) {
      (mismo sistema x/y que ya calcula el SVG) superpuesto sobre el punto,
      con el mismo mecanismo CSS-only data-tooltip que usa stackedBarHtml --
      evita tener que instrumentar mousemove/crosshair sobre el SVG. */
-  const puntosTooltip = (campo, color, nombreCampo) => data.map(p => `<div class="rb-chart-point" style="left:${(x(p.fecha) / W * 100).toFixed(2)}%;top:${(y(p[campo]) / H * 100).toFixed(2)}%;background:${color}" data-tooltip="${esc(p.fecha)} · ${nombreCampo}: ${p[campo]}"></div>`).join('');
+  const puntosTooltip = (campo, color, nombreCampo) => data.map(p => `<div class="rb-chart-point" style="left:${(x(p.fecha) / W * 100).toFixed(2)}%;top:${(y(p[campo]) / H * 100).toFixed(2)}%;background:${color}" data-tooltip="${esc(formatFecha(p.fecha))} · ${nombreCampo}: ${p[campo]}"></div>`).join('');
   const ultimo = puntos[puntos.length - 1];
 
   return `
@@ -2138,7 +2153,7 @@ function renderEvolucionChart(data, clienteNombre) {
       <span><span class="dot" style="background:var(--cyan-text)"></span>Solicitadas (${data[data.length - 1].solicitadas})</span>
       <span><span class="dot" style="background:var(--purple-text)"></span>Cerradas (${data[data.length - 1].cerradas})</span>
     </div>
-    <div class="rb-evolucion-axis"><span>${esc(data[0].fecha)}</span><span>${esc(hoy)}</span></div>`;
+    <div class="rb-evolucion-axis"><span>${esc(formatFecha(data[0].fecha))}</span><span>${esc(formatFecha(hoy))}</span></div>`;
 }
 
 function renderDashboard() {
@@ -2620,7 +2635,7 @@ function renderClienteDetail() {
     ? `<p class="rb-resumen" style="color:var(--text-muted)">Sin interacciones registradas todavía.</p>`
     : interacciones.map(i => `
     <div class="rb-historial-item">
-      <div class="rb-historial-top"><span>${esc(i.tipo)}</span><span style="color:var(--text-muted);font-weight:400">${esc(i.fecha)}</span></div>
+      <div class="rb-historial-top"><span>${esc(i.tipo)}</span><span style="color:var(--text-muted);font-weight:400">${esc(formatFecha(i.fecha))}</span></div>
       <div class="rb-historial-sub">${esc(i.nota)}</div>
     </div>`).join('');
 
@@ -2722,7 +2737,7 @@ function toggleTerminalOpen(nombre) { state.va.terminalOpen[nombre] = !state.va.
 function renderVacanteCard(v, terminal) {
   const count = POSTULACIONES.filter(p => p.vacanteId === v.id && !SALIDAS.includes(p.etapa)).length;
   const dl = deadlineInfo(v.clientDeadline);
-  const deadlineRow = v.clientDeadline ? `<div class="rb-card-meta-row" style="color:${dl.color}">${icon('clock',12)} ${esc(dl.label || ('Deadline: ' + v.clientDeadline))}</div>` : '';
+  const deadlineRow = v.clientDeadline ? `<div class="rb-card-meta-row" style="color:${dl.color}">${icon('clock',12)} ${esc(dl.label || ('Deadline: ' + formatFecha(v.clientDeadline)))}</div>` : '';
   const jdWarn = v.jd.estadoAprobacion === 'borrador' ? `<span class="rb-badge" style="background:rgba(255,176,32,.15);color:var(--warning-text)">JD en borrador</span>` : '';
   /* Quién abrió la posición del lado del cliente -- ver
      HIRING_MANAGERS_POR_CLIENTE/hiringManagerDeVacante. No hay un único
@@ -2859,8 +2874,8 @@ function renderVacanteDrawerBody() {
           <div class="rb-detail-row"><span>Engagement Model</span><span>${esc(v.engagementModel)}</span></div>
           <div class="rb-detail-row"><span>Recruiter asignado</span><span>${esc(v.recruiter || 'Sin asignar')}</span></div>
           <div class="rb-detail-row"><span>Account Manager</span><span>${esc(v.accountManager)}</span></div>
-          <div class="rb-detail-row"><span>Intake Date</span><span>${esc(v.intakeDate)}</span></div>
-          <div class="rb-detail-row"><span>Client Deadline</span><span style="color:${dl.color}">${v.clientDeadline ? esc(dl.label ? v.clientDeadline + ' · ' + dl.label : v.clientDeadline) : 'Sin deadline'}</span></div>
+          <div class="rb-detail-row"><span>Intake Date</span><span>${esc(formatFecha(v.intakeDate))}</span></div>
+          <div class="rb-detail-row"><span>Client Deadline</span><span style="color:${dl.color}">${v.clientDeadline ? esc(dl.label ? formatFecha(v.clientDeadline) + ' · ' + dl.label : formatFecha(v.clientDeadline)) : 'Sin deadline'}</span></div>
           <h3 class="rb-subsection-label">Clasificación</h3>
           <div class="rb-detail-row"><span>Práctica</span><span>${esc(v.practica)}</span></div>
           <div class="rb-detail-row"><span>Especialidad</span><span>${esc(v.especialidad)}</span></div>
@@ -3441,7 +3456,7 @@ function renderCandidatoDetail() {
     </div>` : '';
   const historialExtra = c.historialAdicional.map(h => `
     <div class="rb-historial-item">
-      <div class="rb-historial-top"><span>${esc(h.posicion)} — ${esc(h.cliente)}</span><span style="color:var(--text-muted);font-weight:400">${esc(h.fecha)}</span></div>
+      <div class="rb-historial-top"><span>${esc(h.posicion)} — ${esc(h.cliente)}</span><span style="color:var(--text-muted);font-weight:400">${esc(formatFecha(h.fecha))}</span></div>
       <div class="rb-historial-sub">${esc(h.resultado)}</div>
     </div>`).join('');
   const historialVacio = (!c.postulacion && c.historialAdicional.length === 0) ? `<p class="rb-resumen" style="color:var(--text-muted)">Sin procesos previos registrados todavía.</p>` : '';
@@ -3505,7 +3520,7 @@ function renderCandidatoDetail() {
         <div class="rb-detail-row"><span>Email</span><span>${esc(c.email)}</span></div>
         <div class="rb-detail-row"><span>Teléfono</span><span>${esc(c.telefono)}</span></div>
         <div class="rb-detail-row"><span>LinkedIn</span><span>${esc(c.linkedin)}</span></div>
-        ${p ? `<div class="rb-detail-row"><span>Identificado el</span><span>${esc(p.dateIdentified)}</span></div>` : ''}
+        ${p ? `<div class="rb-detail-row"><span>Identificado el</span><span>${esc(formatFecha(p.dateIdentified))}</span></div>` : ''}
       </div>
       <div class="card rb-detail-section"><h3>Condición y expectativa actual</h3>
         <div class="rb-detail-row"><span>Modalidad actual</span><span>${esc(c.modalidad)}${c.diasPresencialesPorSemana ? ' · ' + c.diasPresencialesPorSemana + 'd presencial/sem' : ''}</span></div>
@@ -4470,8 +4485,7 @@ function horarioAgendadoSimulado(p, salt = 0) {
   const hora = horas[(p.id + salt) % horas.length];
   const fecha = new Date(p.dateIdentified + 'T00:00:00');
   fecha.setDate(fecha.getDate() + 2 + ((p.id + salt) % 5) + salt * 5);
-  const fechaLabel = fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
-  return `${fechaLabel} · ${hora}`;
+  return `${formatFecha(fecha)} · ${hora}`;
 }
 /* Fecha simulada de cuándo la postulación llegó a una etapa dada -- mismo
    criterio que horarioAgendadoSimulado (no hay fecha por etapa en el
@@ -4486,7 +4500,7 @@ function fechaEtapaSimulada(p, etapa) {
   let dias = 0;
   for (let i = 1; i <= ordenIdx; i++) dias += 2 + ((p.id + i) % 5);
   fecha.setDate(fecha.getDate() + dias);
-  return fecha.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  return formatFecha(fecha);
 }
 /* Línea chica de fecha bajo el nombre de cada paso del Historial -- mismo
    lenguaje visual que .rb-card-days (ícono de reloj + texto muted) que ya
