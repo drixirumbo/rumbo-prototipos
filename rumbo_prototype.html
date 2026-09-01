@@ -4744,7 +4744,7 @@ function renderPostulacionDrawerBody() {
   const goInternoBodyHtml = (goInternoSubpasos ? `<div class="rb-subtimeline">${goInternoSubpasos}</div>` : '') + checklistHistorialHtml
     + (p.etapa === GATE_GO_INTERNO ? verdictFormHtml : '');
   /* Mismo bug que ya corregimos para "Sourcing" (ver tipoSourcing/
-     sourcingActual): el marker de "GO Interno" no puede depender solo de
+     sourcingActual): el marker de "Vetting" no puede depender solo de
      `p.etapa === GATE_GO_INTERNO` -- ese nodo agrupa Screening/Agendamiento
      técnico/Entrevista Técnica como sub-pasos, así que está "en curso"
      desde que la postulación entra a cualquiera de ellos, no recién al
@@ -4764,7 +4764,7 @@ function renderPostulacionDrawerBody() {
 
   const clienteBodyHtml = clienteSubtimelineHtml + (p.sustentoCliente ? `<p class="rb-resumen" style="margin-top:var(--sp-3)">${esc(p.sustentoCliente)}</p>` : '')
     + (p.etapa === GATE_CLIENTE ? verdictFormHtml : '');
-  /* Mismo criterio que goInternoActual: "Decisión Cliente" agrupa
+  /* Mismo criterio que goInternoActual: "Con Cliente" agrupa
      Presentado a Cliente y Fase Cliente como sub-pasos, así que está "en
      curso" desde que entra a cualquiera de los dos, no recién al llegar
      al gate. */
@@ -4799,13 +4799,13 @@ function renderPostulacionDrawerBody() {
         </div>
         <div class="rb-timeline-item">
           ${gateMarkerHtml(tipoGoInterno, goInternoActual)}
-          <div class="rb-timeline-name">GO Interno</div>
+          <div class="rb-timeline-name">Vetting</div>
           ${tipoGoInterno ? fechaEtapaHtml(fechaEtapaSimulada(p, GATE_GO_INTERNO), tipoGoInterno === 'aprobar' ? 'Aprobado el' : 'Rechazado el') : ''}
           ${goInternoBodyHtml}
         </div>
         <div class="rb-timeline-item">
           ${gateMarkerHtml(tipoCliente, clienteActual)}
-          <div class="rb-timeline-name">Decisión Cliente</div>
+          <div class="rb-timeline-name">Con Cliente</div>
           ${tipoCliente ? fechaEtapaHtml(fechaEtapaSimulada(p, GATE_CLIENTE), tipoCliente === 'aprobar' ? 'Registrado el' : 'Rechazado el') : ''}
           ${clienteBodyHtml}
         </div>
