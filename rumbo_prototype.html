@@ -664,11 +664,16 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 /* Side drawer de postulación: portal a nivel raíz (ver renderPostulacionDrawer,
    junto a render()), nunca anidado dentro de .rb-main -- mismo motivo que
    ya documentan renderFloatingMenus/renderDocModal (container-type:inline-size
-   en .rb-main crea un containing block nuevo para position:fixed). El
-   drawer declara su propio container-type:inline-size para que el
-   @container de .rb-detail-grid (adentro de renderPostulacionDrawerBody)
-   siga funcionando -- el colapso a 1 columna se dispara antes, relativo al
-   ancho angosto del panel en vez del de la pantalla completa. */
+   en .rb-main crea un containing block nuevo para position:fixed). */
+/* El container-type:inline-size que necesita el @container de
+   .rb-detail-grid (adentro de renderPostulacionDrawerBody) vive en
+   .rb-drawer-inner, NO en .rb-side-drawer -- container-type establece su
+   propio stacking context nuevo, y tenerlo justo en el mismo elemento que
+   scrollea + contiene el header fijo (rb-drawer-sticky-head) causaba que
+   contenido ya scrolleado se viera por encima del header al hacer scroll.
+   Separando "quién scrollea" (rb-side-drawer) de "quién es container de
+   @container" (rb-drawer-inner, un simple wrapper adentro) se evita esa
+   interacción. */
 /* 880px (no 560px) a propósito: a ese ancho el container real (menos
    padding) supera el quiebre de 620px de los @container de abajo, así
    .rb-detail-grid/.rb-detail-grid-3 realmente llegan a usar 2 columnas en
@@ -680,7 +685,8 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
    detrás del overlay), dando el efecto de que "salta" o se ve mal. Se
    complementa con el body-scroll-lock de render() (ver más abajo), que
    directamente congela la página de fondo mientras el drawer está abierto. */
-.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); container-type: inline-size; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+.rb-drawer-inner { container-type: inline-size; }
 @keyframes rb-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 /* Ver comentario en renderPostulacionDrawer(): suprime la animación de
    entrada en los re-renders del drawer ya abierto (tipear, apretar
@@ -5010,7 +5016,7 @@ function renderPostulacionDrawer() {
   const yaAbierto = drawerAbiertoPara === state.pl.selectedId;
   return `
     <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:60" onclick="closeDrawer()"></div>
-    <aside class="rb-side-drawer${yaAbierto ? ' rb-no-anim' : ''}">${renderPostulacionDrawerBody()}</aside>`;
+    <aside class="rb-side-drawer${yaAbierto ? ' rb-no-anim' : ''}"><div class="rb-drawer-inner">${renderPostulacionDrawerBody()}</div></aside>`;
 }
 function renderFloatingMenus() {
   let html = '';
