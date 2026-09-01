@@ -532,6 +532,17 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-gate-card.rb-highlight { box-shadow: 0 0 0 3px rgba(71,235,235,.35); }
 .rb-gate-warn { font-size: var(--fs-xs); color: var(--warning-text); margin: var(--sp-2) 0 0; }
 
+/* Piso común de alto para las 2 cards del kanban (rb-card/rb-gate-card):
+   ya comparten estructura casi idéntica (nombre, 2 líneas de sub-info,
+   señal, footer) desde que rb-gate-card pasó a mostrar expectativa/match
+   score en vez de vacante/cliente (redundante con el header de la lane,
+   que ya muestra la vacante, y el header del grupo de cliente arriba de
+   eso). Lo único que rb-card tiene de más son los dots de progreso de
+   fase y la etiqueta de etapa (rb-gate-card no aplica: es un solo
+   momento puntual, "esperando veredicto", no una fase con sub-pasos) --
+   min-height (nunca height fijo, para no recortar texto largo) absorbe
+   ese resto sin inventar contenido de relleno. */
+.rb-card, .rb-gate-card { min-height: 195px; display: flex; flex-direction: column; }
 .rb-card { cursor: pointer; transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-2) var(--ease-out); }
 .rb-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-2); transform: translateY(-1px); }
 .rb-card.rb-highlight { border-color: var(--cyan-text); box-shadow: 0 0 0 3px rgba(71,235,235,.3); }
@@ -557,7 +568,11 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-dot { width: 16px; height: 4px; border-radius: var(--radius-full); background: var(--border); }
 .rb-dot.filled { background: var(--phase-color, var(--rb-blue)); }
 .rb-card-etapa { font-size: var(--fs-xs); color: var(--text-muted); margin: 0 0 var(--sp-2) 0; }
-.rb-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: var(--sp-2); }
+/* margin-top:auto (no un valor fijo) -- con .rb-card/.rb-gate-card ahora
+   flex-column + min-height (ver más arriba), esto empuja el footer al
+   fondo de la card en vez de dejarlo flotando a mitad de camino con un
+   hueco vacío debajo cuando el contenido no llena el piso mínimo. */
+.rb-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--sp-2); }
 .rb-card-days { font-size: var(--fs-xs); color: var(--text-muted); display: flex; align-items: center; gap: 3px; }
 .rb-sla-badge { font-size: var(--fs-xs); padding: 3px 8px; line-height: 1; border-radius: var(--radius-1); font-weight: 600; display: flex; align-items: center; gap: 3px; }
 .rb-sla-urgente { background: rgba(255,176,32,.15); color: var(--warning-text); }
@@ -4015,8 +4030,8 @@ function renderGateCard(p, gateId) {
           ${renderAssigneeTrigger(p)}
         </div>
       </div>
-      <p class="rb-card-sub">${icon('briefcase',12)} ${esc(p.vacante)}</p>
-      <p class="rb-card-sub">${icon('building',12)} ${esc(p.cliente)}</p>
+      <p class="rb-card-sub">${icon('coin',12)} S/ ${c.expectativa.toLocaleString('es-PE')}/mes</p>
+      <p class="rb-card-sub">${icon('sparkles',12)} Match score ${c.score}%</p>
       ${signalBadge(p.signal)}
       <div class="rb-card-footer">
         <span class="rb-card-days">${icon('clock',11)} ${p.dias === 0 ? 'hoy' : p.dias + 'd esperando'}</span>
