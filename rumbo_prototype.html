@@ -327,12 +327,12 @@ body {
 .rb-postulacion-row.rb-postulacion-contratado { background: rgba(60,203,127,.08); border-left: 3px solid var(--success); border-bottom-color: transparent; padding-left: var(--sp-3); border-radius: var(--radius-1); margin-bottom: var(--sp-1); }
 .rb-am-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px 8px; font-size: var(--fs-xs); line-height: 1; margin: 0 6px 6px 0; }
 
-/* Fijo mientras se scrollea el Historial del proceso (ver
-   renderPostulacionDrawerBody) -- .rb-side-drawer es el contenedor con
-   scroll (overflow-y:auto), así que basta con position:sticky + top:0
-   acá adentro. Mismo fondo que el drawer para que no se transparente el
-   contenido que pasa por detrás al scrollear. */
-.rb-drawer-sticky-head { position: sticky; top: 0; z-index: 5; background: var(--bg-elev); }
+/* Header del drawer de postulación (volver/nombre/badges/quickfacts):
+   fijo por estructura, no por position:sticky -- ver el comentario en
+   .rb-side-drawer/.rb-drawer-scroll (flexbox, no sticky). flex-shrink:0
+   para que conserve su alto natural aunque el hijo scrolleable de al
+   lado se achique. */
+.rb-drawer-head { flex-shrink: 0; }
 .rb-detail-header { display: flex; gap: var(--sp-4); align-items: flex-start; margin-bottom: var(--sp-6); flex-wrap: wrap; }
 /* Agrupa badges + botones de acción del header en un solo bloque pegado a
    la derecha -- antes cada uno flotaba por su cuenta (solo el último
@@ -665,28 +665,25 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
    junto a render()), nunca anidado dentro de .rb-main -- mismo motivo que
    ya documentan renderFloatingMenus/renderDocModal (container-type:inline-size
    en .rb-main crea un containing block nuevo para position:fixed). */
-/* El container-type:inline-size que necesita el @container de
-   .rb-detail-grid (adentro de renderPostulacionDrawerBody) vive en
-   .rb-drawer-inner, NO en .rb-side-drawer -- container-type establece su
-   propio stacking context nuevo, y tenerlo justo en el mismo elemento que
-   scrollea + contiene el header fijo (rb-drawer-sticky-head) causaba que
-   contenido ya scrolleado se viera por encima del header al hacer scroll.
-   Separando "quién scrollea" (rb-side-drawer) de "quién es container de
-   @container" (rb-drawer-inner, un simple wrapper adentro) se evita esa
-   interacción. */
-/* 880px (no 560px) a propósito: a ese ancho el container real (menos
-   padding) supera el quiebre de 620px de los @container de abajo, así
-   .rb-detail-grid/.rb-detail-grid-3 realmente llegan a usar 2 columnas en
-   vez de apilarse siempre en una sola -- antes ese quiebre nunca se
-   alcanzaba y esas reglas quedaban muertas. */
-/* overscroll-behavior:contain evita el "scroll chaining" -- sin esto, en
-   mobile, al llegar al tope/fondo del scroll interno del drawer el gesto
-   se sigue de largo y scrollea la página de fondo (que igual sigue viva
-   detrás del overlay), dando el efecto de que "salta" o se ve mal. Se
-   complementa con el body-scroll-lock de render() (ver más abajo), que
-   directamente congela la página de fondo mientras el drawer está abierto. */
-.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow-y: auto; overscroll-behavior: contain; padding: var(--sp-6) var(--sp-8); animation: rb-drawer-in var(--dur-3) var(--ease-out); }
-.rb-drawer-inner { container-type: inline-size; }
+/* El header (volver/nombre/badges/quickfacts) no usa position:sticky --
+   se probó dos veces (con y sin container-type de por medio) y en
+   ambos casos el contenido ya scrolleado del Historial se seguía viendo
+   por encima del header en vez de quedar tapado detrás. En vez de seguir
+   ajustando el sticky, se resuelve con flexbox: .rb-side-drawer es un
+   flex column de 2 hijos -- el header (alto natural, nunca scrollea
+   porque nunca entra al área con overflow) y .rb-drawer-scroll (el único
+   que scrollea, ver esa clase más abajo). Header fijo por estructura, no
+   por una propiedad de posicionamiento que dependía de que el resto del
+   layout se comportara de una forma particular. */
+.rb-side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(880px, 100vw); background: var(--bg-elev); border-left: 1px solid var(--border); box-shadow: var(--shadow-3); z-index: 61; overflow: hidden; padding: var(--sp-6) var(--sp-8); display: flex; flex-direction: column; animation: rb-drawer-in var(--dur-3) var(--ease-out); }
+/* El único que scrollea de verdad. min-height:0 es necesario -- sin eso,
+   un hijo flex con overflow no se encoge por debajo de su contenido y
+   termina empujando el alto del drawer entero en vez de scrollear
+   adentro. overscroll-behavior:contain evita el "scroll chaining": sin
+   esto, en mobile, al llegar al tope/fondo de este scroll el gesto se
+   sigue de largo y scrollea la página de fondo (que sigue viva detrás
+   del overlay) -- se complementa con el body-scroll-lock de render(). */
+.rb-drawer-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 @keyframes rb-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 /* Ver comentario en renderPostulacionDrawer(): suprime la animación de
    entrada en los re-renders del drawer ya abierto (tipear, apretar
@@ -3943,26 +3940,26 @@ function handleVerdict(postulacionId, gateId, tipo, sustento) {
    pantalla completa. */
 /* Al abrir el detalle, se scrollea directo a la sección del Historial que
    corresponde a la etapa actual (marcada con id="timeline-actual", ver
-   renderPostulacionDrawerBody) -- con el header ahora fijo (ver
-   rb-drawer-sticky-head) y un Historial que puede ser largo, no tiene
-   sentido obligar a scrollear manualmente hasta lo que ya se sabe que es
-   lo relevante ahora mismo. Nada que scrollear si la postulación ya es
+   renderPostulacionDrawerBody) -- con el header fijo (ver rb-drawer-head/
+   rb-drawer-scroll) y un Historial que puede ser largo, no tiene sentido
+   obligar a scrollear manualmente hasta lo que ya se sabe que es lo
+   relevante ahora mismo. Nada que scrollear si la postulación ya es
    terminal (contratado/rechazada/etc): ningún nodo queda marcado como
-   "actual" ahí, así que simplemente no se mueve. */
+   "actual" ahí, así que simplemente no se mueve.
+
+   El header ya no vive DENTRO del área con scroll (es un hermano flex
+   aparte, ver .rb-side-drawer), así que no hace falta descontar su alto
+   acá -- offsetTop de ambos elementos se resta contra el mismo ancestro
+   (.rb-side-drawer, position:fixed) para obtener la posición del nodo
+   relativa al inicio de .rb-drawer-scroll, que es lo que scrollTop
+   necesita. */
 function openPostulacionDetail(id) {
   state.pl.selectedId = id;
   render();
   const actual = document.getElementById('timeline-actual');
-  const drawer = document.querySelector('.rb-side-drawer');
-  if (!actual || !drawer) return;
-  /* No un simple scrollIntoView: el header fijo (rb-drawer-sticky-head)
-     tapa la parte de arriba de lo que sea que quede pegado al borde
-     superior del scroll -- se descuenta su alto real (que varía según
-     el nombre/badges de cada candidato) para que el nodo quede visible
-     debajo de él, no escondido detrás. */
-  const headerEl = document.querySelector('.rb-drawer-sticky-head');
-  const headerH = headerEl ? headerEl.offsetHeight : 0;
-  drawer.scrollTop = Math.max(0, actual.offsetTop - headerH - 16);
+  const scrollEl = document.querySelector('.rb-drawer-scroll');
+  if (!actual || !scrollEl) return;
+  scrollEl.scrollTop = Math.max(0, actual.offsetTop - scrollEl.offsetTop - 16);
 }
 
 /* Normaliza para comparar sin importar mayúsculas ni tildes -- "salcedo"
@@ -4959,7 +4956,7 @@ function renderPostulacionDrawerBody() {
      expectativa) sin tener que volver a subir cada vez que revisa un
      paso más abajo en un Historial que puede ser largo. */
   return `
-    <div class="rb-drawer-sticky-head">
+    <div class="rb-drawer-head">
       <div class="rb-back" onclick="closeDrawer()">${icon('chevronLeft',12)} Volver a Pipeline</div>
       <div class="rb-detail-header">
         <div class="avatar xl">${esc(initials(candidato.nombre))}</div>
@@ -4976,7 +4973,7 @@ function renderPostulacionDrawerBody() {
       </div>
       ${quickFactsHtml}
     </div>
-    ${historialHtml}`;
+    <div class="rb-drawer-scroll">${historialHtml}</div>`;
 }
 
 /* Menús flotantes (asignar recruiter en Pipeline / cambiar estado de
@@ -5016,7 +5013,7 @@ function renderPostulacionDrawer() {
   const yaAbierto = drawerAbiertoPara === state.pl.selectedId;
   return `
     <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:60" onclick="closeDrawer()"></div>
-    <aside class="rb-side-drawer${yaAbierto ? ' rb-no-anim' : ''}"><div class="rb-drawer-inner">${renderPostulacionDrawerBody()}</div></aside>`;
+    <aside class="rb-side-drawer${yaAbierto ? ' rb-no-anim' : ''}">${renderPostulacionDrawerBody()}</aside>`;
 }
 function renderFloatingMenus() {
   let html = '';
@@ -5450,13 +5447,14 @@ function render() {
      en .rb-side-drawer/.modal-preview, que ataca lo mismo desde el CSS). */
   const hayOverlayFijo = (state.view === 'pipeline' && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto;
   document.body.style.overflow = hayOverlayFijo ? 'hidden' : '';
-  /* El side drawer tiene su propio scroll interno (overflow-y: auto) --
+  /* .rb-drawer-scroll es el que de verdad tiene scroll interno (ver
+     .rb-side-drawer: flex-column, el header es un hermano fijo aparte) --
      sin esto, cualquier render() disparado mientras el drawer está
      scrolleado (ej. tipear en el textarea de sustento de Identificado,
      que re-renderiza en cada tecla para habilitar/deshabilitar Confirmar)
      lo resetea a scrollTop 0 en cada letra, dando la sensación de que el
      campo "falla" al escribir. */
-  const drawerEl = document.querySelector('.rb-side-drawer');
+  const drawerEl = document.querySelector('.rb-drawer-scroll');
   const drawerScroll = drawerEl ? drawerEl.scrollTop : null;
 
   document.getElementById('app').innerHTML = `
@@ -5493,7 +5491,7 @@ function render() {
     if (newBoard) newBoard.scrollLeft = boardScroll;
   }
   if (drawerScroll !== null) {
-    const newDrawer = document.querySelector('.rb-side-drawer');
+    const newDrawer = document.querySelector('.rb-drawer-scroll');
     if (newDrawer) newDrawer.scrollTop = drawerScroll;
   }
   if (state.pl.assigneeMenuFor !== null) positionFloatingMenu(`assignee-trigger-${state.pl.assigneeMenuFor}`, `assignee-menu-${state.pl.assigneeMenuFor}`);
