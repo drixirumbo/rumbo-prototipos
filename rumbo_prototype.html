@@ -958,7 +958,7 @@ const ORIGEN_COLOR = { Inbound: 'var(--blue-300-text)', Referido: 'var(--purple-
 const ETAPA_LABELS = {
   intake: 'Identificación', agenda_enviada: 'Agendamiento de Screening',
   screening: 'Screening', agenda_tecnica_enviada: 'Agendamiento de entrevista técnica', entrevista_tecnica: 'Entrevista técnica',
-  presentado_cliente: 'Presentado cliente', fase_cliente: 'Fase cliente',
+  presentado_cliente: 'Presentado cliente', fase_cliente: 'En entrevista con cliente',
   oferta: 'Oferta', contratado: 'Contratado',
   gate_go_interno: 'Gate: GO Interno', gate_cliente: 'Gate: Decisión Cliente',
   rechazado_rumbo: 'Rechazado por Rumbo', rechazado_cliente: 'Rechazado por Cliente', no_interesado: 'No interesado',
@@ -1025,7 +1025,7 @@ const VEREDICTO = {
    interna" sonaba a que todavía falta escrutinio, cuando en realidad solo
    falta completar el checklist (referencias/brief/CV) antes del envío real
    al cliente (ese es un botón aparte, "Aprobar y enviar al cliente",
-   dentro del propio gate GO Interno). De Fase Cliente a Decisión Cliente
+   dentro del propio gate GO Interno). De En entrevista con cliente a Decisión Cliente
    el cliente ya dio su feedback (esa fase es suya, no de Rumbo); acá el
    botón no envía nada, registra una decisión que ya se tomó. */
 /* Copy del botón de avanzar para transiciones que NO van hacia un gate
@@ -1040,7 +1040,7 @@ const ACCION_AVANZAR_LABELS = {
   agenda_tecnica_enviada: 'Avanza a entrevista técnica',
   entrevista_tecnica: 'Avanza a entrevista técnica',
   presentado_cliente: 'Presentar candidato al cliente',
-  fase_cliente: 'Avanzar a Fase Cliente',
+  fase_cliente: 'Avanzar a entrevista con cliente',
   oferta: 'Avanzar a Oferta',
   contratado: 'Avanzar a Contratado',
 };
@@ -1363,7 +1363,7 @@ function resolverEntrevistas(p) {
     { tipo: 'Entrevista Técnica', hecha: idx >= FULL_ORDER.indexOf(GATE_GO_INTERNO), notas: 'Evaluación técnica con cofounder/CTO o especialista de la práctica. Protocolo estructurado completo.', entrevistador: delPool(POOL_ENTREVISTA_TECNICA, p.candidatoId) },
   ];
   if (idx >= FULL_ORDER.indexOf('fase_cliente')) {
-    items.push({ tipo: 'Fase Cliente', hecha: true, notas: 'Entrevista configurada por el cliente completada.', entrevistador: { nombre: `Equipo ${p.cliente}`, rol: 'Panel del cliente', tipo: 'Cliente' } });
+    items.push({ tipo: 'En entrevista con cliente', hecha: true, notas: 'Entrevista configurada por el cliente completada.', entrevistador: { nombre: `Equipo ${p.cliente}`, rol: 'Panel del cliente', tipo: 'Cliente' } });
   }
   return items;
 }
@@ -4396,7 +4396,7 @@ function etapaHistorialRowHtml(nombre, decision, entrevista, esActual, fecha, ex
     <div><div class="rb-decision-name">${esc(nombre)}${resultadoLabel}</div>${fechaEtapaHtml(fecha)}${entrevistadorLine}${extraHtml || ''}</div>
   </div>`;
 }
-/* Paso de una entrevista sin decisión asociada (solo Fase Cliente, que no
+/* Paso de una entrevista sin decisión asociada (solo En entrevista con cliente, que no
    tiene un "resolverDecisiones" propio) -- si aparece en el historial es
    porque ya se hizo (ver resolverEntrevistas), así que el marker siempre
    es un check. Simplificado igual que etapaHistorialRowHtml. extraHtml
@@ -4517,7 +4517,7 @@ function renderPostulacionDrawerBody() {
   const avanzarLabel = esAgendamiento ? 'Candidato agendó su horario' : esGateSiguiente ? labelEnviarAGate(siguienteEtapa) : esc(labelAvanzar(siguienteEtapa));
   /* Botón de avanzar colgado del paso correspondiente dentro del Historial
      del proceso -- ver dónde se usa más abajo (Agendamiento, Screening,
-     Entrevista Técnica, Presentado a Cliente, Fase Cliente, Oferta). Las
+     Entrevista Técnica, Presentado a Cliente, En entrevista con cliente, Oferta). Las
      etapas que no son gate también son parte del proceso y su acción de
      avanzar vive acá igual que el veredicto de un gate (verdictFormHtml). */
   const avanzarActionHtml = puedeAvanzar
@@ -4526,7 +4526,7 @@ function renderPostulacionDrawerBody() {
      trámite -- el candidato puede no dar la talla ahí, no solo avanzar.
      Se agrega "Culminar participación" junto al botón de avanzar (ver
      abrirCulminarModal), a diferencia de Agendamiento/Presentado a
-     Cliente/Fase Cliente/Oferta, que sí son puro trámite de estado. */
+     Cliente/En entrevista con cliente/Oferta, que sí son puro trámite de estado. */
   const accionesScreeningTecnica = puedeAvanzar
     ? `<div class="rb-verdict-row" style="margin-top:var(--sp-2)">
         <button class="btn sm" onclick="handleAdvance(${p.id})">${icon(avanzarIcon, 12)} ${avanzarLabel}</button>
@@ -4595,7 +4595,7 @@ function renderPostulacionDrawerBody() {
        Checklist). Acá la instrucción es una nota discreta, no un título.
        Decisión Cliente no es "enviarle algo al cliente para que decida"
        -- ya se le envió el candidato en GO Interno y ya dio su feedback
-       en Fase Cliente; acá Rumbo solo registra esa decisión, que no es
+       en En entrevista con cliente; acá Rumbo solo registra esa decisión, que no es
        propia. Antes este gate compartía el mismo texto que GO Interno
        ("...antes de enviarla al cliente"), lo cual describía al revés
        quién decide en cada uno. */
@@ -4834,14 +4834,14 @@ function renderPostulacionDrawerBody() {
     ? pasoSimpleHtml('Presentado a Cliente', idx > FULL_ORDER.indexOf('presentado_cliente'), presentadoActual, fechaEtapaSimulada(p, 'presentado_cliente'), presentadoActual ? avanzarActionHtml : '') : '';
   const clienteSubpasos = [
     presentadoPaso,
-    entrevistaPorTipo['Fase Cliente'] ? entrevistaRowHtml(entrevistaPorTipo['Fase Cliente'], fechaEtapaSimulada(p, 'fase_cliente'), p.etapa === 'fase_cliente' ? avanzarActionHtml : '') : '',
+    entrevistaPorTipo['En entrevista con cliente'] ? entrevistaRowHtml(entrevistaPorTipo['En entrevista con cliente'], fechaEtapaSimulada(p, 'fase_cliente'), p.etapa === 'fase_cliente' ? avanzarActionHtml : '') : '',
   ].filter(Boolean).join('');
   const clienteSubtimelineHtml = clienteSubpasos ? `<div class="rb-subtimeline">${clienteSubpasos}</div>` : '';
 
   const clienteBodyHtml = clienteSubtimelineHtml + (p.sustentoCliente ? `<p class="rb-resumen" style="margin-top:var(--sp-3)">${esc(p.sustentoCliente)}</p>` : '')
     + (p.etapa === GATE_CLIENTE ? verdictFormHtml : '');
   /* Mismo criterio que goInternoActual: "Con Cliente" agrupa
-     Presentado a Cliente y Fase Cliente como sub-pasos, así que está "en
+     Presentado a Cliente y En entrevista con cliente como sub-pasos, así que está "en
      curso" desde que entra a cualquiera de los dos, no recién al llegar
      al gate. */
   const clienteActual = p.etapa === GATE_CLIENTE || p.etapa === 'presentado_cliente' || p.etapa === 'fase_cliente';
