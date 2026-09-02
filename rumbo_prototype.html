@@ -361,6 +361,16 @@ h3.rb-subsection-label { font-size: var(--fs-sm); color: var(--text-muted); font
 .rb-detail-row { display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-sm); padding: var(--sp-1) 0; border-bottom: 1px solid var(--border); gap: var(--sp-2); }
 .rb-detail-row:last-child { border-bottom: none; }
 .rb-detail-row span:first-child { color: var(--text-muted); }
+/* Variante para valores largos que pueden envolver a más de una línea
+   (ej. Estrategia de sourcing) -- .rb-detail-row usa flex+space-between,
+   pensado para un valor corto de una sola línea; ahí cada fila mide su
+   propia etiqueta y el valor arranca en una posición horizontal distinta
+   por fila (se ve "desalineado" apenas el texto envuelve). Grid con una
+   primera columna de ancho fijo asegura que el valor de todas las filas
+   arranque siempre en la misma columna, envuelva o no. */
+.rb-detail-row-wrap { display: grid; grid-template-columns: 150px 1fr; align-items: start; font-size: var(--fs-sm); padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); gap: var(--sp-2); }
+.rb-detail-row-wrap:last-child { border-bottom: none; }
+.rb-detail-row-wrap span:first-child { color: var(--text-muted); }
 .rb-resumen { font-size: var(--fs-base); line-height: 1.6; color: var(--text); }
 
 /* Stat grid consolidado (ej. drawer de Cliente): números grandes en el
@@ -2889,10 +2899,10 @@ function renderVacanteDrawerBody() {
       ${sourcingVacio ? `
         <div class="rb-empty rb-empty-lane">${icon('compass',22)}<p>Aún no se registró la estrategia de sourcing para esta posición.</p><button class="btn secondary sm" onclick="startEditVacante(${v.id})">Completar estrategia de sourcing</button></div>
       ` : `
-        <div class="rb-detail-row"><span>Industria deseable</span><span>${v.jd.industriaDeseable ? esc(v.jd.industriaDeseable) : 'No especificado'}</span></div>
-        <div class="rb-detail-row"><span>Empresas objetivo</span><span>${v.jd.empresasObjetivo ? esc(v.jd.empresasObjetivo) : 'No especificado'}</span></div>
-        <div class="rb-detail-row"><span>Palabras clave / Boolean</span><span>${v.jd.booleanSourcing ? esc(v.jd.booleanSourcing) : 'No especificado'}</span></div>
-        <div class="rb-detail-row"><span>Red flags a considerar</span><span>${v.jd.redFlagsSourcing ? esc(v.jd.redFlagsSourcing) : 'No especificado'}</span></div>
+        <div class="rb-detail-row-wrap"><span>Industria deseable</span><span>${v.jd.industriaDeseable ? esc(v.jd.industriaDeseable) : 'No especificado'}</span></div>
+        <div class="rb-detail-row-wrap"><span>Empresas objetivo</span><span>${v.jd.empresasObjetivo ? esc(v.jd.empresasObjetivo) : 'No especificado'}</span></div>
+        <div class="rb-detail-row-wrap"><span>Palabras clave / Boolean</span><span>${v.jd.booleanSourcing ? esc(v.jd.booleanSourcing) : 'No especificado'}</span></div>
+        <div class="rb-detail-row-wrap"><span>Red flags a considerar</span><span>${v.jd.redFlagsSourcing ? esc(v.jd.redFlagsSourcing) : 'No especificado'}</span></div>
         ${v.jd.notasCliente ? `<h3 class="rb-subsection-label">Notas adicionales del cliente</h3><p class="rb-resumen">${esc(v.jd.notasCliente)}</p>` : ''}
       `}
     </div>`;
