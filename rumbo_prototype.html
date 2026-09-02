@@ -608,6 +608,9 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-assignee-avatar { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; flex-shrink: 0; }
 .rb-assignee-avatar.sm { width: 18px; height: 18px; font-size: 9px; }
 .rb-assignee-unassigned { background: var(--surface-2); color: var(--text-dim); }
+.rb-assignee-avatar-stack { display: flex; }
+.rb-assignee-avatar-stack .rb-assignee-avatar { box-shadow: 0 0 0 2px var(--bg-elev); margin-left: -6px; }
+.rb-assignee-avatar-stack .rb-assignee-avatar:first-child { margin-left: 0; }
 /* Menú flotante (asignar recruiter / cambiar estado) -- ver
    renderFloatingMenus/positionFloatingMenu. top/left se calculan en JS
    después de insertar el HTML; acá solo va el resto de la apariencia. El
@@ -1128,23 +1131,23 @@ let POSTULACIONES = [
 ];
 
 let VACANTES = [
-  { id: 1, clienteId: 1, titulo: 'Arquitecto Cloud', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-15', intakeDate: '2026-07-10', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiter: 'Ana Ruiz', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Buscamos un Arquitecto Cloud Senior para liderar el diseño de la infraestructura de microservicios de Interbank sobre AWS. Definirá estándares de arquitectura, guiará la migración de cargas críticas y trabajará de la mano con los equipos de plataforma y seguridad para asegurar escalabilidad y cumplimiento normativo del sector financiero.', skillsMustHave: ['AWS', 'Arquitectura de microservicios', 'Terraform'], skillsNiceToHave: ['Kubernetes', 'Certificación AWS'], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Banca o servicios financieros, con experiencia en entornos regulados', empresasObjetivo: 'Bancos locales y regionales, consultoras cloud con práctica AWS', booleanSourcing: 'Cloud Architect, AWS, Terraform, Microservicios, Arquitectura', redFlagsSourcing: 'Solo experiencia on-premise sin migración real a cloud; sin certificaciones ni proyectos de arquitectura liderados', notasCliente: '', bandas: [{ nivel: 'Nivel III', min: 10000, max: 12500 }, { nivel: 'Nivel II', min: 13000, max: 15500 }] }, practica: 'Ingeniería de Software', especialidad: 'Arquitectura de Software', subEspecialidad: 'Microservicios' },
-  { id: 2, clienteId: 2, titulo: 'Data Engineer', cliente: 'Laive', seniority: 'Mid', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-07-20', modalidad: 'Remoto', engagementModel: 'Staffing', recruiter: 'Marco Solari', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive busca un Data Engineer Mid para construir y mantener pipelines de datos que alimentan los reportes comerciales y de producción. Trabajará bajo la modalidad de staffing, integrado al equipo de datos del cliente, con foco en calidad y disponibilidad de la información.', skillsMustHave: ['Python', 'SQL', 'Airflow'], skillsNiceToHave: ['Databricks', 'AWS'], anosExperiencia: '3-5 años', headcount: 2, industriaDeseable: 'Retail o consumo masivo, con foco en datos comerciales y de producción', empresasObjetivo: 'Empresas de consumo masivo y retail con áreas de datos maduras, consultoras con práctica de data', booleanSourcing: 'Data Engineer, Ingeniero de Datos, ETL Developer, SQL, Python, Pipeline, Airflow, Data Warehouse', redFlagsSourcing: 'Solo experiencia en BI/reporting sin construcción de pipelines; SQL a nivel usuario, no de optimización; nunca trabajó con múltiples fuentes ni cloud', notasCliente: 'Perfil "buen soldado", que quiera dar la milla extra. Autonomía y disciplina de documentación son clave.', bandas: [{ nivel: 'Único', min: 7500, max: 9000 }] }, practica: 'Datos & Analytics', especialidad: 'Data Engineering', subEspecialidad: 'Batch/ETL' },
-  { id: 3, clienteId: 3, titulo: 'Product Designer Mid', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Cerrada - Éxito', priority: 'Medium', clientDeadline: '2026-05-01', intakeDate: '2026-03-15', modalidad: 'Híbrido', fechaCierre: '2026-04-28', engagementModel: 'Staffing', recruiter: 'Ana Ruiz', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security buscó un Product Designer Mid para liderar el rediseño de su portal de autoservicio, con foco en research cuantitativo y adopción del Design System interno. Posición cerrada con éxito tras el proceso de selección.', skillsMustHave: ['Figma', 'Design Systems'], skillsNiceToHave: ['Research cuantitativo'], anosExperiencia: '4+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 6500, max: 7500 }] }, practica: 'Producto & Diseño', especialidad: 'Diseño de Producto', subEspecialidad: 'Design Systems' },
-  { id: 4, clienteId: 1, titulo: 'DevOps Engineer', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-05', intakeDate: '2026-06-01', modalidad: 'Remoto', engagementModel: 'Recruiting', recruiter: 'Marco Solari', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank necesita un DevOps Engineer Senior para fortalecer su práctica de CI/CD y contenedores en un entorno bancario de alta disponibilidad. Responsable de automatizar despliegues, mejorar tiempos de entrega y acompañar a los squads en la adopción de buenas prácticas de infraestructura como código.', skillsMustHave: ['Kubernetes', 'Terraform', 'CI/CD'], skillsNiceToHave: ['AWS'], anosExperiencia: '7+ años', headcount: 1, industriaDeseable: 'Banca, con foco en infraestructura de alta disponibilidad', empresasObjetivo: 'Bancos y fintechs con prácticas DevOps maduras', booleanSourcing: 'DevOps Engineer, Kubernetes, Terraform, CI/CD, Infraestructura como código', redFlagsSourcing: 'Solo experiencia en soporte, sin haber automatizado despliegues de punta a punta', notasCliente: '', bandas: [{ nivel: 'Único', min: 13000, max: 15000 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'AWS' },
-  { id: 5, clienteId: 4, titulo: 'QA Lead', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-01', intakeDate: '2026-07-25', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiter: 'Ana Ruiz', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un QA Lead Senior para liderar la estrategia de automatización de pruebas de su plataforma de pagos. Definirá el plan de test strategy, coordinará con desarrollo para elevar la cobertura automatizada y velará por la calidad de los releases en producción.', skillsMustHave: ['Automation', 'Test Strategy'], skillsNiceToHave: ['Cypress'], anosExperiencia: '6+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 9000, max: 10500 }] }, practica: 'Calidad (QA)', especialidad: 'QA Automation', subEspecialidad: 'Web/API' },
-  { id: 6, clienteId: 2, titulo: 'Backend Ssr.', cliente: 'Laive', seniority: 'Junior', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-07-28', modalidad: 'Remoto', engagementModel: 'Staffing', recruiter: 'Marco Solari', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive busca un Backend Developer Junior/Semi-Senior para sumarse al equipo que mantiene los servicios internos de e-commerce. Buena oportunidad para crecer trabajando con Node.js y PostgreSQL bajo la guía de un equipo backend consolidado.', skillsMustHave: ['Node.js', 'PostgreSQL'], skillsNiceToHave: [], anosExperiencia: '1-2 años', headcount: 2, industriaDeseable: 'Retail o consumo masivo', empresasObjetivo: 'Consultoras de desarrollo, software factories, empresas de consumo masivo', booleanSourcing: 'Backend Developer, Node.js, PostgreSQL, Junior, Semi Senior', redFlagsSourcing: 'Sin proyectos backend reales, solo bootcamps sin experiencia laboral', notasCliente: '', bandas: [{ nivel: 'Único', min: 4000, max: 5000 }] }, practica: 'Ingeniería de Software', especialidad: 'Backend', subEspecialidad: 'Node.js/Python' },
-  { id: 7, clienteId: 4, titulo: 'Arquitecto de Datos', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-30', intakeDate: '2026-07-05', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiter: 'Ana Ruiz', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Arquitecto de Datos Senior para diseñar la arquitectura de streaming y analítica que soporta su plataforma de pagos. Definirá el modelo de datos, los estándares de integración vía Kafka/Spark y acompañará a los equipos de producto en la explotación de datos en tiempo real.', skillsMustHave: ['Java', 'Kafka', 'Spark'], skillsNiceToHave: ['AWS'], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Fintech o pagos digitales, con volúmenes altos de datos', empresasObjetivo: 'Fintechs y empresas de pagos con equipos de datos consolidados', booleanSourcing: 'Data Architect, Kafka, Spark, Data Mesh, Streaming', redFlagsSourcing: 'Sin experiencia en procesamiento distribuido ni arquitecturas de streaming', notasCliente: '', bandas: [{ nivel: 'Único', min: 14500, max: 16500 }] }, practica: 'Datos & Analytics', especialidad: 'Arquitectura de Datos', subEspecialidad: 'Data Mesh' },
-  { id: 8, clienteId: 2, titulo: 'Fullstack .Net', cliente: 'Laive', seniority: 'Mid', estado: 'Cerrada - Éxito', priority: 'Medium', clientDeadline: '2026-02-20', intakeDate: '2026-01-10', modalidad: 'Remoto', fechaCierre: '2026-02-14', engagementModel: 'Staffing', recruiter: 'Marco Solari', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive buscó un Fullstack Developer .NET/React Mid para el e-commerce interno de la compañía, con foco en performance y experiencia de usuario. Posición cerrada con éxito.', skillsMustHave: ['.NET', 'React'], skillsNiceToHave: ['SQL Server'], anosExperiencia: '4+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 6000, max: 7000 }] }, practica: 'Ingeniería de Software', especialidad: 'Fullstack', subEspecialidad: '.NET + React' },
-  { id: 9, clienteId: 3, titulo: 'Business Analyst', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-08-18', intakeDate: '2026-07-01', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiter: 'Ana Ruiz', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un Business Analyst Mid para levantar requerimientos y dar seguimiento a los proyectos de digitalización del área comercial. Trabajará con reportes en Power BI y consultas SQL para sustentar las decisiones de negocio.', skillsMustHave: ['SQL', 'Power BI'], skillsNiceToHave: [], anosExperiencia: '3+ años', headcount: 1, industriaDeseable: 'Seguros o servicios financieros', empresasObjetivo: 'Aseguradoras y consultoras de negocio', booleanSourcing: 'Business Analyst, SQL, Power BI, Requerimientos', redFlagsSourcing: 'Solo experiencia funcional sin manejo de datos/SQL', notasCliente: '', bandas: [{ nivel: 'Único', min: 5500, max: 6500 }] }, practica: 'Negocio & Operaciones', especialidad: 'Business Analysis', subEspecialidad: 'BI/Reporting' },
-  { id: 10, clienteId: 3, titulo: 'Tech Lead (PS)', cliente: 'Protecta Security', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-09-10', intakeDate: '2026-07-15', modalidad: 'Remoto', engagementModel: 'Staffing', recruiter: 'Marco Solari', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un Tech Lead Senior para liderar técnicamente la modernización de su core de seguros sobre .NET. Guiará a un equipo de desarrolladores, definirá decisiones de arquitectura y asegurará la calidad técnica de las entregas.', skillsMustHave: ['.NET', 'Arquitectura'], skillsNiceToHave: ['AWS'], anosExperiencia: '10+ años', headcount: 1, industriaDeseable: 'Seguros, con experiencia modernizando sistemas legacy', empresasObjetivo: 'Aseguradoras y consultoras .NET', booleanSourcing: 'Tech Lead, .NET, Arquitectura, Modernización', redFlagsSourcing: 'Sin experiencia liderando equipos técnicos', notasCliente: '', bandas: [{ nivel: 'Único', min: 15000, max: 17000 }] }, practica: 'Ingeniería de Software', especialidad: 'Arquitectura de Software', subEspecialidad: 'Modernización de sistemas' },
-  { id: 11, clienteId: 4, titulo: 'Product Owner', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-20', intakeDate: '2026-07-08', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiter: 'Marco Solari', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Product Owner Senior para llevar el roadmap de uno de sus productos de pagos digitales. Priorizará el backlog junto a stakeholders de negocio y tecnología, con foco en impacto medible sobre la experiencia del comercio afiliado.', skillsMustHave: ['Agile', 'Roadmapping'], skillsNiceToHave: ['Fintech'], anosExperiencia: '7+ años', headcount: 1, industriaDeseable: 'Fintech / pagos digitales', empresasObjetivo: 'Fintechs y empresas de producto B2C', booleanSourcing: 'Product Owner, Agile, Roadmapping, Fintech', redFlagsSourcing: 'Sin experiencia real definiendo roadmap, solo ejecutando backlog de otros', notasCliente: '', bandas: [{ nivel: 'Único', min: 11500, max: 13500 }] }, practica: 'Producto & Diseño', especialidad: 'Product Management', subEspecialidad: 'Fintech/B2C' },
-  { id: 12, clienteId: 3, titulo: 'IT Ops Analyst', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-06-20', modalidad: 'Remoto', engagementModel: 'Staffing', recruiter: 'Ana Ruiz', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un IT Ops Analyst Mid para dar soporte a la operación de sistemas internos bajo procesos ITIL. Atenderá incidentes, dará seguimiento a solicitudes y contribuirá a la mejora continua de los procesos de TI.', skillsMustHave: ['ITIL', 'SQL'], skillsNiceToHave: [], anosExperiencia: '2-4 años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 5000, max: 6500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Soporte & Operaciones IT', subEspecialidad: 'ITIL' },
-  { id: 13, clienteId: 1, titulo: 'Sr. Program Manager', cliente: 'Interbank', seniority: 'Senior', estado: 'Cerrada - Éxito', priority: 'High', clientDeadline: '2026-07-30', intakeDate: '2026-06-05', modalidad: 'Híbrido', fechaCierre: '2026-07-22', engagementModel: 'Recruiting', recruiter: 'Marco Solari', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank busca un Program Manager Senior para coordinar un programa de proyectos simultáneos de modernización de canales digitales. Gestionará dependencias entre equipos, riesgos y reporte ejecutivo bajo metodología ágil.', skillsMustHave: ['PMO', 'Agile'], skillsNiceToHave: [], anosExperiencia: '10+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 16000, max: 18000 }] }, practica: 'Gestión de Proyectos & Delivery', especialidad: 'Program/Project Management', subEspecialidad: 'PMO' },
-  { id: 14, clienteId: 4, titulo: 'Delivery Manager', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-05', intakeDate: '2026-07-22', modalidad: 'Remoto', engagementModel: 'Staffing', recruiter: 'Ana Ruiz', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Delivery Manager Senior para asegurar la previsibilidad de entregas de varios squads en simultáneo. Coordinará ceremonias ágiles, gestionará riesgos de delivery y será el punto de contacto con stakeholders de negocio.', skillsMustHave: ['Delivery', 'Scrum'], skillsNiceToHave: [], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Fintech / pagos digitales, con equipos distribuidos', empresasObjetivo: 'Fintechs con delivery multi-squad', booleanSourcing: 'Delivery Manager, Scrum, Multi-squad, Agile', redFlagsSourcing: 'Sin experiencia coordinando más de un squad a la vez', notasCliente: '', bandas: [{ nivel: 'Único', min: 14000, max: 16000 }] }, practica: 'Gestión de Proyectos & Delivery', especialidad: 'Delivery Management', subEspecialidad: 'Multi-squad' },
-  { id: 15, clienteId: 3, titulo: 'DevOps Engineer .Net', cliente: 'Protecta Security', seniority: 'Mid', estado: 'On hold', priority: 'Medium', clientDeadline: null, intakeDate: '2026-02-01', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiter: 'Marco Solari', accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un DevOps Engineer Mid para apoyar la migración de un equipo pequeño de VMs a contenedores en Azure. Posición actualmente en pausa por priorización interna del cliente.', skillsMustHave: ['.NET', 'Azure'], skillsNiceToHave: [], anosExperiencia: '3+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 7500, max: 8500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'Azure/GCP' },
-  { id: 16, clienteId: 4, titulo: 'Cloud Security Engineer', cliente: 'Niubiz', seniority: 'Senior', estado: 'Pending kickoff', priority: 'Medium', clientDeadline: null, intakeDate: '2026-08-10', modalidad: 'Remoto', engagementModel: 'Recruiting', recruiter: null, accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'borrador', skillsMustHave: [], skillsNiceToHave: [], anosExperiencia: '', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'AWS' },
-  { id: 17, clienteId: 1, titulo: 'Site Reliability Engineer', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'Low', clientDeadline: '2026-10-01', intakeDate: '2026-08-05', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiter: 'Ana Ruiz', accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank busca un Site Reliability Engineer Senior para fortalecer la observabilidad y confiabilidad de sus plataformas críticas. Definirá SLOs, mejorará la instrumentación de servicios en Kubernetes y participará en la reducción de tiempos de respuesta ante incidentes.', skillsMustHave: ['SRE', 'Observability', 'Kubernetes'], skillsNiceToHave: ['AWS'], anosExperiencia: '6+ años', headcount: 1, industriaDeseable: 'Banca, con foco en plataformas críticas de alta disponibilidad', empresasObjetivo: 'Bancos y fintechs con prácticas de SRE/observabilidad maduras', booleanSourcing: 'SRE, Site Reliability, Observability, Kubernetes, SLOs', redFlagsSourcing: 'Solo experiencia reactiva ante incidentes, sin definir SLOs ni métricas de confiabilidad', notasCliente: '', bandas: [{ nivel: 'Único', min: 13500, max: 15500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'SRE & Observabilidad', subEspecialidad: 'Confiabilidad' },
+  { id: 1, clienteId: 1, titulo: 'Arquitecto Cloud', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-15', intakeDate: '2026-07-10', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiters: ['Ana Ruiz'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Buscamos un Arquitecto Cloud Senior para liderar el diseño de la infraestructura de microservicios de Interbank sobre AWS. Definirá estándares de arquitectura, guiará la migración de cargas críticas y trabajará de la mano con los equipos de plataforma y seguridad para asegurar escalabilidad y cumplimiento normativo del sector financiero.', skillsMustHave: ['AWS', 'Arquitectura de microservicios', 'Terraform'], skillsNiceToHave: ['Kubernetes', 'Certificación AWS'], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Banca o servicios financieros, con experiencia en entornos regulados', empresasObjetivo: 'Bancos locales y regionales, consultoras cloud con práctica AWS', booleanSourcing: 'Cloud Architect, AWS, Terraform, Microservicios, Arquitectura', redFlagsSourcing: 'Solo experiencia on-premise sin migración real a cloud; sin certificaciones ni proyectos de arquitectura liderados', notasCliente: '', bandas: [{ nivel: 'Nivel III', min: 10000, max: 12500 }, { nivel: 'Nivel II', min: 13000, max: 15500 }] }, practica: 'Ingeniería de Software', especialidad: 'Arquitectura de Software', subEspecialidad: 'Microservicios' },
+  { id: 2, clienteId: 2, titulo: 'Data Engineer', cliente: 'Laive', seniority: 'Mid', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-07-20', modalidad: 'Remoto', engagementModel: 'Staffing', recruiters: ['Marco Solari', 'Camila Torres'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive busca un Data Engineer Mid para construir y mantener pipelines de datos que alimentan los reportes comerciales y de producción. Trabajará bajo la modalidad de staffing, integrado al equipo de datos del cliente, con foco en calidad y disponibilidad de la información.', skillsMustHave: ['Python', 'SQL', 'Airflow'], skillsNiceToHave: ['Databricks', 'AWS'], anosExperiencia: '3-5 años', headcount: 2, industriaDeseable: 'Retail o consumo masivo, con foco en datos comerciales y de producción', empresasObjetivo: 'Empresas de consumo masivo y retail con áreas de datos maduras, consultoras con práctica de data', booleanSourcing: 'Data Engineer, Ingeniero de Datos, ETL Developer, SQL, Python, Pipeline, Airflow, Data Warehouse', redFlagsSourcing: 'Solo experiencia en BI/reporting sin construcción de pipelines; SQL a nivel usuario, no de optimización; nunca trabajó con múltiples fuentes ni cloud', notasCliente: 'Perfil "buen soldado", que quiera dar la milla extra. Autonomía y disciplina de documentación son clave.', bandas: [{ nivel: 'Único', min: 7500, max: 9000 }] }, practica: 'Datos & Analytics', especialidad: 'Data Engineering', subEspecialidad: 'Batch/ETL' },
+  { id: 3, clienteId: 3, titulo: 'Product Designer Mid', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Cerrada - Éxito', priority: 'Medium', clientDeadline: '2026-05-01', intakeDate: '2026-03-15', modalidad: 'Híbrido', fechaCierre: '2026-04-28', engagementModel: 'Staffing', recruiters: ['Ana Ruiz'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security buscó un Product Designer Mid para liderar el rediseño de su portal de autoservicio, con foco en research cuantitativo y adopción del Design System interno. Posición cerrada con éxito tras el proceso de selección.', skillsMustHave: ['Figma', 'Design Systems'], skillsNiceToHave: ['Research cuantitativo'], anosExperiencia: '4+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 6500, max: 7500 }] }, practica: 'Producto & Diseño', especialidad: 'Diseño de Producto', subEspecialidad: 'Design Systems' },
+  { id: 4, clienteId: 1, titulo: 'DevOps Engineer', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-05', intakeDate: '2026-06-01', modalidad: 'Remoto', engagementModel: 'Recruiting', recruiters: ['Marco Solari'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank necesita un DevOps Engineer Senior para fortalecer su práctica de CI/CD y contenedores en un entorno bancario de alta disponibilidad. Responsable de automatizar despliegues, mejorar tiempos de entrega y acompañar a los squads en la adopción de buenas prácticas de infraestructura como código.', skillsMustHave: ['Kubernetes', 'Terraform', 'CI/CD'], skillsNiceToHave: ['AWS'], anosExperiencia: '7+ años', headcount: 1, industriaDeseable: 'Banca, con foco en infraestructura de alta disponibilidad', empresasObjetivo: 'Bancos y fintechs con prácticas DevOps maduras', booleanSourcing: 'DevOps Engineer, Kubernetes, Terraform, CI/CD, Infraestructura como código', redFlagsSourcing: 'Solo experiencia en soporte, sin haber automatizado despliegues de punta a punta', notasCliente: '', bandas: [{ nivel: 'Único', min: 13000, max: 15000 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'AWS' },
+  { id: 5, clienteId: 4, titulo: 'QA Lead', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-01', intakeDate: '2026-07-25', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiters: ['Ana Ruiz'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un QA Lead Senior para liderar la estrategia de automatización de pruebas de su plataforma de pagos. Definirá el plan de test strategy, coordinará con desarrollo para elevar la cobertura automatizada y velará por la calidad de los releases en producción.', skillsMustHave: ['Automation', 'Test Strategy'], skillsNiceToHave: ['Cypress'], anosExperiencia: '6+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 9000, max: 10500 }] }, practica: 'Calidad (QA)', especialidad: 'QA Automation', subEspecialidad: 'Web/API' },
+  { id: 6, clienteId: 2, titulo: 'Backend Ssr.', cliente: 'Laive', seniority: 'Junior', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-07-28', modalidad: 'Remoto', engagementModel: 'Staffing', recruiters: ['Marco Solari', 'Camila Torres'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive busca un Backend Developer Junior/Semi-Senior para sumarse al equipo que mantiene los servicios internos de e-commerce. Buena oportunidad para crecer trabajando con Node.js y PostgreSQL bajo la guía de un equipo backend consolidado.', skillsMustHave: ['Node.js', 'PostgreSQL'], skillsNiceToHave: [], anosExperiencia: '1-2 años', headcount: 2, industriaDeseable: 'Retail o consumo masivo', empresasObjetivo: 'Consultoras de desarrollo, software factories, empresas de consumo masivo', booleanSourcing: 'Backend Developer, Node.js, PostgreSQL, Junior, Semi Senior', redFlagsSourcing: 'Sin proyectos backend reales, solo bootcamps sin experiencia laboral', notasCliente: '', bandas: [{ nivel: 'Único', min: 4000, max: 5000 }] }, practica: 'Ingeniería de Software', especialidad: 'Backend', subEspecialidad: 'Node.js/Python' },
+  { id: 7, clienteId: 4, titulo: 'Arquitecto de Datos', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-30', intakeDate: '2026-07-05', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiters: ['Ana Ruiz', 'Camila Torres'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Arquitecto de Datos Senior para diseñar la arquitectura de streaming y analítica que soporta su plataforma de pagos. Definirá el modelo de datos, los estándares de integración vía Kafka/Spark y acompañará a los equipos de producto en la explotación de datos en tiempo real.', skillsMustHave: ['Java', 'Kafka', 'Spark'], skillsNiceToHave: ['AWS'], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Fintech o pagos digitales, con volúmenes altos de datos', empresasObjetivo: 'Fintechs y empresas de pagos con equipos de datos consolidados', booleanSourcing: 'Data Architect, Kafka, Spark, Data Mesh, Streaming', redFlagsSourcing: 'Sin experiencia en procesamiento distribuido ni arquitecturas de streaming', notasCliente: '', bandas: [{ nivel: 'Único', min: 14500, max: 16500 }] }, practica: 'Datos & Analytics', especialidad: 'Arquitectura de Datos', subEspecialidad: 'Data Mesh' },
+  { id: 8, clienteId: 2, titulo: 'Fullstack .Net', cliente: 'Laive', seniority: 'Mid', estado: 'Cerrada - Éxito', priority: 'Medium', clientDeadline: '2026-02-20', intakeDate: '2026-01-10', modalidad: 'Remoto', fechaCierre: '2026-02-14', engagementModel: 'Staffing', recruiters: ['Marco Solari'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Laive buscó un Fullstack Developer .NET/React Mid para el e-commerce interno de la compañía, con foco en performance y experiencia de usuario. Posición cerrada con éxito.', skillsMustHave: ['.NET', 'React'], skillsNiceToHave: ['SQL Server'], anosExperiencia: '4+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 6000, max: 7000 }] }, practica: 'Ingeniería de Software', especialidad: 'Fullstack', subEspecialidad: '.NET + React' },
+  { id: 9, clienteId: 3, titulo: 'Business Analyst', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-08-18', intakeDate: '2026-07-01', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiters: ['Ana Ruiz'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un Business Analyst Mid para levantar requerimientos y dar seguimiento a los proyectos de digitalización del área comercial. Trabajará con reportes en Power BI y consultas SQL para sustentar las decisiones de negocio.', skillsMustHave: ['SQL', 'Power BI'], skillsNiceToHave: [], anosExperiencia: '3+ años', headcount: 1, industriaDeseable: 'Seguros o servicios financieros', empresasObjetivo: 'Aseguradoras y consultoras de negocio', booleanSourcing: 'Business Analyst, SQL, Power BI, Requerimientos', redFlagsSourcing: 'Solo experiencia funcional sin manejo de datos/SQL', notasCliente: '', bandas: [{ nivel: 'Único', min: 5500, max: 6500 }] }, practica: 'Negocio & Operaciones', especialidad: 'Business Analysis', subEspecialidad: 'BI/Reporting' },
+  { id: 10, clienteId: 3, titulo: 'Tech Lead (PS)', cliente: 'Protecta Security', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-09-10', intakeDate: '2026-07-15', modalidad: 'Remoto', engagementModel: 'Staffing', recruiters: ['Marco Solari'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un Tech Lead Senior para liderar técnicamente la modernización de su core de seguros sobre .NET. Guiará a un equipo de desarrolladores, definirá decisiones de arquitectura y asegurará la calidad técnica de las entregas.', skillsMustHave: ['.NET', 'Arquitectura'], skillsNiceToHave: ['AWS'], anosExperiencia: '10+ años', headcount: 1, industriaDeseable: 'Seguros, con experiencia modernizando sistemas legacy', empresasObjetivo: 'Aseguradoras y consultoras .NET', booleanSourcing: 'Tech Lead, .NET, Arquitectura, Modernización', redFlagsSourcing: 'Sin experiencia liderando equipos técnicos', notasCliente: '', bandas: [{ nivel: 'Único', min: 15000, max: 17000 }] }, practica: 'Ingeniería de Software', especialidad: 'Arquitectura de Software', subEspecialidad: 'Modernización de sistemas' },
+  { id: 11, clienteId: 4, titulo: 'Product Owner', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'High', clientDeadline: '2026-08-20', intakeDate: '2026-07-08', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiters: ['Marco Solari'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Product Owner Senior para llevar el roadmap de uno de sus productos de pagos digitales. Priorizará el backlog junto a stakeholders de negocio y tecnología, con foco en impacto medible sobre la experiencia del comercio afiliado.', skillsMustHave: ['Agile', 'Roadmapping'], skillsNiceToHave: ['Fintech'], anosExperiencia: '7+ años', headcount: 1, industriaDeseable: 'Fintech / pagos digitales', empresasObjetivo: 'Fintechs y empresas de producto B2C', booleanSourcing: 'Product Owner, Agile, Roadmapping, Fintech', redFlagsSourcing: 'Sin experiencia real definiendo roadmap, solo ejecutando backlog de otros', notasCliente: '', bandas: [{ nivel: 'Único', min: 11500, max: 13500 }] }, practica: 'Producto & Diseño', especialidad: 'Product Management', subEspecialidad: 'Fintech/B2C' },
+  { id: 12, clienteId: 3, titulo: 'IT Ops Analyst', cliente: 'Protecta Security', seniority: 'Mid', estado: 'Abierta', priority: 'Low', clientDeadline: null, intakeDate: '2026-06-20', modalidad: 'Remoto', engagementModel: 'Staffing', recruiters: ['Ana Ruiz'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un IT Ops Analyst Mid para dar soporte a la operación de sistemas internos bajo procesos ITIL. Atenderá incidentes, dará seguimiento a solicitudes y contribuirá a la mejora continua de los procesos de TI.', skillsMustHave: ['ITIL', 'SQL'], skillsNiceToHave: [], anosExperiencia: '2-4 años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 5000, max: 6500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Soporte & Operaciones IT', subEspecialidad: 'ITIL' },
+  { id: 13, clienteId: 1, titulo: 'Sr. Program Manager', cliente: 'Interbank', seniority: 'Senior', estado: 'Cerrada - Éxito', priority: 'High', clientDeadline: '2026-07-30', intakeDate: '2026-06-05', modalidad: 'Híbrido', fechaCierre: '2026-07-22', engagementModel: 'Recruiting', recruiters: ['Marco Solari'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank busca un Program Manager Senior para coordinar un programa de proyectos simultáneos de modernización de canales digitales. Gestionará dependencias entre equipos, riesgos y reporte ejecutivo bajo metodología ágil.', skillsMustHave: ['PMO', 'Agile'], skillsNiceToHave: [], anosExperiencia: '10+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 16000, max: 18000 }] }, practica: 'Gestión de Proyectos & Delivery', especialidad: 'Program/Project Management', subEspecialidad: 'PMO' },
+  { id: 14, clienteId: 4, titulo: 'Delivery Manager', cliente: 'Niubiz', seniority: 'Senior', estado: 'Abierta', priority: 'Medium', clientDeadline: '2026-09-05', intakeDate: '2026-07-22', modalidad: 'Remoto', engagementModel: 'Staffing', recruiters: ['Ana Ruiz'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Niubiz busca un Delivery Manager Senior para asegurar la previsibilidad de entregas de varios squads en simultáneo. Coordinará ceremonias ágiles, gestionará riesgos de delivery y será el punto de contacto con stakeholders de negocio.', skillsMustHave: ['Delivery', 'Scrum'], skillsNiceToHave: [], anosExperiencia: '8+ años', headcount: 1, industriaDeseable: 'Fintech / pagos digitales, con equipos distribuidos', empresasObjetivo: 'Fintechs con delivery multi-squad', booleanSourcing: 'Delivery Manager, Scrum, Multi-squad, Agile', redFlagsSourcing: 'Sin experiencia coordinando más de un squad a la vez', notasCliente: '', bandas: [{ nivel: 'Único', min: 14000, max: 16000 }] }, practica: 'Gestión de Proyectos & Delivery', especialidad: 'Delivery Management', subEspecialidad: 'Multi-squad' },
+  { id: 15, clienteId: 3, titulo: 'DevOps Engineer .Net', cliente: 'Protecta Security', seniority: 'Mid', estado: 'On hold', priority: 'Medium', clientDeadline: null, intakeDate: '2026-02-01', modalidad: 'Híbrido', engagementModel: 'Staffing', recruiters: ['Marco Solari'], accountManager: 'Lucía Bravo', jd: { estadoAprobacion: 'aprobado', descripcion: 'Protecta Security busca un DevOps Engineer Mid para apoyar la migración de un equipo pequeño de VMs a contenedores en Azure. Posición actualmente en pausa por priorización interna del cliente.', skillsMustHave: ['.NET', 'Azure'], skillsNiceToHave: [], anosExperiencia: '3+ años', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [{ nivel: 'Único', min: 7500, max: 8500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'Azure/GCP' },
+  { id: 16, clienteId: 4, titulo: 'Cloud Security Engineer', cliente: 'Niubiz', seniority: 'Senior', estado: 'Pending kickoff', priority: 'Medium', clientDeadline: null, intakeDate: '2026-08-10', modalidad: 'Remoto', engagementModel: 'Recruiting', recruiters: [], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'borrador', skillsMustHave: [], skillsNiceToHave: [], anosExperiencia: '', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '', bandas: [] }, practica: 'Infraestructura & Cloud', especialidad: 'Cloud & DevOps', subEspecialidad: 'AWS' },
+  { id: 17, clienteId: 1, titulo: 'Site Reliability Engineer', cliente: 'Interbank', seniority: 'Senior', estado: 'Abierta', priority: 'Low', clientDeadline: '2026-10-01', intakeDate: '2026-08-05', modalidad: 'Híbrido', engagementModel: 'Recruiting', recruiters: ['Ana Ruiz'], accountManager: 'Renzo Ibáñez', jd: { estadoAprobacion: 'aprobado', descripcion: 'Interbank busca un Site Reliability Engineer Senior para fortalecer la observabilidad y confiabilidad de sus plataformas críticas. Definirá SLOs, mejorará la instrumentación de servicios en Kubernetes y participará en la reducción de tiempos de respuesta ante incidentes.', skillsMustHave: ['SRE', 'Observability', 'Kubernetes'], skillsNiceToHave: ['AWS'], anosExperiencia: '6+ años', headcount: 1, industriaDeseable: 'Banca, con foco en plataformas críticas de alta disponibilidad', empresasObjetivo: 'Bancos y fintechs con prácticas de SRE/observabilidad maduras', booleanSourcing: 'SRE, Site Reliability, Observability, Kubernetes, SLOs', redFlagsSourcing: 'Solo experiencia reactiva ante incidentes, sin definir SLOs ni métricas de confiabilidad', notasCliente: '', bandas: [{ nivel: 'Único', min: 13500, max: 15500 }] }, practica: 'Infraestructura & Cloud', especialidad: 'SRE & Observabilidad', subEspecialidad: 'Confiabilidad' },
 ];
 
 /* Matchmaking (CV vs. JD) queda calculado desde que existe la postulación
@@ -1313,7 +1316,7 @@ const ESTADOS_VACANTE_OPCIONES = ['Pending kickoff', 'Abierta', 'On hold', 'Cerr
    preferida en CANDIDATOS, un dato distinto: la de acá es la que ofrece
    la posición en sí). Solo 2 valores por ahora (no Presencial). */
 const MODALIDAD_VACANTE_OPCIONES = ['Híbrido', 'Remoto'];
-const RECRUITERS_DISPONIBLES = ['Ana Ruiz', 'Marco Solari'];
+const RECRUITERS_DISPONIBLES = ['Ana Ruiz', 'Marco Solari', 'Camila Torres'];
 const TD_ESTADOS_OPCIONES = ['En proceso', 'Colocado', 'Disponible', 'No interesado', 'Blacklisted'];
 const TD_ORIGENES_OPCIONES = ['Inbound', 'Referido', 'Outbound', 'Base de datos'];
 const TD_SENIORITY_OPCIONES = ['Junior', 'Mid', 'Senior'];
@@ -2050,6 +2053,26 @@ function renderTagInput(path, items, placeholder) {
 function addBanda(path) { const { obj, key } = resolvePath(path); obj[key].push({ nivel: '', min: 0, max: 0 }); render(); }
 function removeBanda(path, i) { const { obj, key } = resolvePath(path); obj[key].splice(i, 1); render(); }
 function updateBandaField(path, i, field, value) { const { obj, key } = resolvePath(path); obj[key][i][field] = field === 'nivel' ? value : Number(value); }
+/* Toggle genérico sobre un array de state (agrega si no está, quita si ya
+   está) -- usado por el checklist de Recruiters asignados en el
+   formulario de edición y el wizard (una vacante puede tener más de uno
+   co-asignado, ver RECRUITERS_DISPONIBLES). */
+function toggleArrayField(path, value) {
+  const { obj, key } = resolvePath(path);
+  const arr = obj[key];
+  const idx = arr.indexOf(value);
+  if (idx >= 0) arr.splice(idx, 1); else arr.push(value);
+  render();
+}
+function renderRecruitersCheckboxes(path, seleccionados) {
+  return `<div class="rb-td-checkbox-list" style="max-height:none">
+    ${RECRUITERS_DISPONIBLES.map(r => `
+      <label class="rb-td-checkbox-row">
+        <input type="checkbox" ${seleccionados.includes(r) ? 'checked' : ''} onchange="toggleArrayField('${path}', ${esc(JSON.stringify(r))})" />
+        <span class="txt">${esc(r)}</span>
+      </label>`).join('')}
+  </div>`;
+}
 
 /* =========================================================================
    VISTA: DASHBOARD
@@ -2227,8 +2250,11 @@ function renderDashboard() {
 
   /* ---- Carga por recruiter: cuantas postulaciones activas tiene cada uno.
      Metrica que propongo para el equipo -- ayuda a rebalancear antes de
-     que alguien quede sobrecargado mientras otro recruiter tiene aire. ---- */
-  const cargaPorRecruiter = RECRUITERS_DISPONIBLES.map(r => ({ r, n: enProceso.filter(p => recruiterDePostulacion(p) === r).length }));
+     que alguien quede sobrecargado mientras otro recruiter tiene aire.
+     Una vacante puede tener más de un recruiter co-asignado -- cuenta
+     como carga completa para cada uno (no se reparte entre ambos), ya
+     que ambos están efectivamente dando seguimiento al mismo pipeline. ---- */
+  const cargaPorRecruiter = RECRUITERS_DISPONIBLES.map(r => ({ r, n: enProceso.filter(p => recruitersDePostulacion(p).includes(r)).length }));
   const maxCarga = Math.max(1, ...cargaPorRecruiter.map(x => x.n));
   /* Ramp secuencial de un solo hue (azul) segun carga relativa -- es
      magnitud, no categoria, asi que la codificacion correcta es
@@ -2392,7 +2418,7 @@ function engagementBreakdownCliente(clienteId) {
 /* Recruiters con vacantes abiertas en este cliente (derivado, no un campo
    del cliente -- el recruiter se asigna a nivel de posición). */
 function recruitersDeCliente(clienteId) {
-  return [...new Set(abiertasDeCliente(clienteId).map(v => v.recruiter).filter(Boolean))];
+  return [...new Set(abiertasDeCliente(clienteId).flatMap(v => v.recruiters))];
 }
 const TIER_COLOR = { 1: 'var(--purple-text)', 2: 'var(--blue-300-text)', 3: 'var(--text-muted)' };
 function tierBadge(tier) {
@@ -2944,7 +2970,7 @@ function renderVacanteDrawerBody() {
           <div class="rb-detail-row"><span>Hiring Manager</span><span>${hm ? esc(hm.nombre) + ' · ' + esc(hm.cargo) : 'Sin asignar'}</span></div>
           <div class="rb-detail-row"><span>Headcount</span><span>${hcProgreso.headcount} ${hcProgreso.headcount === 1 ? 'posición' : 'posiciones'}${hcProgreso.cubiertas > 0 ? ` · ${hcProgreso.cubiertas} de ${hcProgreso.headcount} cubierta${hcProgreso.headcount === 1 ? '' : 's'}` : ''}</span></div>
           <h3 class="rb-subsection-label">Asignación y fechas</h3>
-          <div class="rb-detail-row"><span>Recruiter asignado</span><span>${esc(v.recruiter || 'Sin asignar')}</span></div>
+          <div class="rb-detail-row"><span>Recruiters asignados</span><span>${v.recruiters.length ? esc(v.recruiters.join(', ')) : 'Sin asignar'}</span></div>
           <div class="rb-detail-row"><span>Account Manager</span><span>${esc(v.accountManager)}</span></div>
           <div class="rb-detail-row"><span>Intake Date</span><span>${esc(formatFecha(v.intakeDate))}</span></div>
           <div class="rb-detail-row"><span>Client Deadline</span><span style="color:${dl.color}">${v.clientDeadline ? esc(dl.label ? formatFecha(v.clientDeadline) + ' · ' + dl.label : formatFecha(v.clientDeadline)) : 'Sin deadline'}</span></div>
@@ -2974,7 +3000,7 @@ function startEditVacante(id) {
   const v = VACANTES.find(x => x.id === id);
   state.editForm = {
     titulo: v.titulo, clienteId: v.clienteId, seniority: v.seniority, estado: v.estado,
-    engagementModel: v.engagementModel, modalidad: v.modalidad, priority: v.priority, recruiter: v.recruiter || '',
+    engagementModel: v.engagementModel, modalidad: v.modalidad, priority: v.priority, recruiters: [...v.recruiters],
     accountManager: v.accountManager || '', clientDeadline: v.clientDeadline || '', intakeDate: v.intakeDate || '',
     anosExperiencia: v.jd.anosExperiencia || '', descripcion: v.jd.descripcion || '', skillsMustHave: [...v.jd.skillsMustHave],
     skillsNiceToHave: [...v.jd.skillsNiceToHave],
@@ -2997,7 +3023,7 @@ function guardarEdicionVacante() {
     clienteId: ef.clienteId, cliente: clienteObj ? clienteObj.nombre : v.cliente,
     titulo: ef.titulo, seniority: ef.seniority, estado: ef.estado, priority: ef.priority,
     clientDeadline: ef.clientDeadline || null, intakeDate: ef.intakeDate || v.intakeDate, engagementModel: ef.engagementModel,
-    modalidad: ef.modalidad, recruiter: ef.recruiter || null, accountManager: ef.accountManager || null,
+    modalidad: ef.modalidad, recruiters: ef.recruiters, accountManager: ef.accountManager || null,
     jd: {
       estadoAprobacion: ef.jdAprobada ? 'aprobado' : 'borrador', descripcion: ef.descripcion, skillsMustHave: ef.skillsMustHave, skillsNiceToHave: ef.skillsNiceToHave, anosExperiencia: ef.anosExperiencia, bandas: ef.bandas.filter(b => b.min > 0 || b.max > 0),
       headcount: parseInt(ef.headcount, 10) || 1, industriaDeseable: ef.industriaDeseable, empresasObjetivo: ef.empresasObjetivo,
@@ -3040,8 +3066,8 @@ function renderEditVacanteForm(v) {
         ${renderSelect('ef-subespecialidad', subEspecialidadesDe(ef.practica, ef.especialidad).map(s => ({ value: s, label: s })), ef.subEspecialidad, 'Sub-especialidad', 'state.editForm.subEspecialidad=value; render();', null, null, true)}
       </div>
       <div class="card rb-detail-section"><h3>Asignación y fechas</h3>
-        <label class="rb-wizard-label" for="ef-recruiter">Recruiter asignado</label>
-        ${renderSelect('ef-recruiter', [{ value: '', label: 'Sin asignar' }, ...RECRUITERS_DISPONIBLES.map(r => ({ value: r, label: r }))], ef.recruiter, 'Sin asignar', 'state.editForm.recruiter=value; render();', null, null, true)}
+        <label class="rb-wizard-label">Recruiters asignados</label>
+        ${renderRecruitersCheckboxes('editForm.recruiters', ef.recruiters)}
         <label class="rb-wizard-label" for="ef-am">Account Manager</label>
         ${renderSelect('ef-am', [{ value: '', label: 'Sin asignar' }, ...AMS_DISPONIBLES.map(r => ({ value: r, label: r }))], ef.accountManager, 'Sin asignar', 'state.editForm.accountManager=value; render();', null, null, true)}
         <label class="rb-wizard-label">Intake Date</label>
@@ -3143,7 +3169,7 @@ function sintetizarWizard(origen) {
         practica: '', especialidad: '', subEspecialidad: '',
       };
     }
-    w.draft = Object.assign(borrador, { engagementModel: 'Staffing', modalidad: 'Híbrido', priority: 'Medium', recruiter: '', accountManager: '', clientDeadline: '', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '' });
+    w.draft = Object.assign(borrador, { engagementModel: 'Staffing', modalidad: 'Híbrido', priority: 'Medium', recruiters: [], accountManager: '', clientDeadline: '', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '' });
     w.step = 'revisar';
     render();
   }, 1300);
@@ -3174,7 +3200,7 @@ function finalizarWizard(aprobar) {
     cliente: clienteObj ? clienteObj.nombre : 'Sin cliente', seniority: w.seniority,
     estado: aprobar ? 'Abierta' : 'Pending kickoff', priority: w.priority,
     clientDeadline: w.clientDeadline || null, intakeDate: new Date().toISOString().slice(0, 10),
-    engagementModel: w.engagementModel, modalidad: w.modalidad || 'Híbrido', recruiter: w.recruiter || null, accountManager: w.accountManager || null,
+    engagementModel: w.engagementModel, modalidad: w.modalidad || 'Híbrido', recruiters: w.recruiters || [], accountManager: w.accountManager || null,
     jd: {
       estadoAprobacion: aprobar ? 'aprobado' : 'borrador', descripcion: w.descripcion || '', skillsMustHave: w.skillsMustHave, skillsNiceToHave: w.skillsNiceToHave, anosExperiencia: w.anosExperiencia, bandas: w.bandas.filter(b => b.min > 0 || b.max > 0),
       headcount: parseInt(w.headcount, 10) || 1, industriaDeseable: w.industriaDeseable || '', empresasObjetivo: w.empresasObjetivo || '',
@@ -3283,8 +3309,8 @@ function renderWizardStep(w) {
         ${renderSelect('wiz-draft-subespecialidad', subEspecialidadesDe(d.practica, d.especialidad).map(s => ({ value: s, label: s })), d.subEspecialidad, 'Sub-especialidad', 'state.wizard.draft.subEspecialidad=value; render();', null, null, true)}
       </div>
       <div class="card rb-detail-section"><h3>Asignación y fechas</h3>
-        <label class="rb-wizard-label" for="wiz-draft-recruiter">Recruiter asignado</label>
-        ${renderSelect('wiz-draft-recruiter', [{ value: '', label: 'Sin asignar' }, ...RECRUITERS_DISPONIBLES.map(r => ({ value: r, label: r }))], d.recruiter, 'Sin asignar', 'state.wizard.draft.recruiter=value; render();', null, null, true)}
+        <label class="rb-wizard-label">Recruiters asignados</label>
+        ${renderRecruitersCheckboxes('wizard.draft.recruiters', d.recruiters)}
         <label class="rb-wizard-label" for="wiz-draft-am">Account Manager</label>
         ${renderSelect('wiz-draft-am', [{ value: '', label: 'Sin asignar' }, ...AMS_DISPONIBLES.map(r => ({ value: r, label: r }))], d.accountManager, 'Sin asignar', 'state.wizard.draft.accountManager=value; render();', null, null, true)}
         </select>
@@ -3331,8 +3357,8 @@ function renderWizardStep(w) {
     <div class="rb-wizard-footer">
       <button class="btn secondary" onclick="finalizarWizard(false)">Guardar como borrador</button>
       <div style="display:flex;align-items:center;gap:var(--sp-3)">
-        ${(!d.titulo || !d.clienteId || !d.recruiter) ? `<span id="wiz-aprobar-hint" class="rb-hint">Falta ${[!d.titulo && 'título', !d.clienteId && 'cliente', !d.recruiter && 'recruiter'].filter(Boolean).join(', ')} para aprobar.</span>` : ''}
-        <button class="btn" ${(!d.titulo || !d.clienteId || !d.recruiter) ? 'disabled aria-describedby="wiz-aprobar-hint"' : ''} onclick="finalizarWizard(true)">Aprobar y crear Posición</button>
+        ${(!d.titulo || !d.clienteId || !d.recruiters.length) ? `<span id="wiz-aprobar-hint" class="rb-hint">Falta ${[!d.titulo && 'título', !d.clienteId && 'cliente', !d.recruiters.length && 'recruiter'].filter(Boolean).join(', ')} para aprobar.</span>` : ''}
+        <button class="btn" ${(!d.titulo || !d.clienteId || !d.recruiters.length) ? 'disabled aria-describedby="wiz-aprobar-hint"' : ''} onclick="finalizarWizard(true)">Aprobar y crear Posición</button>
       </div>
     </div>`;
 }
@@ -3366,7 +3392,7 @@ function candidatosAgrupados() {
     const key = state.td.vista === 'estado' ? c.estado
       : state.td.vista === 'cliente' ? (c.postulacion ? c.postulacion.cliente : 'Sin cliente')
       : state.td.vista === 'practica' ? c.practica
-      : (c.postulacion ? (recruiterDePostulacion(c.postulacion) || 'Sin recruiter') : 'Sin recruiter');
+      : (c.postulacion ? (recruitersDePostulacion(c.postulacion).join(', ') || 'Sin recruiter') : 'Sin recruiter');
     (grouped[key] = grouped[key] || []).push(c);
   });
   /* Ordenamiento por columna: cada header de la tabla es clicable (toggleSortTd)
@@ -3653,7 +3679,7 @@ function renderCandidatoDetail() {
         <div class="rb-detail-row"><span>Expectativa salarial</span><span>S/ ${c.expectativa.toLocaleString('es-PE')}/mes</span></div>
         ${p ? `<div class="rb-detail-row"><span>% cobertura vs. presupuesto</span><span>${p.porcentajeCobertura}%</span></div>` : ''}
         <div class="rb-detail-row"><span>Idiomas</span><span>${esc(c.idiomas.join(', '))}</span></div>
-        ${c.postulacion ? `<div class="rb-detail-row"><span>Recruiter asignado</span><span>${esc(recruiterDePostulacion(c.postulacion) || 'Sin asignar')}</span></div>` : ''}
+        ${c.postulacion ? `<div class="rb-detail-row"><span>Recruiters asignados</span><span>${esc(recruitersDePostulacion(c.postulacion).join(', ') || 'Sin asignar')}</span></div>` : ''}
       </div>
     </div>
     <div class="rb-detail-grid-3">
@@ -3678,15 +3704,22 @@ function renderCandidatoDetail() {
 /* =========================================================================
    VISTA: PIPELINE (tablero, gates, popover de veredicto, archivo)
    ========================================================================= */
-/* Recruiter: vive a nivel de Vacante, nunca a nivel de Cliente ni de
-   Postulación -- una posición tiene un solo recruiter dueño, y todas sus
+/* Recruiters: viven a nivel de Vacante, nunca a nivel de Cliente ni de
+   Postulación -- una posición puede tener más de un recruiter co-asignado
+   (ver RECRUITERS_DISPONIBLES/commit que lo introdujo), y todas sus
    postulaciones (todos los candidatos de esa vacante) comparten ese mismo
-   recruiter. Por eso se resuelve siempre desde acá, nunca desde un campo
-   propio de la postulación. */
-function recruiterDeVacante(vacanteId) {
+   set. Por eso se resuelve siempre desde acá, nunca desde un campo propio
+   de la postulación. */
+function recruitersDeVacante(vacanteId) {
   const v = VACANTES.find(x => x.id === vacanteId);
-  return (v && v.recruiter) || '';
+  return (v && v.recruiters) || [];
 }
+function recruitersDePostulacion(p) { return recruitersDeVacante(p.vacanteId); }
+/* Recruiter "principal" (el primero de la lista) -- para los pocos
+   lugares donde el mock necesita UNA sola persona a modo narrativo (quién
+   hizo tal llamada, quién envía tal link de agendamiento), no un listado
+   completo de todos los co-asignados. */
+function recruiterDeVacante(vacanteId) { return recruitersDeVacante(vacanteId)[0] || ''; }
 function recruiterDePostulacion(p) { return recruiterDeVacante(p.vacanteId); }
 /* Prioridad: también vive a nivel de Vacante, nunca de Postulación --
    mismo criterio que recruiterDeVacante/recruiterDePostulacion, para
@@ -3735,13 +3768,18 @@ function renderRecruiterFilterFacepile() {
 
 /* Asignación estilo Jira: un avatar clickeable por tarjeta que abre una
    lista corta de recruiters para asignar/reasignar. Reasignar reescribe el
-   recruiter de la VACANTE (no de la tarjeta puntual) -- así todas las
-   demás tarjetas de esa misma vacante en el tablero reflejan el cambio de
-   inmediato, consistente con que el recruiter es una propiedad de la
-   posición. El estado de qué menú está abierto sí es por tarjeta
+   set de recruiters de la VACANTE (no de la tarjeta puntual) -- así todas
+   las demás tarjetas de esa misma vacante en el tablero reflejan el
+   cambio de inmediato, consistente con que el recruiter es una propiedad
+   de la posición. El estado de qué menú está abierto sí es por tarjeta
    (state.pl.assigneeMenuFor guarda el id de la POSTULACIÓN, no de la
    vacante), simplemente para que abrir el picker de una tarjeta no abra
-   también el de otra tarjeta de la misma vacante. */
+   también el de otra tarjeta de la misma vacante.
+   Una vacante puede tener más de un recruiter co-asignado -- cada opción
+   del menú es un toggle (agrega/quita de la lista) en vez de reemplazar,
+   y el menú queda abierto tras marcar/desmarcar para poder elegir más de
+   uno sin reabrirlo; "Sin asignar" sí limpia todo y cierra, como acción
+   terminal. */
 function toggleAssigneeMenu(postulacionId) {
   state.pl.assigneeMenuFor = state.pl.assigneeMenuFor === postulacionId ? null : postulacionId;
   render();
@@ -3749,9 +3787,15 @@ function toggleAssigneeMenu(postulacionId) {
 function asignarRecruiter(vacanteId, recruiter) {
   const v = VACANTES.find(x => x.id === vacanteId);
   if (!v) return;
-  v.recruiter = recruiter || '';
-  state.pl.assigneeMenuFor = null;
-  showToast(recruiter ? `Recruiter de "${v.titulo}" asignado a ${recruiter}` : `Se quitó el recruiter de "${v.titulo}"`);
+  if (!recruiter) {
+    v.recruiters = [];
+    state.pl.assigneeMenuFor = null;
+    showToast(`Se quitó el recruiter de "${v.titulo}"`);
+  } else {
+    const idx = v.recruiters.indexOf(recruiter);
+    if (idx >= 0) { v.recruiters.splice(idx, 1); showToast(`${recruiter} se quitó de "${v.titulo}"`); }
+    else { v.recruiters.push(recruiter); showToast(`${recruiter} se asignó a "${v.titulo}"`); }
+  }
   render();
 }
 /* El picker es un menú FLOTANTE (position:fixed, portal a nivel raíz --
@@ -3763,29 +3807,38 @@ function asignarRecruiter(vacanteId, recruiter) {
    vive afuera, igual que ya resuelve renderDocModal() para el modal de
    documentos. */
 function renderAssigneeTrigger(p) {
-  const recruiter = recruiterDePostulacion(p);
-  const c = recruiter ? tagColor(recruiter) : null;
+  const recruiters = recruitersDePostulacion(p);
+  const title = recruiters.length ? `Recruiter${recruiters.length === 1 ? '' : 's'}: ${recruiters.join(', ')}` : 'Sin recruiter asignado';
+  const avatar = r => { const c = tagColor(r); return `<div class="rb-assignee-avatar" style="background:${c}22;color:${c};box-shadow:inset 0 0 0 1px ${c}55">${esc(initials(r))}</div>`; };
+  /* 2+ co-asignados: stack de avatares superpuestos (mismo idiom que
+     cualquier "avatar group" -- ver .rb-assignee-avatar-stack) en vez de
+     intentar meter 2 sets de iniciales en un solo círculo. El título del
+     botón sí lista a todos, aunque el stack solo muestre los 2 primeros. */
+  const avatarHtml = recruiters.length === 0
+    ? `<div class="rb-assignee-avatar rb-assignee-unassigned">${icon('user', 12)}</div>`
+    : recruiters.length === 1
+      ? avatar(recruiters[0])
+      : `<div class="rb-assignee-avatar-stack">${recruiters.slice(0, 2).map(avatar).join('')}</div>`;
   return `
-    <button id="assignee-trigger-${p.id}" class="rb-assignee-trigger" title="${recruiter ? 'Recruiter: ' + esc(recruiter) : 'Sin recruiter asignado'}" onclick="event.stopPropagation(); toggleAssigneeMenu(${p.id})">
-      ${recruiter
-        ? `<div class="rb-assignee-avatar" style="background:${c}22;color:${c};box-shadow:inset 0 0 0 1px ${c}55">${esc(initials(recruiter))}</div>`
-        : `<div class="rb-assignee-avatar rb-assignee-unassigned">${icon('user', 12)}</div>`}
+    <button id="assignee-trigger-${p.id}" class="rb-assignee-trigger" title="${esc(title)}" onclick="event.stopPropagation(); toggleAssigneeMenu(${p.id})">
+      ${avatarHtml}
     </button>`;
 }
 /* Solo las filas de opciones -- el contenedor flotante en sí lo arma
    renderFloatingMenus(). */
 function renderAssigneeMenuOptions(p) {
-  const recruiter = recruiterDePostulacion(p);
+  const recruiters = recruitersDePostulacion(p);
   const opciones = [{ nombre: '', label: 'Sin asignar' }, ...RECRUITERS_DISPONIBLES.map(r => ({ nombre: r, label: r === 'Ana Ruiz' ? r + ' (asignarme)' : r }))];
   return opciones.map(o => {
     const oc = o.nombre ? tagColor(o.nombre) : null;
+    const seleccionado = o.nombre ? recruiters.includes(o.nombre) : recruiters.length === 0;
     return `
-    <div class="rb-assignee-option ${recruiter === o.nombre ? 'selected' : ''}" onclick="asignarRecruiter(${p.vacanteId}, ${esc(JSON.stringify(o.nombre))})">
+    <div class="rb-assignee-option ${seleccionado ? 'selected' : ''}" onclick="asignarRecruiter(${p.vacanteId}, ${esc(JSON.stringify(o.nombre))})">
       ${o.nombre
         ? `<div class="rb-assignee-avatar sm" style="background:${oc}22;color:${oc}">${esc(initials(o.nombre))}</div>`
         : `<div class="rb-assignee-avatar sm rb-assignee-unassigned">${icon('user', 10)}</div>`}
       <span>${esc(o.label)}</span>
-      ${recruiter === o.nombre ? icon('check', 12) : ''}
+      ${seleccionado ? icon('check', 12) : ''}
     </div>`;
   }).join('');
 }
@@ -4110,9 +4163,9 @@ function normalizarBusqueda(s) {
 function postulacionesFiltradas() {
   const q = normalizarBusqueda(state.pl.query);
   return POSTULACIONES.filter(p => {
-    if (state.pl.scope === 'mias' && recruiterDePostulacion(p) !== 'Ana Ruiz') return false;
+    if (state.pl.scope === 'mias' && !recruitersDePostulacion(p).includes('Ana Ruiz')) return false;
     if (state.pl.cliente && p.cliente !== state.pl.cliente) return false;
-    if (state.pl.recruiterFilter && recruiterDePostulacion(p) !== state.pl.recruiterFilter) return false;
+    if (state.pl.recruiterFilter && !recruitersDePostulacion(p).includes(state.pl.recruiterFilter)) return false;
     if (state.pl.prioridadFiltro && prioridadDePostulacion(p) !== state.pl.prioridadFiltro) return false;
     /* El buscador matchea por candidato O por posición/cliente -- así
        buscar "Site Reliability" trae a todos los candidatos de esa
@@ -4378,9 +4431,9 @@ function renderPipelineBoard() {
   const vacantesVacias = VACANTES.filter(v => {
     if (esVacanteTerminal(v.estado)) return false;
     if (vacanteIdsConPipeline.has(v.id)) return false;
-    if (state.pl.scope === 'mias' && v.recruiter !== 'Ana Ruiz') return false;
+    if (state.pl.scope === 'mias' && !v.recruiters.includes('Ana Ruiz')) return false;
     if (state.pl.cliente && v.cliente !== state.pl.cliente) return false;
-    if (state.pl.recruiterFilter && v.recruiter !== state.pl.recruiterFilter) return false;
+    if (state.pl.recruiterFilter && !v.recruiters.includes(state.pl.recruiterFilter)) return false;
     if (state.pl.prioridadFiltro && v.priority !== state.pl.prioridadFiltro) return false;
     /* Buscando texto no tiene sentido mostrar vacantes vacías que ni
        siquiera calzan con lo buscado -- solo se cuelan las que sí matchean
@@ -5104,7 +5157,7 @@ function renderPostulacionDrawerBody() {
           ${puedeRetirarse ? `<button class="rb-icon-btn" title="Se retira del proceso" onclick="abrirRetiroModal(${p.id})">${icon('logOut',14)}</button>` : ''}
           ${puedeBlacklistear ? `<button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>` : ''}
         </h1>
-        <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter: ${esc(recruiterDePostulacion(p) || 'Sin asignar')}</p></div>
+        <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter${recruitersDePostulacion(p).length === 1 ? '' : 's'}: ${esc(recruitersDePostulacion(p).join(', ') || 'Sin asignar')}</p></div>
         <div class="rb-detail-header-actions">
           <span class="rb-badge" style="background:${ESTADO_COLOR[deriveEstado(p.etapa)]}22;color:${ESTADO_COLOR[deriveEstado(p.etapa)]}">${esc(ETAPA_LABELS[p.etapa] || deriveEstado(p.etapa))}</span>
           ${origenBadge(candidato.origen)}
