@@ -56,11 +56,18 @@ p { margin: 0; }
 .badge { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); font-weight: 600; padding: 4px 10px; border-radius: var(--radius-full); line-height: 1; }
 textarea { width: 100%; font-family: inherit; font-size: var(--fs-base); padding: 10px 12px; border-radius: var(--radius-2); border: 1px solid var(--border-strong); background: var(--bg-elev); color: var(--text); resize: vertical; min-height: 80px; }
 textarea:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input, .select { width: 100%; font-family: inherit; font-size: var(--fs-base); padding: 10px 12px; border-radius: var(--radius-2); border: 1px solid var(--border-strong); background: var(--bg-elev); color: var(--text); }
+.input:focus, .select:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 label.field { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); color: var(--text-muted); font-weight: 600; }
 
 /* ---- Shell ---- */
 .rb-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: var(--sp-4) var(--sp-6); background: rgba(18,18,20,.75); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: var(--sp-3); }
 :root[data-theme="light"] .rb-topbar { background: rgba(255,255,255,.75); }
+.rb-nav { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-6); }
+.rb-nav button { background: transparent; border: none; color: var(--text-muted); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; padding: 8px 14px; border-radius: var(--radius-2); cursor: pointer; }
+.rb-nav button:hover { background: var(--surface); color: var(--text); }
+.rb-nav button.active { background: var(--accent-soft); color: var(--accent); }
+:root[data-theme="light"] .rb-nav button.active { color: var(--rb-blue); }
 .rb-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-lg); }
 .rb-brand svg { display: block; height: 22px; width: auto; color: var(--text); }
 .rb-user { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); }
@@ -241,8 +248,35 @@ let POSTULACIONES = [
   },
 ];
 
+/* Solicitudes de nueva posición que el propio cliente envía a Rumbo --
+   isla aparte del wizard del recruiter en rumbo_prototype.html (mismo
+   criterio que la decisión de Aprobar/Rechazar: sin backend compartido
+   entre los 4 prototipos, no hay forma real de que esto cree una vacante
+   ahí). El formulario acá es deliberadamente más simple que el JD
+   completo que arma el recruiter (bandas de presupuesto, palabras clave
+   de sourcing, red flags a considerar son trabajo del recruiter durante
+   el intake, no algo que un Hiring Manager llenaría él mismo).
+   Se precargan 2 ejemplos que muestran el ciclo completo: una en
+   revisión y otra ya convertida en una posición real (Site Reliability
+   Engineer, la misma vacante de Interbank que ya existe del lado del
+   recruiter -- mismo nombre por continuidad narrativa, sin ningún link
+   de datos real entre los dos archivos). */
+let SOLICITUDES = [
+  {
+    id: 1, titulo: 'Data Analyst', seniority: 'Mid', headcount: 1, modalidad: 'Híbrido', urgencia: 'Media',
+    contexto: 'Necesitamos a alguien que arme y mantenga los reportes de negocio del área de riesgos, hoy lo estamos haciendo a mano con Excel y no da abasto.',
+    fechaSolicitud: '2026-08-25', estado: 'en_revision', vacanteAsociada: null,
+  },
+  {
+    id: 2, titulo: 'Site Reliability Engineer', seniority: 'Senior', headcount: 1, modalidad: 'Híbrido', urgencia: 'Alta',
+    contexto: 'Tuvimos 2 incidentes de disponibilidad este trimestre en plataformas críticas. Necesitamos a alguien senior que se haga cargo de la observabilidad y defina SLOs.',
+    fechaSolicitud: '2026-08-01', estado: 'convertida', vacanteAsociada: 'Site Reliability Engineer',
+  },
+];
+
 const state = { view: 'cola', detalleId: null, toast: null, ui: { theme: leerThemeGuardado() } };
 let decisionForm = null;
+let solicitudForm = null;
 
 function postulacionDe(id) { return POSTULACIONES.find(p => p.id === id); }
 function showToast(msg) { state.toast = msg; render(); setTimeout(() => { state.toast = null; render(); }, 2600); }
@@ -274,6 +308,28 @@ function toggleTheme() {
   state.ui.theme = state.ui.theme === 'dark' ? 'light' : 'dark';
   try { localStorage.setItem('rb-client-theme', state.ui.theme); } catch (e) {}
   render();
+}
+
+/* Navegación por tab (Candidatos presentados / Solicitar posición / Mis
+   solicitudes) -- mismo idiom que irA() en candidate_portal.html. */
+function irA(view) {
+  state.view = view; state.detalleId = null; decisionForm = null;
+  solicitudForm = view === 'solicitar' ? nuevaSolicitudForm() : null;
+  render();
+}
+function nuevaSolicitudForm() { return { titulo: '', seniority: 'Mid', headcount: 1, modalidad: 'Híbrido', urgencia: 'Media', contexto: '' }; }
+function solicitudValida() { return solicitudForm.titulo.trim().length > 0 && solicitudForm.contexto.trim().length > 0; }
+function enviarSolicitud() {
+  if (!solicitudValida()) return;
+  const nuevoId = Math.max(0, ...SOLICITUDES.map(s => s.id)) + 1;
+  SOLICITUDES.unshift({
+    id: nuevoId, titulo: solicitudForm.titulo.trim(), seniority: solicitudForm.seniority,
+    headcount: parseInt(solicitudForm.headcount, 10) || 1, modalidad: solicitudForm.modalidad,
+    urgencia: solicitudForm.urgencia, contexto: solicitudForm.contexto.trim(),
+    fechaSolicitud: new Date().toISOString().slice(0, 10), estado: 'enviada', vacanteAsociada: null,
+  });
+  irA('solicitudes');
+  showToast('Tu solicitud fue enviada al equipo de Rumbo (simulado)');
 }
 
 /* =========================================================================
@@ -312,6 +368,67 @@ function renderCola() {
           : `<span class="badge" style="background:rgba(255,90,54,.15);color:var(--danger-text)">${icon('x', 11)} Rechazado</span>`}
       </div>
       <div class="rb-tags">${p.candidato.skills.map(s => `<span class="rb-tag">${esc(s)}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+/* =========================================================================
+   SOLICITAR NUEVA POSICIÓN + MIS SOLICITUDES
+   ========================================================================= */
+const ESTADO_SOLICITUD_BADGE = {
+  enviada: () => `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Enviada</span>`,
+  en_revision: () => `<span class="badge" style="background:rgba(255,176,32,.15);color:var(--warning-text)">En revisión</span>`,
+  convertida: () => `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Convertida en posición</span>`,
+};
+function renderSolicitarForm() {
+  const f = solicitudForm;
+  return `
+    <div class="card">
+      <label class="field">Título del rol
+        <input class="input" id="sol-titulo" value="${esc(f.titulo)}" placeholder="Ej. Data Analyst" oninput="solicitudForm.titulo=this.value; render()" />
+      </label>
+      <div style="display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-top:var(--sp-4)">
+        <label class="field" style="flex:1 1 140px">Seniority
+          <select class="select" onchange="solicitudForm.seniority=this.value">${['Junior', 'Mid', 'Senior'].map(s => `<option value="${s}" ${f.seniority === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+        </label>
+        <label class="field" style="flex:1 1 100px">Headcount
+          <input class="input" type="number" min="1" value="${f.headcount}" oninput="solicitudForm.headcount=this.value" />
+        </label>
+        <label class="field" style="flex:1 1 140px">Modalidad
+          <select class="select" onchange="solicitudForm.modalidad=this.value">${['Híbrido', 'Remoto'].map(m => `<option value="${m}" ${f.modalidad === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
+        </label>
+        <label class="field" style="flex:1 1 140px">Urgencia
+          <select class="select" onchange="solicitudForm.urgencia=this.value">${['Alta', 'Media', 'Baja'].map(u => `<option value="${u}" ${f.urgencia === u ? 'selected' : ''}>${u}</option>`).join('')}</select>
+        </label>
+      </div>
+      <label class="field" style="margin-top:var(--sp-4)">Contexto / qué necesitas
+        <textarea id="sol-contexto" placeholder="Contanos qué necesitas y por qué..." oninput="solicitudForm.contexto=this.value; render()">${esc(f.contexto)}</textarea>
+      </label>
+      <div style="display:flex;justify-content:flex-end;margin-top:var(--sp-4)">
+        <button class="btn" ${solicitudValida() ? '' : 'disabled'} onclick="enviarSolicitud()">${icon('sparkles', 13)} Enviar solicitud</button>
+      </div>
+    </div>`;
+}
+function renderSolicitudes() {
+  if (SOLICITUDES.length === 0) {
+    return `<div class="rb-empty card">Todavía no enviaste ninguna solicitud de posición.</div>`;
+  }
+  const orden = [...SOLICITUDES].sort((a, b) => a.fechaSolicitud < b.fechaSolicitud ? 1 : -1);
+  return orden.map(s => `
+    <div class="card rb-postulacion-card" style="cursor:default">
+      <div class="rb-postulacion-top">
+        <div>
+          <div style="font-size:var(--fs-lg);font-weight:600;margin-bottom:2px">${esc(s.titulo)}</div>
+          <div class="rb-postulacion-sub">${icon('briefcase', 12)} ${esc(s.seniority)} · Enviada el ${esc(fechaLabel(s.fechaSolicitud))}</div>
+        </div>
+        ${ESTADO_SOLICITUD_BADGE[s.estado]()}
+      </div>
+      <div class="rb-brief-stats">
+        <span class="rb-brief-stat">${icon('briefcase', 12)} Headcount: ${s.headcount}</span>
+        <span class="rb-brief-stat">${icon('mapPin', 12)} ${esc(s.modalidad)}</span>
+        <span class="rb-brief-stat">${icon('clock', 12)} Urgencia ${esc(s.urgencia)}</span>
+      </div>
+      <p style="color:var(--text-muted);line-height:1.5;margin-top:var(--sp-2)">${esc(s.contexto)}</p>
+      ${s.estado === 'convertida' ? `<p style="margin-top:var(--sp-2);font-size:var(--fs-sm);color:var(--success-text)">${icon('check', 12)} Ahora es la posición "${esc(s.vacanteAsociada)}" — pronto vas a ver candidatos presentados acá.</p>` : ''}
     </div>`).join('');
 }
 
@@ -397,8 +514,22 @@ function render() {
   const selEnd = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : null;
 
   document.documentElement.setAttribute('data-theme', state.ui.theme);
-  const titulos = { cola: ['Candidatos presentados', `Revisá y decidí sobre los candidatos presentados para ${YO.cliente}.`] };
+  const titulos = {
+    cola: ['Candidatos presentados', `Revisá y decidí sobre los candidatos presentados para ${YO.cliente}.`],
+    solicitar: ['Solicitar posición', 'Contanos qué necesitas y el equipo de Rumbo se encarga de estructurarlo.'],
+    solicitudes: ['Mis solicitudes', 'Seguimiento de las posiciones que solicitaste.'],
+  };
   const [titulo, sub] = titulos[state.view] || ['', ''];
+  const TABS = [
+    { key: 'cola', label: 'Candidatos presentados' },
+    { key: 'solicitar', label: 'Solicitar posición' },
+    { key: 'solicitudes', label: 'Mis solicitudes' },
+  ];
+  const activeTab = state.view === 'detalle' ? 'cola' : state.view;
+  const body = state.view === 'detalle' ? renderDetalle()
+    : state.view === 'solicitar' ? renderSolicitarForm()
+    : state.view === 'solicitudes' ? renderSolicitudes()
+    : renderCola();
   document.getElementById('root').innerHTML = `
     <header class="rb-topbar">
       <div class="rb-brand">${LOGO_SVG} <span style="color:var(--text-muted);font-weight:400;font-size:var(--fs-sm)">· Portal del Cliente</span></div>
@@ -409,17 +540,18 @@ function render() {
       </div>
     </header>
     <main class="rb-main">
+      ${state.view !== 'detalle' ? `<nav class="rb-nav">${TABS.map(t => `<button class="${activeTab === t.key ? 'active' : ''}" onclick="irA('${t.key}')">${esc(t.label)}</button>`).join('')}</nav>` : ''}
       ${state.view !== 'detalle' ? `<h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>` : ''}
-      ${state.view === 'detalle' ? renderDetalle() : renderCola()}
+      ${body}
     </main>
     ${state.toast ? `<div class="rb-toast">${esc(state.toast)}</div>` : ''}
   `;
   if (activeId) {
     const el = document.getElementById(activeId);
     /* Nunca re-enfocar un <select> -- en mobile, .focus() sobre un <select>
-       reabre el picker nativo del sistema operativo (mismo fix aplicado en
-       los otros 3 prototipos, acá preventivo ya que este archivo no tiene
-       ninguno todavía). */
+       reabre el picker nativo del sistema operativo (mismo fix ya aplicado
+       en los otros 3 prototipos; acá aplica desde que el formulario de
+       "Solicitar posición" sumó selects de seniority/modalidad/urgencia). */
     if (el && typeof el.focus === 'function' && el.tagName !== 'SELECT') {
       el.focus({ preventScroll: true });
       if (selStart !== null && el.setSelectionRange) { try { el.setSelectionRange(selStart, selEnd); } catch (e) {} }
