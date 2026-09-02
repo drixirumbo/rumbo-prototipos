@@ -2584,15 +2584,25 @@ function renderClienteDetail() {
       <span>${enRiesgo.map(vacanteInlineLink).join(' · ')}</span></div>
     </div>` : '';
 
-  /* ---- Salud de vacantes abiertas: breakdown de SLA + modalidad, integrado
-     como resumen dentro de la misma card de "Vacantes abiertas" ---- */
+  /* ---- Salud de vacantes abiertas: un solo resumen unificado (SLA +
+     prioridad + engagement) en vez de 2 filas apiladas con estilos
+     distintos (puntos de color vs. badges de prioridad) repitiendo la
+     misma idea -- "cómo se distribuyen mis posiciones abiertas" -- dos
+     veces seguidas antes de llegar a la lista. Cada categoría se omite
+     si no tiene ningún caso, mismo criterio que ya usaba el desglose de
+     Staffing/Recruiting. */
   const sla = slaBreakdownCliente(c.id);
   const engBreak = engagementBreakdownCliente(c.id);
+  const prioridadChips = ['High', 'Medium', 'Low']
+    .filter(p => porPrioridad[p] > 0)
+    .map(p => `<span>${priorityBadge(p)} ${porPrioridad[p]} abierta${porPrioridad[p] === 1 ? '' : 's'}</span>`)
+    .join('');
   const saludResumen = abiertas.length === 0 ? '' : `
     <div class="rb-salud-resumen">
       <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--success)"></span>${sla.onTime} on time</span>
       <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--warning)"></span>${sla.porVencer} por vencer</span>
       <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--danger)"></span>${sla.vencidas} vencidas</span>
+      ${prioridadChips ? `<span style="color:var(--text-dim)">·</span>${prioridadChips}` : ''}
       ${(engBreak.staffing > 0 && engBreak.recruiting > 0) ? `<span style="color:var(--text-dim)">·</span><span>${engBreak.staffing} Staffing</span><span>${engBreak.recruiting} Recruiting</span>` : ''}
     </div>`;
 
@@ -2666,7 +2676,6 @@ function renderClienteDetail() {
       <h3>Posiciones abiertas (${abiertas.length})</h3>
       ${riesgoAlert}
       ${saludResumen}
-      ${abiertas.length ? `<div class="rb-salud-resumen" style="border-bottom:none;padding-bottom:0;margin-bottom:var(--sp-3)">${['High', 'Medium', 'Low'].map(p => `<span>${priorityBadge(p)} ${porPrioridad[p]} abierta${porPrioridad[p] === 1 ? '' : 's'}</span>`).join('')}</div>` : ''}
       ${progresoAbiertas}
     </div>
     <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
