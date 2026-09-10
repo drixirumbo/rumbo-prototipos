@@ -182,7 +182,7 @@ function leerThemeGuardado() {
    de alta el account manager, no se auto-inscribe. Ve solo candidatos
    presentados para SU empresa (Interbank), no los de otros clientes de
    Rumbo -- mismo criterio de acceso que ya tiene sentido en el recruiter
-   (cada vacante pertenece a un solo cliente). */
+   (cada posición pertenece a un solo cliente). */
 const YO = { nombre: 'Patricia Vega', rol: 'Hiring Manager', cliente: 'Interbank' };
 
 const SOFT_SKILL_LABELS = { comunicacion: 'Comunicación', liderazgo: 'Liderazgo', trabajoEnEquipo: 'Trabajo en equipo', adaptabilidad: 'Adaptabilidad', resolucionProblemas: 'Resolución de problemas' };
@@ -201,7 +201,7 @@ let POSTULACIONES = [
       skills: ['AWS', 'Arquitectura de microservicios', 'Terraform', 'Kubernetes'],
       softSkills: { comunicacion: 5, liderazgo: 5, trabajoEnEquipo: 5, adaptabilidad: 5, resolucionProblemas: 5 },
     },
-    vacante: 'Arquitecto Cloud', matchScore: 95,
+    posición: 'Arquitecto Cloud', matchScore: 95,
     recomendacionTecnica: 'Dominio sólido de arquitectura de microservicios y AWS, validado en la evaluación con el especialista. Se recomienda avanzar en el proceso.',
     fechaPresentado: '2026-08-26', decision: null, feedback: null,
   },
@@ -214,7 +214,7 @@ let POSTULACIONES = [
       skills: ['AWS', 'Terraform', 'Certificación AWS'],
       softSkills: { comunicacion: 4, liderazgo: 5, trabajoEnEquipo: 4, adaptabilidad: 3, resolucionProblemas: 4 },
     },
-    vacante: 'Arquitecto Cloud', matchScore: 87,
+    posición: 'Arquitecto Cloud', matchScore: 87,
     recomendacionTecnica: 'Buen dominio conceptual de AWS y adopción cloud, con algo menos de profundidad hands-on que otros candidatos del proceso. Avanza con reservas menores.',
     fechaPresentado: '2026-08-20', decision: null, feedback: null,
   },
@@ -227,7 +227,7 @@ let POSTULACIONES = [
       skills: ['Kubernetes', 'Terraform', 'AWS', 'CI/CD'],
       softSkills: { comunicacion: 4, liderazgo: 3, trabajoEnEquipo: 4, adaptabilidad: 5, resolucionProblemas: 5 },
     },
-    vacante: 'Site Reliability Engineer', matchScore: 91,
+    posición: 'Site Reliability Engineer', matchScore: 91,
     recomendacionTecnica: 'Excelente manejo de CI/CD e infraestructura como código. Perfil sólido para el rol, se recomienda avanzar sin reservas.',
     fechaPresentado: '2026-08-08', decision: 'aprobar',
     feedback: 'Muy buena entrevista, se alinea con lo que necesitamos para el equipo de plataforma. Avanzamos con oferta.',
@@ -241,7 +241,7 @@ let POSTULACIONES = [
       skills: ['.NET', 'Arquitectura', 'AWS'],
       softSkills: { comunicacion: 4, liderazgo: 5, trabajoEnEquipo: 3, adaptabilidad: 4, resolucionProblemas: 4 },
     },
-    vacante: 'Sr. Program Manager', matchScore: 74,
+    posición: 'Sr. Program Manager', matchScore: 74,
     recomendacionTecnica: 'Buen líder técnico, pero el perfil está más orientado a arquitectura que a program management. Avanza con reservas relevantes.',
     fechaPresentado: '2026-07-30', decision: 'rechazar',
     feedback: 'Buen candidato pero no es el fit que buscamos para este rol puntual — necesitamos a alguien más enfocado en gestión de programas que en arquitectura.',
@@ -251,26 +251,26 @@ let POSTULACIONES = [
 /* Solicitudes de nueva posición que el propio cliente envía a Rumbo --
    isla aparte del wizard del recruiter en rumbo_prototype.html (mismo
    criterio que la decisión de Aprobar/Rechazar: sin backend compartido
-   entre los 4 prototipos, no hay forma real de que esto cree una vacante
+   entre los 4 prototipos, no hay forma real de que esto cree una posición
    ahí). El formulario acá es deliberadamente más simple que el JD
    completo que arma el recruiter (bandas de presupuesto, palabras clave
    de sourcing, red flags a considerar son trabajo del recruiter durante
    el intake, no algo que un Hiring Manager llenaría él mismo).
    Se precargan 2 ejemplos que muestran el ciclo completo: una en
    revisión y otra ya convertida en una posición real (Site Reliability
-   Engineer, la misma vacante de Interbank que ya existe del lado del
+   Engineer, la misma posición de Interbank que ya existe del lado del
    recruiter -- mismo nombre por continuidad narrativa, sin ningún link
    de datos real entre los dos archivos). */
 let SOLICITUDES = [
   {
     id: 1, titulo: 'Data Analyst', seniority: 'Mid', headcount: 1, modalidad: 'Híbrido', urgencia: 'Media',
     contexto: 'Necesitamos a alguien que arme y mantenga los reportes de negocio del área de riesgos, hoy lo estamos haciendo a mano con Excel y no da abasto.',
-    fechaSolicitud: '2026-08-25', estado: 'en_revision', vacanteAsociada: null,
+    fechaSolicitud: '2026-08-25', estado: 'en_revision', posiciónAsociada: null,
   },
   {
     id: 2, titulo: 'Site Reliability Engineer', seniority: 'Senior', headcount: 1, modalidad: 'Híbrido', urgencia: 'Alta',
     contexto: 'Tuvimos 2 incidentes de disponibilidad este trimestre en plataformas críticas. Necesitamos a alguien senior que se haga cargo de la observabilidad y defina SLOs.',
-    fechaSolicitud: '2026-08-01', estado: 'convertida', vacanteAsociada: 'Site Reliability Engineer',
+    fechaSolicitud: '2026-08-01', estado: 'convertida', posiciónAsociada: 'Site Reliability Engineer',
   },
 ];
 
@@ -326,7 +326,7 @@ function enviarSolicitud() {
     id: nuevoId, titulo: solicitudForm.titulo.trim(), seniority: solicitudForm.seniority,
     headcount: parseInt(solicitudForm.headcount, 10) || 1, modalidad: solicitudForm.modalidad,
     urgencia: solicitudForm.urgencia, contexto: solicitudForm.contexto.trim(),
-    fechaSolicitud: new Date().toISOString().slice(0, 10), estado: 'enviada', vacanteAsociada: null,
+    fechaSolicitud: new Date().toISOString().slice(0, 10), estado: 'enviada', posiciónAsociada: null,
   });
   irA('solicitudes');
   showToast('Tu solicitud fue enviada al equipo de Rumbo (simulado)');
@@ -359,7 +359,7 @@ function renderCola() {
       <div class="rb-postulacion-top">
         <div>
           <div style="font-size:var(--fs-lg);font-weight:600;margin-bottom:2px">${esc(p.candidato.nombre)}</div>
-          <div class="rb-postulacion-sub">${icon('briefcase', 12)} ${esc(p.vacante)} · Presentado el ${esc(fechaLabel(p.fechaPresentado))}</div>
+          <div class="rb-postulacion-sub">${icon('briefcase', 12)} ${esc(p.posición)} · Presentado el ${esc(fechaLabel(p.fechaPresentado))}</div>
         </div>
         ${p.decision === null
           ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Por decidir</span>`
@@ -428,7 +428,7 @@ function renderSolicitudes() {
         <span class="rb-brief-stat">${icon('clock', 12)} Urgencia ${esc(s.urgencia)}</span>
       </div>
       <p style="color:var(--text-muted);line-height:1.5;margin-top:var(--sp-2)">${esc(s.contexto)}</p>
-      ${s.estado === 'convertida' ? `<p style="margin-top:var(--sp-2);font-size:var(--fs-sm);color:var(--success-text)">${icon('check', 12)} Ahora es la posición "${esc(s.vacanteAsociada)}" — pronto vas a ver candidatos presentados acá.</p>` : ''}
+      ${s.estado === 'convertida' ? `<p style="margin-top:var(--sp-2);font-size:var(--fs-sm);color:var(--success-text)">${icon('check', 12)} Ahora es la posición "${esc(s.posiciónAsociada)}" — pronto vas a ver candidatos presentados acá.</p>` : ''}
     </div>`).join('');
 }
 
@@ -486,7 +486,7 @@ function renderDetalle() {
       <div class="rb-postulacion-top">
         <div>
           <h2 style="font-size:var(--fs-xl)">${esc(p.candidato.nombre)}</h2>
-          <div class="rb-postulacion-sub" style="margin-top:4px">${esc(p.candidato.rol)} · ${esc(p.candidato.seniority)} · postula a ${esc(p.vacante)}</div>
+          <div class="rb-postulacion-sub" style="margin-top:4px">${esc(p.candidato.rol)} · ${esc(p.candidato.seniority)} · postula a ${esc(p.posición)}</div>
         </div>
         ${p.decision === null
           ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Por decidir</span>`

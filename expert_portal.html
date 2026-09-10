@@ -232,13 +232,13 @@ const DIMENSIONES_EVAL = [
 let ENTREVISTAS = [
   {
     id: 1,
-    /* Site Reliability Engineer @ Interbank, mismo candidato/vacante/fecha
+    /* Site Reliability Engineer @ Interbank, mismo candidato/posición/fecha
        que la postulación id 2 de Renata en candidate_portal.html (ya
        agendó para el 2 sep · 15:00) y que la postulación id 1 en
-       rumbo_prototype.html (vacanteId 17) -- misma historia contada desde
+       rumbo_prototype.html (posiciónId 17) -- misma historia contada desde
        los 3 ángulos, ver el comentario en candidate_portal.html. */
     candidato: { nombre: 'Renata Salcedo', rol: 'Backend Engineer', seniority: 'Senior', skills: ['Java', 'AWS', 'Kafka', 'PostgreSQL'] },
-    vacante: { titulo: 'Site Reliability Engineer', cliente: 'Interbank' },
+    posición: { titulo: 'Site Reliability Engineer', cliente: 'Interbank' },
     matchScore: 92,
     fecha: '2026-09-02', hora: '15:00',
     estado: 'pendiente', reporte: null,
@@ -246,7 +246,7 @@ let ENTREVISTAS = [
   {
     id: 2,
     candidato: { nombre: 'Julio Ancco', rol: 'DevOps Engineer', seniority: 'Senior', skills: ['Kubernetes', 'Terraform', 'AWS', 'CI/CD'] },
-    vacante: { titulo: 'Site Reliability Engineer', cliente: 'Interbank' },
+    posición: { titulo: 'Site Reliability Engineer', cliente: 'Interbank' },
     matchScore: 79,
     fecha: '2026-08-27', hora: '11:00',
     estado: 'pendiente', reporte: null,
@@ -254,7 +254,7 @@ let ENTREVISTAS = [
   {
     id: 3,
     candidato: { nombre: 'Fiorella Guanilo', rol: 'Data Engineer', seniority: 'Senior', skills: ['Java', 'Kafka', 'Spark', 'AWS'] },
-    vacante: { titulo: 'Arquitecto de Datos', cliente: 'Niubiz' },
+    posición: { titulo: 'Arquitecto de Datos', cliente: 'Niubiz' },
     matchScore: 90,
     fecha: '2026-08-20', hora: '10:00',
     estado: 'completada',
@@ -272,7 +272,7 @@ let ENTREVISTAS = [
   {
     id: 4,
     candidato: { nombre: 'Andrés Pinto', rol: 'Fullstack Developer', seniority: 'Mid', skills: ['.NET', 'React', 'SQL Server'] },
-    vacante: { titulo: 'Fullstack .Net', cliente: 'Laive' },
+    posición: { titulo: 'Fullstack .Net', cliente: 'Laive' },
     matchScore: 84,
     fecha: '2026-08-14', hora: '16:00',
     estado: 'completada',
@@ -361,7 +361,7 @@ function renderCola() {
       <div class="rb-entrevista-top">
         <div>
           <div class="rb-entrevista-nombre">${esc(e.candidato.nombre)}</div>
-          <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.vacante.titulo)} · ${esc(e.vacante.cliente)}</div>
+          <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.posición.titulo)} · ${esc(e.posición.cliente)}</div>
         </div>
         ${e.estado === 'pendiente'
           ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Pendiente</span>`
@@ -433,7 +433,7 @@ function renderDetalle() {
       <div class="rb-entrevista-top">
         <div>
           <h2 class="rb-entrevista-nombre" style="font-size:var(--fs-xl)">${esc(e.candidato.nombre)}</h2>
-          <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.vacante.titulo)} · ${esc(e.vacante.cliente)} · ${esc(e.candidato.seniority)}</div>
+          <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.posición.titulo)} · ${esc(e.posición.cliente)} · ${esc(e.candidato.seniority)}</div>
         </div>
         ${e.estado === 'pendiente'
           ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Pendiente</span>`
