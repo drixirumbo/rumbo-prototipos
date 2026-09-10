@@ -4355,14 +4355,14 @@ const MATCH_RESULTADO_COLOR = { 'Fuerte': 'var(--success-text)', 'Aceptable': 'v
 function matchColor(resultado) { return MATCH_RESULTADO_COLOR[resultado] || 'var(--text-muted)'; }
 /* Fila de la Landing Zone (detalle de Vacante): candidatos en GATE_INTAKE,
    antes de que el kanban los vea. Distinta de renderPostRow (que es del
-   Pipeline ya post-Go) porque necesita match%, origen y las acciones
-   propias del intake -- no las reusa para no forzar un componente
-   genérico a cubrir dos necesidades bien distintas. El click en la fila
-   (salvo en los botones de acción, que cortan la propagación) abre el
-   detalle de la postulación, donde ya vive el detalle por dimensión del
-   matching (sección colapsable "Matching de CV vs Job Description") y el
-   flujo completo de descarte/rechazo con sustento obligatorio -- no se
-   duplica ninguno de los dos acá. */
+   Pipeline ya post-Go) porque necesita match%/origen -- no la reusa para
+   no forzar un componente genérico a cubrir dos necesidades distintas.
+   Puramente informativa: "Enviar a validación (Go)"/"Descartar"/"Dar
+   Go"/"Rechazar"/Blacklist viven solo en el detalle de la postulación
+   (ver verdictFormHtml/abrirBlacklistModal), no acá -- mismo criterio que
+   ya usan las cards de gate del kanban (nunca tienen botones de veredicto
+   inline, la decisión se toma siempre desde el detalle). El click en
+   cualquier parte de la fila abre ese detalle. */
 function renderLandingZoneRow(p) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
   const m = resolverIntakeMatching(p);
@@ -4378,16 +4378,6 @@ function renderLandingZoneRow(p) {
         ${origenBadge(c.origen, true)}
         ${pendienteGo ? `<span class="rb-badge" style="background:var(--warning)22;color:var(--warning-text)">${icon('clock',11)} Pendiente de Go</span>` : ''}
       </div>
-    </div>
-    <div class="rb-verdict-row">
-      ${pendienteGo ? `
-        <button class="btn sm" onclick="event.stopPropagation(); abrirAprobarModal(${p.id})">${icon('check',12)} Dar Go</button>
-        <button class="btn danger sm" onclick="event.stopPropagation(); goToDetalleDesdeVacante(${p.id})">${icon('x',12)} Rechazar</button>
-      ` : `
-        <button class="btn sm" onclick="event.stopPropagation(); enviarAValidacion(${p.id})">${icon('arrowUpRight',12)} Enviar a validación (Go)</button>
-        <button class="btn secondary sm" onclick="event.stopPropagation(); goToDetalleDesdeVacante(${p.id})">${icon('x',12)} Descartar</button>
-      `}
-      <button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="event.stopPropagation(); abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>
     </div>
   </div>`;
 }
