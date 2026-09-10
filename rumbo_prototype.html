@@ -325,13 +325,16 @@ body {
 .rb-postulacion-row:last-child { border-bottom: none; }
 .rb-postulacion-row:hover .rb-card-name { color: var(--cyan-text); }
 .rb-postulacion-row.rb-postulacion-contratado { background: rgba(60,203,127,.08); border-left: 3px solid var(--success); border-bottom-color: transparent; padding-left: var(--sp-3); border-radius: var(--radius-1); margin-bottom: var(--sp-1); }
-/* Fila de la Landing Zone (ver renderLandingZoneRow) -- lista compacta,
-   no grilla de cards del kanban, así que no reusa .rb-card (min-height
-   fijo pensado para grillas, no para una lista angosta). */
-.rb-landingzone-row { position: relative; border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3); margin-bottom: var(--sp-3); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out); }
-.rb-landingzone-row:last-child { margin-bottom: 0; }
-.rb-landingzone-row:hover { border-color: var(--border-strong); }
-.rb-landingzone-row.rb-top-talent { border-color: rgba(71,235,235,.45); box-shadow: 0 0 0 1px rgba(71,235,235,.2); }
+/* Fila de la Landing Zone (ver renderLandingZoneRow) -- mismo idioma
+   visual que .rb-postulacion-row (lista plana con separador, no grilla de
+   cards del kanban ni caja individual por fila) para que Landing Zone y
+   Pipeline, que conviven una debajo de la otra en el mismo drawer de
+   Vacante, se vean como una sola familia de listas y no como dos
+   componentes distintos. Más alta que esa fila porque suma match%/origen
+   y una fila de acciones propias, así que no reusa la clase tal cual. */
+.rb-landingzone-row { position: relative; padding: var(--sp-4) 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.rb-landingzone-row:last-child { border-bottom: none; }
+.rb-landingzone-row:hover .rb-card-name { color: var(--cyan-text); }
 .rb-am-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px 8px; font-size: var(--fs-xs); line-height: 1; margin: 0 6px 6px 0; }
 
 /* Header del drawer de postulación (volver/nombre/badges/quickfacts):
@@ -3051,7 +3054,7 @@ function renderVacanteDrawerBody() {
         ${sourcingBlock}
       </div>
     </div>
-    <div class="card rb-detail-section">
+    <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4)">
         <h3 style="margin:0">Landing Zone (${landingZoneList.length})</h3>
         <button class="btn sm" onclick="abrirCargaCandidato(${v.id})">${icon('userPlus',12)} Cargar candidato</button>
@@ -3951,35 +3954,43 @@ function confirmarAltaCandidato() {
   showToast(`${nombre} fue agregado a la Landing Zone de ${v.titulo}`);
   render();
 }
+/* Igual que drawerAbiertoPara para el drawer de postulación: sin esto, la
+   animación de entrada del overlay (rb-fade-in, compartida con
+   .rb-drawer-overlay) se re-dispara en CADA render mientras el modal está
+   abierto -- no solo al abrirlo -- dando un parpadeo notorio cada vez que
+   se tipea un caracter o se elige algo en un dropdown (ambos re-renderizan
+   el modal entero). */
+let altaCandidatoAbiertoPrevio = false;
 function renderAltaCandidatoModal() {
   if (!state.altaCandidato) return '';
   const d = state.altaCandidato;
   const v = VACANTES.find(x => x.id === d.vacanteId);
   const puedeConfirmar = d.nombre.trim().length > 0 && d.rol.trim().length > 0;
+  const yaAbierto = altaCandidatoAbiertoPrevio;
   return `
-    <div class="rb-drawer-overlay" style="z-index:65" onclick="cerrarCargaCandidato()"></div>
+    <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:65" onclick="cerrarCargaCandidato()"></div>
     <div class="modal-preview">
       <div class="mhead">
         <span class="ic">${icon('userPlus', 18)}</span>
         <div><h5>Cargar candidato</h5><p>Se agrega a la Landing Zone de ${esc(v ? v.titulo : '')}</p></div>
       </div>
-      <label class="rb-wizard-label">Nombre completo</label>
-      <input class="input" value="${esc(d.nombre)}" oninput="state.altaCandidato.nombre=this.value; render()" />
+      <label class="rb-wizard-label" for="ac-nombre">Nombre completo</label>
+      <input id="ac-nombre" class="input" value="${esc(d.nombre)}" oninput="state.altaCandidato.nombre=this.value; render()" />
       <div style="display:flex;gap:var(--sp-3)">
         <div style="flex:1"><label class="rb-wizard-label" for="ac-rol">Rol</label>
           <input id="ac-rol" class="input" value="${esc(d.rol)}" oninput="state.altaCandidato.rol=this.value; render()" /></div>
         <div style="flex:1"><label class="rb-wizard-label" for="ac-seniority">Seniority</label>
           ${renderSelect('ac-seniority', ['Junior', 'Semi Senior', 'Senior'].map(s => ({ value: s, label: s })), d.seniority, 'Seniority', "state.altaCandidato.seniority=value; render();", null, null, true)}</div>
       </div>
-      <label class="rb-wizard-label">LinkedIn</label>
-      <input class="input" placeholder="linkedin.com/in/..." value="${esc(d.linkedin)}" oninput="state.altaCandidato.linkedin=this.value; render()" />
-      <label class="rb-wizard-label">CV</label>
-      <input class="input" placeholder="Nombre del archivo (simulado)" value="${esc(d.cvSimulado)}" oninput="state.altaCandidato.cvSimulado=this.value; render()" />
+      <label class="rb-wizard-label" for="ac-linkedin">LinkedIn</label>
+      <input id="ac-linkedin" class="input" placeholder="linkedin.com/in/..." value="${esc(d.linkedin)}" oninput="state.altaCandidato.linkedin=this.value; render()" />
+      <label class="rb-wizard-label" for="ac-cv">CV</label>
+      <input id="ac-cv" class="input" placeholder="Nombre del archivo (simulado)" value="${esc(d.cvSimulado)}" oninput="state.altaCandidato.cvSimulado=this.value; render()" />
       <div style="display:flex;gap:var(--sp-3)">
-        <div style="flex:1"><label class="rb-wizard-label">Expectativa salarial (S/)</label>
-          <input class="input" type="number" value="${esc(d.expectativa)}" oninput="state.altaCandidato.expectativa=this.value" /></div>
-        <div style="flex:1"><label class="rb-wizard-label">Disponibilidad</label>
-          <input class="input" value="${esc(d.disponibilidad)}" oninput="state.altaCandidato.disponibilidad=this.value" /></div>
+        <div style="flex:1"><label class="rb-wizard-label" for="ac-expectativa">Expectativa salarial (S/)</label>
+          <input id="ac-expectativa" class="input" type="number" value="${esc(d.expectativa)}" oninput="state.altaCandidato.expectativa=this.value; render()" /></div>
+        <div style="flex:1"><label class="rb-wizard-label" for="ac-disponibilidad">Disponibilidad</label>
+          <input id="ac-disponibilidad" class="input" value="${esc(d.disponibilidad)}" oninput="state.altaCandidato.disponibilidad=this.value; render()" /></div>
       </div>
       <label class="rb-wizard-label">Skills</label>
       ${renderTagInput('altaCandidato.skills', d.skills, 'Ej. AWS')}
@@ -4356,18 +4367,19 @@ function renderLandingZoneRow(p) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
   const m = resolverIntakeMatching(p);
   const pendienteGo = !!p.pendienteGo;
-  return `<div class="rb-landingzone-row ${esTopTalent(p) ? 'rb-top-talent' : ''}" onclick="goToDetalleDesdeVacante(${p.id})">
-    ${topTalentRibbon(p)}
-    <div class="rb-card-name-row">
-      <p class="rb-card-name">${esc(c.nombre)}</p>
-      <span class="rb-badge" title="Ver detalle del matching" style="background:${matchColor(m.resultado)}22;color:${matchColor(m.resultado)}">${icon('sparkles',12)} ${esc(m.resultado)} (${m.score}%)</span>
+  return `<div class="rb-landingzone-row" onclick="goToDetalleDesdeVacante(${p.id})">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-3);flex-wrap:wrap">
+      <div>
+        <p class="rb-card-name" style="margin:0;display:flex;align-items:center;gap:6px">${esTopTalent(p) ? icon('trophy', 13) : ''}${esc(c.nombre)}</p>
+        <p class="rb-card-sub" style="margin:2px 0 0">${esc(c.rol)} · ${esc(c.seniority)}${c.expectativa ? ` · S/ ${c.expectativa.toLocaleString('es-PE')}/mes` : ''}</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="rb-badge" title="Ver detalle del matching" style="background:${matchColor(m.resultado)}22;color:${matchColor(m.resultado)}">${icon('sparkles',12)} ${esc(m.resultado)} (${m.score}%)</span>
+        ${origenBadge(c.origen, true)}
+        ${pendienteGo ? `<span class="rb-badge" style="background:var(--warning)22;color:var(--warning-text)">${icon('clock',11)} Pendiente de Go</span>` : ''}
+      </div>
     </div>
-    <p class="rb-card-sub">${esc(c.rol)} · ${esc(c.seniority)}${c.expectativa ? ` · S/ ${c.expectativa.toLocaleString('es-PE')}/mes` : ''}</p>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
-      ${origenBadge(c.origen, true)}
-      ${pendienteGo ? `<span class="rb-badge" style="background:var(--warning)22;color:var(--warning-text)">${icon('clock',11)} Pendiente de Go</span>` : ''}
-    </div>
-    <div class="rb-verdict-row" style="margin-top:var(--sp-2)">
+    <div class="rb-verdict-row">
       ${pendienteGo ? `
         <button class="btn sm" onclick="event.stopPropagation(); abrirAprobarModal(${p.id})">${icon('check',12)} Dar Go</button>
         <button class="btn danger sm" onclick="event.stopPropagation(); goToDetalleDesdeVacante(${p.id})">${icon('x',12)} Rechazar</button>
@@ -5905,7 +5917,7 @@ function render() {
      scroll interno del overlay llega a su tope/fondo, dando el efecto de
      que la página salta o se ve mal (se suma a overscroll-behavior:contain
      en .rb-side-drawer/.modal-preview, que ataca lo mismo desde el CSS). */
-  const hayOverlayFijo = (state.view === 'pipeline' && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto;
+  const hayOverlayFijo = ((state.view === 'pipeline' || state.view === 'vacantes') && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto || !!state.altaCandidato;
   document.body.style.overflow = hayOverlayFijo ? 'hidden' : '';
   /* .rb-drawer-scroll es el que de verdad tiene scroll interno (ver
      .rb-side-drawer: flex-column, el header es un hermano fijo aparte) --
@@ -5959,6 +5971,7 @@ function render() {
   if (state.va.estadoMenuFor !== null) positionFloatingMenu(`estado-trigger-${state.va.estadoMenuFor}`, `estado-menu-${state.va.estadoMenuFor}`);
   window.scrollTo(0, pageScroll);
   drawerAbiertoPara = (state.view === 'pipeline' || state.view === 'vacantes') ? state.pl.selectedId : null;
+  altaCandidatoAbiertoPrevio = !!state.altaCandidato;
 }
 
 aplicarTheme();
