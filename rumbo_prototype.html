@@ -727,6 +727,13 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-wizard-path-title { font-weight: 600; font-size: var(--fs-base); margin: 0 0 2px; }
 .rb-wizard-path-desc { font-size: var(--fs-sm); color: var(--text-muted); margin: 0; }
 .rb-wizard-label { font-size: var(--fs-sm); color: var(--text-muted); margin: var(--sp-4) 0 var(--sp-1); display: block; }
+/* Adjuntar CV -- mismo componente que ya usa candidate_portal.html
+   (input file real detrás de una caja clickeable + fila de "ya
+   adjunté X, quitar"), reusado acá para el panel "Cargar candidato"
+   (ver renderAltaCandidatoModal) en vez de un input de texto libre. */
+.rb-upload-box { display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); text-align: center; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-2); padding: var(--sp-5) var(--sp-4); color: var(--text-muted); font-size: var(--fs-sm); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
+.rb-upload-box:hover { border-color: var(--accent); background: var(--accent-soft); }
+.rb-file-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); }
 .rb-wizard-footer { display: flex; justify-content: space-between; align-items: center; margin-top: var(--sp-6); gap: var(--sp-3); flex-wrap: wrap; }
 .rb-chat { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-4); }
 .rb-chat-msg { max-width: 80%; padding: var(--sp-3); border-radius: var(--radius-3); font-size: var(--fs-sm); }
@@ -931,6 +938,7 @@ const ICONS = {
   compass: '<circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6Z"/>',
   barChart: '<path d="M4 20V10M10 20V4M16 20v-7"/><path d="M2 20h20"/>',
   fileText: '<path d="M6 3h9l4 4v14H6Z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 16h6"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
   signal1: '<rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="10" width="4" height="10" rx="1" opacity=".3"/><rect x="16" y="5" width="4" height="15" rx="1" opacity=".3"/>',
   signal2: '<rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="10" width="4" height="10" rx="1"/><rect x="16" y="5" width="4" height="15" rx="1" opacity=".3"/>',
   signal3: '<rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="10" width="4" height="10" rx="1"/><rect x="16" y="5" width="4" height="15" rx="1"/>',
@@ -3939,6 +3947,16 @@ function newAltaCandidatoState(vacanteId) {
 }
 function abrirCargaCandidato(vacanteId) { state.altaCandidato = newAltaCandidatoState(vacanteId); render(); }
 function cerrarCargaCandidato() { state.altaCandidato = null; render(); }
+/* Adjuntar CV: mismo criterio que adjuntarCvRegistro/quitarCvRegistro en
+   candidate_portal.html -- input file real (no un input de texto
+   "simulando" un nombre de archivo), se lee el nombre con la propia API
+   del input; el archivo nunca se sube a ningún lado, es un prototipo
+   estático sin backend. */
+function adjuntarCvCandidato(input) {
+  const file = input.files && input.files[0];
+  if (file) { state.altaCandidato.cvSimulado = file.name; render(); }
+}
+function quitarCvCandidato() { state.altaCandidato.cvSimulado = ''; render(); }
 function confirmarAltaCandidato() {
   const d = state.altaCandidato;
   /* El materno es opcional (bastante frecuente omitirlo en un alta rápida
@@ -4003,8 +4021,14 @@ function renderAltaCandidatoModal() {
       </div>
       <label class="rb-wizard-label" for="ac-linkedin">LinkedIn</label>
       <input id="ac-linkedin" class="input" placeholder="linkedin.com/in/..." value="${esc(d.linkedin)}" oninput="state.altaCandidato.linkedin=this.value; render()" />
-      <label class="rb-wizard-label" for="ac-cv">CV</label>
-      <input id="ac-cv" class="input" placeholder="Nombre del archivo (simulado)" value="${esc(d.cvSimulado)}" oninput="state.altaCandidato.cvSimulado=this.value; render()" />
+      <label class="rb-wizard-label">CV</label>
+      ${d.cvSimulado
+        ? `<div class="rb-file-row"><span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(d.cvSimulado)}</span><button class="btn ghost sm" onclick="quitarCvCandidato()">${icon('x', 12)} Quitar</button></div>`
+        : `<label class="rb-upload-box">
+            ${icon('upload', 20)}
+            <span>Arrastra el CV aquí o haz clic para elegir el archivo</span>
+            <input type="file" accept=".pdf,.doc,.docx" style="display:none" onchange="adjuntarCvCandidato(this)">
+          </label>`}
       <div style="display:flex;gap:var(--sp-3)">
         <div style="flex:1"><label class="rb-wizard-label" for="ac-expectativa">Expectativa salarial (S/)</label>
           <input id="ac-expectativa" class="input" type="number" value="${esc(d.expectativa)}" oninput="state.altaCandidato.expectativa=this.value; render()" /></div>
