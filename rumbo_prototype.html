@@ -528,6 +528,11 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
 .rb-phase { display: flex; flex-direction: column; min-width: 260px; flex: 1.2; border-right: 1px solid var(--border); padding: 0 var(--sp-3); }
 .rb-phase:first-child { padding-left: 0; }
 .rb-phase-header { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) 0 var(--sp-3) 0; }
+/* El chevron de colapsar solo existe (y responde a click) en el layout
+   responsive de abajo -- en desktop las columnas van lado a lado y
+   colapsar un estado ahí no tiene el mismo sentido que colapsar un
+   swimlane completo, así que se lo oculta sin remover el markup. */
+.rb-phase-header .rb-group-chevron { display: none; }
 .rb-phase-dot { width: 8px; height: 8px; border-radius: 50%; }
 .rb-phase-title { font-size: var(--fs-sm); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .rb-phase-count { font-size: var(--fs-sm); color: var(--text-muted); margin-left: auto; }
@@ -825,6 +830,12 @@ textarea.input { resize: vertical; min-height: 80px; font-family: inherit; }
   .rb-board { flex-direction: column; overflow-x: visible; }
   .rb-phase { min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
   .rb-gate-column { background: none; }
+  /* Apiladas en columna, las tarjetas de cada estado ya no caben todas en
+     pantalla -- se puede colapsar cualquier estado para hojear el tablero
+     completo sin scrollear entre etapas que no importan ahora mismo. */
+  .rb-phase-header { cursor: pointer; }
+  .rb-phase-header .rb-group-chevron { display: inline; }
+  .rb-phase.rb-phase-collapsed .rb-phase-cards { display: none; }
   /* En mobile, el nombre+rol del detalle ya ocupa todo el ancho, así que
      los badges (estado/origen) siempre caen a su propia fila -- el
      margin-left:auto pensado para alinearlos a la derecha en la MISMA
@@ -1875,7 +1886,7 @@ const state = {
   td: { query: '', estado: '', origen: '', seniority: '', practicas: [], especialidades: [], roles: [], skills: [], panelOpen: false, sortCol: '', sortDir: 'asc', vista: 'estado', collapsed: {}, selectedId: null },
   va: { clienteF: '', estadoF: '', engagementF: '', modalidadF: '', priorityF: '', sortBy: 'priority', collapsed: {}, terminalOpen: {}, selectedId: null, editando: false, wizardOpen: false, wizardKey: 0, estadoMenuFor: null },
   cl: { selectedId: null, query: '', industriaF: '', activoF: '', amF: '', cerradasOpen: false, tiersCollapsed: {} },
-  pl: { scope: 'todo', cliente: '', query: '', prioridadFiltro: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
+  pl: { scope: 'todo', cliente: '', query: '', prioridadFiltro: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, estadosCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
   editForm: null,
   postVerdictDraft: null, postVerdictFb: '',
@@ -4298,9 +4309,13 @@ function renderGateCard(p, gateId) {
 function renderGateColumn(gateId, label, items) {
   const count = items.length;
   const dropAttrs = `data-etapas="${gateId}" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onColumnDrop(event)"`;
+  const colapsado = !!state.pl.estadosCollapsed[gateId];
   return `
-    <div class="rb-phase rb-gate-column">
-      <div class="rb-phase-header"><div class="rb-phase-dot" style="background:var(--rb-cyan)"></div><span class="rb-phase-title">Gate: ${label}</span><span class="rb-phase-count">${count}</span></div>
+    <div class="rb-phase rb-gate-column${colapsado ? ' rb-phase-collapsed' : ''}">
+      <div class="rb-phase-header" onclick="toggleEstadoCollapse(${esc(JSON.stringify(gateId))})">
+        <span class="rb-group-chevron">${colapsado ? icon('chevronRight',11) : icon('chevronDown',11)}</span>
+        <div class="rb-phase-dot" style="background:var(--rb-cyan)"></div><span class="rb-phase-title">Gate: ${label}</span><span class="rb-phase-count">${count}</span>
+      </div>
       <div class="rb-phase-cards" ${dropAttrs}>${count === 0 ? `<p style="color:var(--text-muted);font-size:var(--fs-sm)">Nadie esperando veredicto</p>` : items.map(p => renderGateCard(p, gateId)).join('')}</div>
     </div>`;
 }
@@ -4333,9 +4348,13 @@ function renderBoardColumns(activas) {
     const dropAttrs = `data-etapas="${phase.sub.join(',')}" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onColumnDrop(event)"`;
     const cardsHtml = (esSourcing ? gateIntake.map(p => renderGateCard(p, GATE_INTAKE)).join('') : '')
       + cardsInPhase.map(p => renderPipelineCard(p, phase)).join('');
+    const colapsado = !!state.pl.estadosCollapsed[phase.id];
     boardHtml += `
-    <div class="rb-phase">
-      <div class="rb-phase-header"><div class="rb-phase-dot" style="background:${phase.color}"></div><span class="rb-phase-title">${phase.label}</span><span class="rb-phase-count">${totalCount}</span></div>
+    <div class="rb-phase${colapsado ? ' rb-phase-collapsed' : ''}">
+      <div class="rb-phase-header" onclick="toggleEstadoCollapse(${esc(JSON.stringify(phase.id))})">
+        <span class="rb-group-chevron">${colapsado ? icon('chevronRight',11) : icon('chevronDown',11)}</span>
+        <div class="rb-phase-dot" style="background:${phase.color}"></div><span class="rb-phase-title">${phase.label}</span><span class="rb-phase-count">${totalCount}</span>
+      </div>
       <div class="rb-phase-cards" ${dropAttrs}>${totalCount === 0 ? `<p style="color:var(--text-muted);font-size:var(--fs-sm)">Sin postulaciones aquí</p>` : cardsHtml}</div>
     </div>`;
     if (i === 1) boardHtml += renderGateColumn(GATE_GO_INTERNO, 'GO Interno', goInterno);
@@ -4344,6 +4363,12 @@ function renderBoardColumns(activas) {
   return boardHtml;
 }
 function toggleLaneCollapse(vacanteId) { state.pl.lanesCollapsed[vacanteId] = !state.pl.lanesCollapsed[vacanteId]; render(); }
+/* Colapsar un estado (columna del kanban) -- solo tiene efecto visual en el
+   layout responsive, donde las columnas se apilan una debajo de otra (ver
+   @media max-width:900px). El estado es global por id de fase/gate, no por
+   lane: colapsar "Sourcing" lo colapsa en todas las posiciones del tablero,
+   igual que ocultar una columna. */
+function toggleEstadoCollapse(estadoId) { state.pl.estadosCollapsed[estadoId] = !state.pl.estadosCollapsed[estadoId]; render(); }
 function toggleClienteLaneCollapse(clienteId) {
   const colapsadoActual = state.pl.clientesCollapsed[clienteId] !== false;
   state.pl.clientesCollapsed[clienteId] = !colapsadoActual;
