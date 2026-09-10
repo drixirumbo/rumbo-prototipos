@@ -4350,6 +4350,13 @@ function toggleClienteLaneCollapse(clienteId) {
   render();
 }
 function collapseAllLanes(value, laneIds, clienteIds) { laneIds.forEach(id => { state.pl.lanesCollapsed[id] = value; }); (clienteIds || []).forEach(id => { state.pl.clientesCollapsed[id] = value; }); render(); }
+/* Apagar "Agrupar por posición" saca del medio toda la jerarquía
+   Cliente -> Vacante (lanes) y muestra un único tablero con las columnas
+   de fase de siempre, mezclando las cards de todas las posiciones que
+   calzan con el filtro -- para cuando lo que se quiere es un vistazo
+   rápido de todo el pipeline sin la fricción de abrir cliente por
+   cliente y posición por posición. */
+function toggleLanesOn(value) { state.pl.lanesOn = value; render(); }
 
 /* Disclosure progresivo para las sub-secciones del Historial que quedan
    visibles "para siempre" una vez que aparecen (Matching de CV, Red
@@ -4521,7 +4528,7 @@ function renderPipelineBoard() {
     </div>
     <div class="rb-toolbar-row">
       <div class="rb-results-count" style="margin:0">${icon('briefcase',14)} ${vacantesConPipeline} ${vacantesConPipeline === 1 ? 'posición' : 'posiciones'} con pipeline activo${vacantesVacias.length ? ` · ${vacantesVacias.length} sin candidatos todavía` : ''}</div>
-      ${laneIds.length > 0 ? (() => {
+      ${state.pl.lanesOn && laneIds.length > 0 ? (() => {
         /* El "checked" se basa solo en el nivel de cliente (colapsado por
            defecto) -- es el que controla si algo se ve o no. Las lanes
            individuales por debajo arrancan "expandidas" (lanesCollapsed
@@ -4532,8 +4539,15 @@ function renderPipelineBoard() {
         const plAllCollapsed = clienteIds.every(id => state.pl.clientesCollapsed[id] !== false);
         return renderCollapseSwitch('pl-collapse', plAllCollapsed, `collapseAllLanes(${!plAllCollapsed}, ${JSON.stringify(laneIds)}, ${JSON.stringify(clienteIds)})`);
       })() : ''}
+      ${renderCollapseSwitch('pl-lanes-toggle', state.pl.lanesOn, `toggleLanesOn(${!state.pl.lanesOn})`, 'Agrupar por posición')}
     </div>
-    ${laneIds.length === 0 ? `<div class="rb-empty">${icon('columns',28)}<p>${q ? `Sin resultados para "${esc(state.pl.query)}" — probá con el nombre del candidato o el título de la posición.` : 'No hay posiciones ni postulaciones que calcen con este filtro.'}</p></div>` : `<div class="rb-lanes">${clientesHtml}</div>`}
+    ${!state.pl.lanesOn
+      ? (activas.length === 0
+          ? `<div class="rb-empty">${icon('columns',28)}<p>${q ? `Sin resultados para "${esc(state.pl.query)}" — probá con el nombre del candidato o el título de la posición.` : 'No hay postulaciones que calcen con este filtro.'}</p></div>`
+          : `<div class="rb-board">${renderBoardColumns(activas)}</div>`)
+      : (laneIds.length === 0
+          ? `<div class="rb-empty">${icon('columns',28)}<p>${q ? `Sin resultados para "${esc(state.pl.query)}" — probá con el nombre del candidato o el título de la posición.` : 'No hay posiciones ni postulaciones que calcen con este filtro.'}</p></div>`
+          : `<div class="rb-lanes">${clientesHtml}</div>`)}
     <div class="rb-archive">
       <div class="rb-archive-header" onclick="state.pl.archiveOpen=!state.pl.archiveOpen; render()">${state.pl.archiveOpen ? icon('chevronDown',11) : icon('chevronRight',11)} Salidas recientes (${archivadas.length}) — fuera del flujo activo</div>
       ${state.pl.archiveOpen ? `<div class="rb-archive-list">${archiveList}</div>` : ''}
@@ -5505,6 +5519,10 @@ function goToPipelineVacante(vacanteId) {
   clearAllSelections();
   state.view = 'pipeline';
   const v = VACANTES.find(x => x.id === vacanteId);
+  /* El scroll de abajo apunta a [data-vacante-id], que solo existe con
+     las lanes prendidas -- si el usuario venía en la vista "sin agrupar"
+     hay que reactivarlas para que el target exista. */
+  state.pl.lanesOn = true;
   state.pl.lanesCollapsed[vacanteId] = false;
   if (v) state.pl.clientesCollapsed[v.clienteId] = false;
   render();
