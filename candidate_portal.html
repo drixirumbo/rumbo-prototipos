@@ -101,12 +101,12 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-size: var(--
 .rb-accion-pendiente-txt { font-size: var(--fs-sm); font-weight: 600; }
 .rb-agendado-info { display: flex; align-items: center; gap: 8px; color: var(--success-text); font-size: var(--fs-sm); font-weight: 600; margin-top: var(--sp-3); background: rgba(60,203,127,.1); border-radius: var(--radius-2); padding: var(--sp-3); }
 
-/* ---- Vacantes ---- */
-.rb-vacante-card { margin-bottom: var(--sp-4); }
-.rb-vacante-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-2); }
-.rb-vacante-titulo { font-size: var(--fs-lg); font-weight: 600; }
-.rb-vacante-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--text-muted); font-size: var(--fs-sm); margin: var(--sp-2) 0 var(--sp-3); }
-.rb-vacante-meta span { display: flex; align-items: center; gap: 5px; }
+/* ---- Posiciones ---- */
+.rb-posición-card { margin-bottom: var(--sp-4); }
+.rb-posición-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.rb-posición-titulo { font-size: var(--fs-lg); font-weight: 600; }
+.rb-posición-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--text-muted); font-size: var(--fs-sm); margin: var(--sp-2) 0 var(--sp-3); }
+.rb-posición-meta span { display: flex; align-items: center; gap: 5px; }
 .rb-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-3); }
 .rb-tag { font-size: var(--fs-xs); padding: 3px 9px; border-radius: var(--radius-1); background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-muted); }
 
@@ -164,7 +164,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-size: var(--
 
    Alcance v1 (confirmado con el usuario): estado de postulaciones +
    agendar horario (Screening/Entrevista Técnica) + explorar y aplicar a
-   vacantes + perfil/documentos. ---- */
+   posiciones + perfil/documentos. ---- */
 
 const ICONS = {
   chevronRight: '<path d="M9 6l6 6-6 6"/>',
@@ -282,7 +282,7 @@ let YO = null;
 /* Semilla de demo -- para que se pueda ver de entrada el resto del portal
    ya construido (Mis postulaciones con agendamiento en curso, Mi perfil)
    sin tener que pasar por el registro cada vez. Ver continuarComoDemo,
-   colgado de un link chico en la pantalla de Vacantes cuando no hay
+   colgado de un link chico en la pantalla de Posiciones cuando no hay
    sesión -- no reemplaza al registro real, es un atajo de prototipo. */
 const YO_DEMO = {
   nombre: 'Renata Salcedo', nombres: 'Renata', apellidoPaterno: 'Salcedo', apellidoMaterno: '', rol: 'Backend Engineer', seniority: 'Senior', ubicacion: 'Lima, Perú', pais: 'Perú',
@@ -292,25 +292,25 @@ const YO_DEMO = {
   cv: { nombre: 'CV_Renata_Salcedo.pdf', actualizado: '2026-07-02' },
 };
 const POSTULACIONES_DEMO = [
-  { id: 1, vacanteId: 6, etapa: 'agenda_enviada', fechaPostulacion: '2026-08-20', horarioAgendado: null },
+  { id: 1, posiciónId: 6, etapa: 'agenda_enviada', fechaPostulacion: '2026-08-20', horarioAgendado: null },
   /* Site Reliability Engineer @ Interbank -- deliberadamente el mismo
-     candidato/vacante/fecha que la entrevista de Renata Salcedo en
+     candidato/posición/fecha que la entrevista de Renata Salcedo en
      expert_portal.html (id 1 ahí) y que la postulación id 1 en
-     rumbo_prototype.html (misma vacanteId 17). No hay backend real detrás
+     rumbo_prototype.html (misma posiciónId 17). No hay backend real detrás
      -- es la misma persona/historia contada a mano en los 3 archivos, para
      que se sienta un solo pipeline visto desde 3 ángulos en vez de 3 demos
-     sueltas. Si se edita la fecha/vacante acá, actualizar también los
+     sueltas. Si se edita la fecha/posición acá, actualizar también los
      otros dos. */
-  { id: 2, vacanteId: 17, etapa: 'entrevista_tecnica', fechaPostulacion: '2026-08-05', horarioAgendado: { label: '02-09-2026', hora: '15:00' } },
+  { id: 2, posiciónId: 17, etapa: 'entrevista_tecnica', fechaPostulacion: '2026-08-05', horarioAgendado: { label: '02-09-2026', hora: '15:00' } },
 ];
 
 /* Países de origen soportados en el registro -- los candidatos no son
-   todos de Perú (aunque la mayoría de las vacantes mock sí lo son), así
+   todos de Perú (aunque la mayoría de las posiciones mock sí lo son), así
    que el país es un select real, no un dato fijo, y la ubicación
    completa (ciudad + país) se arma a partir de eso en vez de asumirlo. */
 const PAISES = ['Perú', 'Colombia', 'México', 'Chile', 'Argentina', 'Ecuador', 'Bolivia', 'España', 'Estados Unidos', 'Otro'];
 
-const VACANTES = [
+const POSICIONES = [
   { id: 1, titulo: 'Arquitecto Cloud', cliente: 'Interbank', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Híbrido', bandaLabel: 'S/ 10,000 – 12,500', skillsMustHave: ['AWS', 'Arquitectura de microservicios', 'Terraform'], descripcion: 'Liderar el diseño de la infraestructura de microservicios sobre AWS, definir estándares de arquitectura y guiar la migración de cargas críticas.' },
   { id: 2, titulo: 'Data Engineer', cliente: 'Laive', seniority: 'Mid', ubicacion: 'Remoto', modalidad: 'Remoto', bandaLabel: 'S/ 7,500 – 9,000', skillsMustHave: ['Python', 'SQL', 'Airflow'], descripcion: 'Construir y mantener pipelines de datos que alimentan los reportes comerciales y de producción del equipo de datos.' },
   { id: 5, titulo: 'QA Lead', cliente: 'Niubiz', seniority: 'Senior', ubicacion: 'Lima, Perú', modalidad: 'Híbrido', bandaLabel: 'S/ 9,000 – 10,500', skillsMustHave: ['Automation', 'Test Strategy'], descripcion: 'Liderar la estrategia de automatización de pruebas de la plataforma de pagos y elevar la cobertura automatizada.' },
@@ -321,7 +321,7 @@ const VACANTES = [
 
 /* Postulaciones de YO -- arranca vacío (sin cuenta, no hay nada que
    mostrar todavía); se llena al completar el Registro (postulación al
-   puesto de interés) o al aplicar a más vacantes ya con sesión, o con la
+   puesto de interés) o al aplicar a más posiciones ya con sesión, o con la
    semilla de demo (ver POSTULACIONES_DEMO/continuarComoDemo). */
 let POSTULACIONES = [];
 let nextPostulacionId = 1;
@@ -335,13 +335,13 @@ function leerThemeGuardado() {
   catch (e) { return 'light'; }
 }
 const state = {
-  view: 'vacantes', detalleId: null, slotSeleccionado: null, agendarPostulacionId: null, editandoPerfil: false, toast: null,
+  view: 'posiciones', detalleId: null, slotSeleccionado: null, agendarPostulacionId: null, editandoPerfil: false, toast: null,
   registrado: false, registro: null,
   ui: { theme: leerThemeGuardado() },
 };
 
-function vacanteDe(p) { return VACANTES.find(v => v.id === p.vacanteId); }
-function yaPostuloA(vacanteId) { return POSTULACIONES.some(p => p.vacanteId === vacanteId); }
+function posiciónDe(p) { return POSICIONES.find(v => v.id === p.posiciónId); }
+function yaPostuloA(posiciónId) { return POSTULACIONES.some(p => p.posiciónId === posiciónId); }
 
 function showToast(msg) { state.toast = msg; render(); setTimeout(() => { state.toast = null; render(); }, 2600); }
 
@@ -360,14 +360,14 @@ function continuarComoDemo() {
 }
 /* Postular es el único gatillo del Registro (ver iniciarRegistro): si ya
    hay sesión, aplica directo; si no, no se pide "crear cuenta" en
-   abstracto -- se arranca el flujo de registro CON la vacante de interés
+   abstracto -- se arranca el flujo de registro CON la posición de interés
    ya guardada, para aplicar automáticamente al terminarlo (ver
    completarRegistro). */
-function aplicarAVacante(vacanteId) {
-  if (!state.registrado) { iniciarRegistro(vacanteId); return; }
-  if (yaPostuloA(vacanteId)) return;
-  POSTULACIONES.unshift({ id: nextPostulacionId++, vacanteId, etapa: 'intake', fechaPostulacion: new Date().toISOString().slice(0, 10), horarioAgendado: null });
-  const v = VACANTES.find(x => x.id === vacanteId);
+function aplicarAPosición(posiciónId) {
+  if (!state.registrado) { iniciarRegistro(posiciónId); return; }
+  if (yaPostuloA(posiciónId)) return;
+  POSTULACIONES.unshift({ id: nextPostulacionId++, posiciónId, etapa: 'intake', fechaPostulacion: new Date().toISOString().slice(0, 10), horarioAgendado: null });
+  const v = POSICIONES.find(x => x.id === posiciónId);
   showToast(`Postulaste a ${v.titulo} — te avisaremos por email cuando avance (simulado)`);
   state.view = 'postulaciones';
   render();
@@ -394,8 +394,8 @@ function irA(view) { state.view = view; state.detalleId = null; render(); }
 function abrirDetalle(id) { state.view = 'detalle'; state.detalleId = id; render(); }
 
 /* =========================================================================
-   REGISTRO -- flujo de 4 pasos que termina postulando a la vacante que lo
-   disparó (ver aplicarAVacante). Captura: (1) datos personales/contacto +
+   REGISTRO -- flujo de 4 pasos que termina postulando a la posición que lo
+   disparó (ver aplicarAPosición). Captura: (1) datos personales/contacto +
    LinkedIn, (2) ubicación (país + ciudad -- país es un select real, ver
    PAISES, porque los candidatos no son todos de Perú), (3) CV adjunto,
    (4) confirmación. state.registro guarda el form en progreso; se
@@ -409,8 +409,8 @@ const REGISTRO_STEPS = [
   { key: 'cv', label: 'Currículum' },
   { key: 'confirmar', label: 'Confirmar' },
 ];
-function iniciarRegistro(vacanteId) {
-  state.registro = { vacanteId, step: 0, form: { nombres: '', apellidoPaterno: '', apellidoMaterno: '', email: '', telefono: '', linkedin: '', pais: PAISES[0], ciudad: '', cvNombre: '' } };
+function iniciarRegistro(posiciónId) {
+  state.registro = { posiciónId, step: 0, form: { nombres: '', apellidoPaterno: '', apellidoMaterno: '', email: '', telefono: '', linkedin: '', pais: PAISES[0], ciudad: '', cvNombre: '' } };
   state.view = 'registro';
   render();
 }
@@ -421,7 +421,7 @@ function iniciarRegistro(vacanteId) {
 function armarNombreCompleto(nombres, apellidoPaterno, apellidoMaterno) {
   return [nombres, apellidoPaterno, apellidoMaterno].map(s => (s || '').trim()).filter(Boolean).join(' ');
 }
-function cancelarRegistro() { state.registro = null; irA('vacantes'); }
+function cancelarRegistro() { state.registro = null; irA('posiciones'); }
 /* Validación mínima por paso -- no deja avanzar sin lo esencial de ESE
    paso (mismo criterio que ya usan los botones "Continuar" deshabilitados
    en el resto del portal), pero no exige de más (ej. LinkedIn es opcional,
@@ -451,7 +451,7 @@ function adjuntarCvRegistro(input) {
 function quitarCvRegistro() { state.registro.form.cvNombre = ''; render(); }
 function completarRegistro() {
   const f = state.registro.form;
-  const vacanteId = state.registro.vacanteId;
+  const posiciónId = state.registro.posiciónId;
   const nombres = f.nombres.trim(), apellidoPaterno = f.apellidoPaterno.trim(), apellidoMaterno = f.apellidoMaterno.trim();
   YO = {
     nombre: armarNombreCompleto(nombres, apellidoPaterno, apellidoMaterno), nombres, apellidoPaterno, apellidoMaterno,
@@ -462,13 +462,13 @@ function completarRegistro() {
   };
   state.registrado = true;
   state.registro = null;
-  /* showToast (llamado dentro de aplicarAVacante) dispara un render()
-     intermedio antes de que aplicarAVacante llegue a fijar
+  /* showToast (llamado dentro de aplicarAPosición) dispara un render()
+     intermedio antes de que aplicarAPosición llegue a fijar
      state.view='postulaciones' -- si en ese instante state.view siguiera
      en 'registro' con state.registro ya en null, renderRegistro rompe.
      Se deja en un valor válido de antemano para ese render de paso. */
-  state.view = 'vacantes';
-  aplicarAVacante(vacanteId);
+  state.view = 'posiciones';
+  aplicarAPosición(posiciónId);
 }
 
 let editForm = null;
@@ -561,11 +561,11 @@ function renderPostulaciones() {
     return `<div class="rb-empty card">
       <p style="font-size:var(--fs-lg);font-weight:600;margin-bottom:var(--sp-2)">Todavía no postulaste a nada</p>
       <p style="margin-bottom:var(--sp-4)">Explora las posiciones abiertas y postula a la que más te interese.</p>
-      <button class="btn" onclick="irA('vacantes')">${icon('briefcase', 14)} Buscar posiciones</button>
+      <button class="btn" onclick="irA('posiciones')">${icon('briefcase', 14)} Buscar posiciones</button>
     </div>`;
   }
   return POSTULACIONES.map(p => {
-    const v = vacanteDe(p);
+    const v = posiciónDe(p);
     return `<div class="card rb-postulacion-card">
       <div class="rb-postulacion-head" onclick="abrirDetalle(${p.id})">
         <div>
@@ -583,13 +583,13 @@ function renderPostulaciones() {
 function renderDetalle() {
   const p = POSTULACIONES.find(x => x.id === state.detalleId);
   if (!p) { state.view = 'postulaciones'; return renderPostulaciones(); }
-  const v = vacanteDe(p);
+  const v = posiciónDe(p);
   return `
     <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="irA('postulaciones')">${icon('chevronLeft', 12)} Volver</button>
     <div class="card">
-      <div class="rb-vacante-top">
+      <div class="rb-posición-top">
         <div>
-          <h2 class="rb-vacante-titulo">${esc(v.titulo)}</h2>
+          <h2 class="rb-posición-titulo">${esc(v.titulo)}</h2>
           <div class="rb-postulacion-sub" style="margin-top:4px">${icon('mapPin', 12)} ${esc(v.ubicacion)} · ${esc(v.modalidad)}</div>
         </div>
         <span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">${esc(faseDe(p.etapa).label)}</span>
@@ -604,20 +604,20 @@ function renderDetalle() {
     </div>`;
 }
 
-function renderVacantes() {
-  return VACANTES.map(v => {
+function renderPosiciones() {
+  return POSICIONES.map(v => {
     const aplicado = yaPostuloA(v.id);
-    return `<div class="card rb-vacante-card">
-      <div class="rb-vacante-top">
+    return `<div class="card rb-posición-card">
+      <div class="rb-posición-top">
         <div>
-          <div class="rb-vacante-titulo">${esc(v.titulo)}</div>
-          <div class="rb-vacante-meta">
+          <div class="rb-posición-titulo">${esc(v.titulo)}</div>
+          <div class="rb-posición-meta">
             <span>${icon('mapPin', 12)} ${esc(v.ubicacion)}</span>
           </div>
         </div>
         ${aplicado
           ? `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Ya postulaste</span>`
-          : `<button class="btn sm" onclick="aplicarAVacante(${v.id})">Postular</button>`}
+          : `<button class="btn sm" onclick="aplicarAPosición(${v.id})">Postular</button>`}
       </div>
       <p style="color:var(--text-muted);line-height:1.5;margin-bottom:var(--sp-3)">${esc(v.descripcion)}</p>
       <div class="rb-tags">${v.skillsMustHave.map(s => `<span class="rb-tag">${esc(s)}</span>`).join('')}</div>
@@ -683,7 +683,7 @@ function registroPasoHtml() {
     </div>`;
 }
 function renderRegistro() {
-  const v = VACANTES.find(x => x.id === state.registro.vacanteId);
+  const v = POSICIONES.find(x => x.id === state.registro.posiciónId);
   const paso = REGISTRO_STEPS[state.registro.step].key;
   const esUltimo = state.registro.step === REGISTRO_STEPS.length - 1;
   return `
@@ -760,7 +760,7 @@ function editarPerfilModalHtml() {
 function agendarModalHtml() {
   if (state.agendarPostulacionId === null) return '';
   const p = POSTULACIONES.find(x => x.id === state.agendarPostulacionId);
-  const v = vacanteDe(p);
+  const v = posiciónDe(p);
   const esTecnica = p.etapa === 'agenda_tecnica_enviada';
   const slots = slotsDisponibles();
   return `
@@ -787,10 +787,10 @@ function agendarModalHtml() {
    ========================================================================= */
 const TABS_SESION = [
   { key: 'postulaciones', label: 'Mis postulaciones' },
-  { key: 'vacantes', label: 'Buscar posiciones' },
+  { key: 'posiciones', label: 'Buscar posiciones' },
   { key: 'perfil', label: 'Mi perfil' },
 ];
-const TABS_PUBLICO = [{ key: 'vacantes', label: 'Buscar posiciones' }];
+const TABS_PUBLICO = [{ key: 'posiciones', label: 'Buscar posiciones' }];
 function render() {
   /* Preservar foco+selección a través del re-render -- mismo criterio que
      ya usa rumbo_prototype.html: al reemplazar innerHTML completo en cada
@@ -803,22 +803,22 @@ function render() {
   const selStart = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
   const selEnd = active && typeof active.selectionEnd === 'number' ? active.selectionEnd : null;
   document.documentElement.setAttribute('data-theme', state.ui.theme);
-  /* Sin sesión, las únicas vistas alcanzables son "vacantes" (pública) y
+  /* Sin sesión, las únicas vistas alcanzables son "posiciones" (pública) y
      "registro" (mientras hay un registro en curso) -- Mis postulaciones/
      Mi perfil/detalle requieren YO, así que cualquier otro estado
-     residual cae de vuelta a vacantes en vez de romper. */
-  if (!state.registrado && !['vacantes', 'registro'].includes(state.view)) state.view = 'vacantes';
+     residual cae de vuelta a posiciones en vez de romper. */
+  if (!state.registrado && !['posiciones', 'registro'].includes(state.view)) state.view = 'posiciones';
   const view = state.view === 'detalle' ? 'detalle' : state.view;
   const activeTab = view === 'detalle' ? 'postulaciones' : view;
   const TABS = state.registrado ? TABS_SESION : TABS_PUBLICO;
   const body = view === 'registro' ? renderRegistro()
     : view === 'postulaciones' ? renderPostulaciones()
-    : view === 'vacantes' ? renderVacantes()
+    : view === 'posiciones' ? renderPosiciones()
     : view === 'perfil' ? renderPerfil()
     : renderDetalle();
   const titulos = {
     postulaciones: ['Mis postulaciones', 'El estado de tus procesos, de un vistazo.'],
-    vacantes: ['Posiciones abiertas', 'Postula a la posición que más te interese.'],
+    posiciones: ['Posiciones abiertas', 'Postula a la posición que más te interese.'],
     perfil: ['Mi perfil', 'Así te ven los recruiters de Rumbo.'],
   };
   const [titulo, sub] = titulos[view] || ['', ''];
