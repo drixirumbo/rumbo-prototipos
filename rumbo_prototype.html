@@ -1933,8 +1933,8 @@ const state = {
    nunca se sube ni se lee el contenido real de un PDF); lo que sí se
    procesa como texto para "Estructurar con IA" es la transcripción del
    LP + el refinamiento manual (ver sintetizarWizard). */
-function newWizardState() {
-  return { step: 'crear', leadForm: '', clienteIdForm: '', tituloForm: '', dpArchivo: '', transcripcion: '', textoLibre: '', draft: null };
+function newWizardState(clienteId) {
+  return { step: 'crear', leadForm: '', clienteIdForm: clienteId ? String(clienteId) : '', tituloForm: '', dpArchivo: '', transcripcion: '', textoLibre: '', draft: null };
 }
 
 let toastTimer = null;
@@ -2643,6 +2643,11 @@ function renderClienteDetail() {
   const abiertas = abiertasDeCliente(c.id);
   const cerradas = cerradasDeCliente(c.id);
   const colocados = colocadosDeCliente(c.id);
+  /* Abiertas + cerradas = todas las posiciones de este cliente (esos 2
+     helpers ya particionan el total exhaustivamente entre estado activo
+     y estado terminal) -- se reusa tal cual para el picker de "copiar
+     posición anterior" en vez de volver a filtrar desde cero. */
+  const posicionesCliente = [...abiertas, ...cerradas];
   const amTags = c.accountManagers.map(am => `<span class="rb-am-tag">${icon('user',12)} ${esc(am)}</span>`).join('');
   const recruiters = recruitersDeCliente(c.id);
   const recruiterTags = recruiters.length
@@ -2767,7 +2772,13 @@ function renderClienteDetail() {
       </div>
     </div>
     <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-      <h3>Posiciones abiertas (${abiertas.length})</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+        <h3 style="margin:0">Posiciones abiertas (${abiertas.length})</h3>
+        <div style="display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap">
+          ${posicionesCliente.length ? renderSelect('cl-copiar-posicion', [{ value: '', label: 'Copiar posición anterior...' }, ...posicionesCliente.map(v => ({ value: v.id, label: v.titulo }))], '', 'Copiar posición anterior...', 'if (value) copiarPosicionAnterior(value);', 'Copiar una posición anterior de este cliente como plantilla') : ''}
+          <button class="btn secondary sm" onclick="openWizard(${c.id})">+ Nueva posición</button>
+        </div>
+      </div>
       ${riesgoAlert}
       ${saludResumen}
       ${progresoAbiertas}
@@ -3225,9 +3236,42 @@ function renderEditPosiciónForm(v) {
 }
 
 /* =========================================================================
-   WIZARD: Nueva Posición (3 caminos convergen en la misma revision)
+   WIZARD: Nueva Posición
    ========================================================================= */
-function openWizard() { state.wizard = newWizardState(); state.va.wizardOpen = true; state.va.selectedId = null; render(); window.scrollTo(0, 0); }
+/* `clienteId` opcional -- lo pasa el botón "+ Nueva posición" del detalle
+   de Cliente (ver renderClienteDetail) para no obligar a re-elegir un
+   cliente que ya es obvio por el contexto. Sin argumento (ej. desde la
+   lista de Posiciones) el wizard arranca sin cliente preseleccionado,
+   como siempre. */
+function openWizard(clienteId) { state.wizard = newWizardState(clienteId); state.va.wizardOpen = true; state.va.selectedId = null; state.view = 'posiciones'; render(); window.scrollTo(0, 0); }
+/* Copiar una posición anterior de este cliente como plantilla para una
+   nueva -- salta directo al paso "revisar" del wizard con casi todos los
+   campos ya clonados (JD, bandas, clasificación, lead), en vez de repetir
+   DP+LP desde cero para un rol que ya se conoce bien (ej. una posición
+   recurrente para el mismo cliente, tipo "otro Backend Engineer más").
+   El deadline NO se copia (es propio de cada posición, uno viejo no
+   significa nada acá); todo lo demás queda editable antes de aprobar --
+   nada se auto-aprueba solo por venir de una copia. */
+function copiarPosicionAnterior(vacanteId) {
+  const v = VACANTES.find(x => x.id === Number(vacanteId));
+  if (!v) return;
+  state.wizard = newWizardState(v.clienteId);
+  state.wizard.step = 'revisar';
+  state.wizard.draft = {
+    titulo: v.titulo, clienteId: v.clienteId, lead: v.lead || '', seniority: v.seniority,
+    engagementModel: v.engagementModel, modalidad: v.modalidad, priority: v.priority,
+    clientDeadline: '', headcount: v.jd.headcount || 1,
+    descripcion: v.jd.descripcion || '', skillsMustHave: [...v.jd.skillsMustHave], skillsNiceToHave: [...v.jd.skillsNiceToHave],
+    anosExperiencia: v.jd.anosExperiencia || '', bandas: v.jd.bandas.map(b => ({ ...b })),
+    industriaDeseable: v.jd.industriaDeseable || '', empresasObjetivo: v.jd.empresasObjetivo || '',
+    booleanSourcing: v.jd.booleanSourcing || '', redFlagsSourcing: v.jd.redFlagsSourcing || '', notasCliente: v.jd.notasCliente || '',
+    practica: v.practica || '', especialidad: v.especialidad || '', subEspecialidad: v.subEspecialidad || '',
+  };
+  state.va.wizardOpen = true; state.va.selectedId = null; state.view = 'posiciones';
+  showToast(`Se copió "${v.titulo}" como base para una nueva posición — revísala y ajusta antes de aprobar`);
+  render();
+  window.scrollTo(0, 0);
+}
 /* Adjuntar DP: mismo criterio que adjuntarCvCandidato -- input file real,
    solo se lee el nombre (prototipo estático, sin backend). El contenido
    del PDF nunca se "lee" para la síntesis (no hay forma real de parsear
