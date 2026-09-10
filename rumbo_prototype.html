@@ -1934,7 +1934,7 @@ const state = {
    procesa como texto para "Estructurar con IA" es la transcripción del
    LP + el refinamiento manual (ver sintetizarWizard). */
 function newWizardState(clienteId) {
-  return { step: 'crear', leadForm: '', clienteIdForm: clienteId ? String(clienteId) : '', tituloForm: '', dpArchivo: '', transcripcion: '', textoLibre: '', draft: null };
+  return { step: 'crear', leadForm: '', clienteIdForm: clienteId ? String(clienteId) : '', tituloForm: '', headcountForm: 1, dpArchivo: '', transcripcion: '', textoLibre: '', draft: null };
 }
 
 let toastTimer = null;
@@ -3303,7 +3303,7 @@ function sintetizarWizard() {
       bandas: [{ nivel: 'Único', min: presupuesto ? presupuesto.min : 0, max: presupuesto ? presupuesto.max : 0 }],
       practica: '', especialidad: '', subEspecialidad: '',
     };
-    w.draft = Object.assign(borrador, { engagementModel: 'Staffing', modalidad: 'Híbrido', priority: 'Medium', clientDeadline: '', headcount: 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '' });
+    w.draft = Object.assign(borrador, { engagementModel: 'Staffing', modalidad: 'Híbrido', priority: 'Medium', clientDeadline: '', headcount: parseInt(w.headcountForm, 10) || 1, industriaDeseable: '', empresasObjetivo: '', booleanSourcing: '', redFlagsSourcing: '', notasCliente: '' });
     w.step = 'revisar';
     render();
   }, 1300);
@@ -3393,8 +3393,12 @@ function renderWizardStep(w) {
       ${renderSelect('wiz-lead', [{ value: '', label: 'Selecciona un lead' }, ...LEADS_POSICION_OPCIONES.map(r => ({ value: r, label: r }))], w.leadForm, 'Selecciona un lead', 'state.wizard.leadForm=value; render();', null, null, true)}
       <label class="rb-wizard-label" for="wiz-cliente">Cliente</label>
       ${renderSelect('wiz-cliente', [{ value: '', label: 'Selecciona un cliente' }, ...CLIENTES.filter(c => c.activo).map(c => ({ value: c.id, label: c.nombre }))], w.clienteIdForm, 'Selecciona un cliente', 'state.wizard.clienteIdForm=value; render();', null, null, true)}
-      <label class="rb-wizard-label" for="wiz-titulo">Título de la posición</label>
-      <input id="wiz-titulo" class="input" value="${esc(w.tituloForm)}" placeholder="Ej. Senior Data Engineer" oninput="state.wizard.tituloForm=this.value; render()" />
+      <div style="display:flex;gap:var(--sp-3)">
+        <div style="flex:2"><label class="rb-wizard-label" for="wiz-titulo">Título de la posición</label>
+          <input id="wiz-titulo" class="input" value="${esc(w.tituloForm)}" placeholder="Ej. Senior Data Engineer" oninput="state.wizard.tituloForm=this.value; render()" /></div>
+        <div style="flex:1"><label class="rb-wizard-label" for="wiz-headcount">Headcount</label>
+          <input id="wiz-headcount" class="input" type="number" min="1" value="${w.headcountForm}" oninput="state.wizard.headcountForm=this.value" /></div>
+      </div>
       <label class="rb-wizard-label">DP -- Descripción de la Posición <span style="font-weight:400;color:var(--text-dim)">(provista por el cliente, hoy llega por mail)</span></label>
       ${w.dpArchivo
         ? `<div class="rb-file-row"><span style="display:flex;align-items:center;gap:8px">${icon('fileText', 16)} ${esc(w.dpArchivo)}</span><button class="btn ghost sm" onclick="quitarDpWizard()">${icon('x', 12)} Quitar</button></div>`
