@@ -2040,6 +2040,17 @@ function toastHtml() {
   return `<div class="rb-toast">${esc(state.toast)}</div>`;
 }
 
+/* Resetea todo el estado propio del detalle de una postulación (drawer +
+   sus modales/formularios) -- compartido por closeDrawer() (cuando se
+   sale de la vista Pipeline) y cerrarDetalleDesdeVacante() (cuando el
+   detalle se abrió desde la Landing Zone/Pipeline de una Vacante, ver
+   goToDetalleDesdeVacante, y "volver" no debe sacar de esa Vacante). */
+function resetDetallePostulacion() {
+  state.pl.selectedId = null; state.postVerdictDraft = null; state.postVerdictFb = '';
+  state.docAbierto = null; state.retiroAbierto = null; state.retiroMotivo = null; state.retiroMotivoOtro = '';
+  state.aprobarAbierto = null; state.culminarAbierto = null; state.culminarMotivo = null; state.culminarMotivoOtro = '';
+  state.blacklistAbierto = null; state.blacklistMotivo = null; state.blacklistMotivoOtro = '';
+}
 function closeDrawer() {
   // "Volver" desde el detalle a la lista/tablero de la vista activa. Para
   // Pipeline esto SÍ cierra un drawer de verdad (ver renderPostulacionDrawer)
@@ -2051,9 +2062,24 @@ function closeDrawer() {
   if (state.view === 'talent-database') state.td.selectedId = null;
   if (state.view === 'vacantes') { state.va.selectedId = null; state.va.editando = false; state.va.wizardOpen = false; }
   if (state.view === 'clientes') state.cl.selectedId = null;
-  if (esPipeline) { state.pl.selectedId = null; state.postVerdictDraft = null; state.postVerdictFb = ''; state.docAbierto = null; state.retiroAbierto = null; state.retiroMotivo = null; state.retiroMotivoOtro = ''; state.aprobarAbierto = null; state.culminarAbierto = null; state.culminarMotivo = null; state.culminarMotivoOtro = ''; state.blacklistAbierto = null; state.blacklistMotivo = null; state.blacklistMotivoOtro = ''; }
+  if (esPipeline) resetDetallePostulacion();
   render();
   if (!esPipeline) window.scrollTo(0, 0);
+}
+/* Abre el detalle de una postulación SIN salir de la Vacante (Landing
+   Zone o Pipeline de abajo, ver renderVacanteDrawerBody/renderLandingZoneRow)
+   -- a diferencia de goToDetalleProceso, que navega a la vista Pipeline.
+   Necesario porque una postulación en Landing Zone (GATE_INTAKE) todavía
+   no vive en el kanban: forzar state.view='pipeline' dejaría a "volver"
+   aterrizando en un tablero donde ese candidato ni siquiera aparece, en
+   vez de en la misma Vacante de la que salió. */
+function goToDetalleDesdeVacante(postulacionId) {
+  state.pl.selectedId = postulacionId;
+  render();
+}
+function cerrarDetalleDesdeVacante() {
+  resetDetallePostulacion();
+  render();
 }
 
 /* Helper generico para editar arrays anidados por path de texto (usado por
@@ -2967,7 +2993,7 @@ function renderVacanteDrawerBody() {
     const c = CANDIDATOS.find(x => x.id === p.candidatoId);
     const contratado = p.etapa === 'contratado';
     const rowClass = contratado ? 'rb-postulacion-contratado' : (SALIDAS.includes(p.etapa) ? 'rb-terminal-item' : '');
-    return `<div class="rb-postulacion-row ${rowClass}" onclick="goToDetalleProceso(${p.id})">
+    return `<div class="rb-postulacion-row ${rowClass}" onclick="goToDetalleDesdeVacante(${p.id})">
       <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-sub" style="margin:0">${esc(ETAPA_LABELS[p.etapa])}</p></div>
       <div style="display:flex;align-items:center;gap:8px">
         ${contratado ? `<span class="rb-badge" style="background:var(--success)22;color:var(--success-text)">${icon('check',11)} Contratado</span>` : ''}
@@ -4330,7 +4356,7 @@ function renderLandingZoneRow(p) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
   const m = resolverIntakeMatching(p);
   const pendienteGo = !!p.pendienteGo;
-  return `<div class="rb-landingzone-row ${esTopTalent(p) ? 'rb-top-talent' : ''}" onclick="goToDetalleProceso(${p.id})">
+  return `<div class="rb-landingzone-row ${esTopTalent(p) ? 'rb-top-talent' : ''}" onclick="goToDetalleDesdeVacante(${p.id})">
     ${topTalentRibbon(p)}
     <div class="rb-card-name-row">
       <p class="rb-card-name">${esc(c.nombre)}</p>
@@ -4344,10 +4370,10 @@ function renderLandingZoneRow(p) {
     <div class="rb-verdict-row" style="margin-top:var(--sp-2)">
       ${pendienteGo ? `
         <button class="btn sm" onclick="event.stopPropagation(); abrirAprobarModal(${p.id})">${icon('check',12)} Dar Go</button>
-        <button class="btn danger sm" onclick="event.stopPropagation(); goToDetalleProceso(${p.id})">${icon('x',12)} Rechazar</button>
+        <button class="btn danger sm" onclick="event.stopPropagation(); goToDetalleDesdeVacante(${p.id})">${icon('x',12)} Rechazar</button>
       ` : `
         <button class="btn sm" onclick="event.stopPropagation(); enviarAValidacion(${p.id})">${icon('arrowUpRight',12)} Enviar a validación (Go)</button>
-        <button class="btn secondary sm" onclick="event.stopPropagation(); goToDetalleProceso(${p.id})">${icon('x',12)} Descartar</button>
+        <button class="btn secondary sm" onclick="event.stopPropagation(); goToDetalleDesdeVacante(${p.id})">${icon('x',12)} Descartar</button>
       `}
       <button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="event.stopPropagation(); abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>
     </div>
@@ -5349,9 +5375,15 @@ function renderPostulacionDrawerBody() {
      info que un recruiter quiere seguir viendo (nombre, badges, CV,
      expectativa) sin tener que volver a subir cada vez que revisa un
      paso más abajo en un Historial que puede ser largo. */
+  /* Si se abrió desde la Landing Zone/Pipeline de una Vacante (ver
+     goToDetalleDesdeVacante), "volver" debe quedarse en esa misma
+     Vacante -- no tiene sentido decir "Volver a Pipeline" para una
+     postulación que, estando en GATE_INTAKE, ni siquiera vive ahí
+     todavía. */
+  const abiertoDesdeVacante = state.view === 'vacantes';
   return `
     <div class="rb-drawer-head">
-      <div class="rb-back" onclick="closeDrawer()">${icon('chevronLeft',12)} Volver a Pipeline</div>
+      <div class="rb-back" onclick="${abiertoDesdeVacante ? 'cerrarDetalleDesdeVacante()' : 'closeDrawer()'}">${icon('chevronLeft',12)} ${abiertoDesdeVacante ? `Volver a ${esc(p.vacante)}` : 'Volver a Pipeline'}</div>
       <div class="rb-detail-header">
         <div class="avatar xl">${esc(initials(candidato.nombre))}</div>
         <div><h1 class="rb-detail-name" style="display:flex;align-items:center;gap:6px">
@@ -5404,10 +5436,16 @@ function renderPostulacionDrawerBody() {
    misma, se suprime la animación -- solo se anima la apertura real. */
 let drawerAbiertoPara = null;
 function renderPostulacionDrawer() {
-  if (state.view !== 'pipeline' || state.pl.selectedId === null) return '';
+  /* También se abre desde la Landing Zone/Pipeline del detalle de Vacante
+     (state.view === 'vacantes', ver goToDetalleDesdeVacante) sin navegar
+     a la vista Pipeline -- si view es 'vacantes' acá, es SIEMPRE porque
+     vino de ese camino (goToDetalleProceso, el único otro lugar que abre
+     este drawer, fuerza state.view='pipeline'). */
+  if ((state.view !== 'pipeline' && state.view !== 'vacantes') || state.pl.selectedId === null) return '';
   const yaAbierto = drawerAbiertoPara === state.pl.selectedId;
+  const cerrarFn = state.view === 'vacantes' ? 'cerrarDetalleDesdeVacante()' : 'closeDrawer()';
   return `
-    <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:60" onclick="closeDrawer()"></div>
+    <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:60" onclick="${cerrarFn}"></div>
     <aside class="rb-side-drawer${yaAbierto ? ' rb-no-anim' : ''}">${renderPostulacionDrawerBody()}</aside>`;
 }
 function renderFloatingMenus() {
@@ -5507,7 +5545,10 @@ function exportarBriefPdf(id) {
 }
 
 function renderDocModal() {
-  if (!state.docAbierto || state.view !== 'pipeline' || state.pl.selectedId === null) return '';
+  /* El detalle de postulación (y sus checklists/docs) también se abre
+     desde la Landing Zone/Pipeline de una Vacante -- ver
+     goToDetalleDesdeVacante. */
+  if (!state.docAbierto || (state.view !== 'pipeline' && state.view !== 'vacantes') || state.pl.selectedId === null) return '';
   const p = POSTULACIONES.find(x => x.id === state.pl.selectedId);
   if (!p) return '';
   const candidato = CANDIDATOS.find(c => c.id === p.candidatoId);
@@ -5566,7 +5607,7 @@ function renderDocModal() {
    elegir un motivo (o escribirlo, si es "Otro") antes de habilitar
    Confirmar, igual que el sustento obligatorio del gate de Identificado. */
 function renderRetiroModal() {
-  if (!state.retiroAbierto || state.view !== 'pipeline') return '';
+  if (!state.retiroAbierto || (state.view !== 'pipeline' && state.view !== 'vacantes')) return '';
   const p = POSTULACIONES.find(x => x.id === state.retiroAbierto);
   if (!p) return '';
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -5597,7 +5638,7 @@ function renderRetiroModal() {
    Entrevista Técnica -- mismo patrón que renderRetiroModal(), con
    motivos propios de una decisión de Rumbo (ver MOTIVOS_CULMINAR). */
 function renderCulminarModal() {
-  if (!state.culminarAbierto || state.view !== 'pipeline') return '';
+  if (!state.culminarAbierto || (state.view !== 'pipeline' && state.view !== 'vacantes')) return '';
   const p = POSTULACIONES.find(x => x.id === state.culminarAbierto);
   if (!p) return '';
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -5917,7 +5958,7 @@ function render() {
   if (state.pl.assigneeMenuFor !== null) positionFloatingMenu(`assignee-trigger-${state.pl.assigneeMenuFor}`, `assignee-menu-${state.pl.assigneeMenuFor}`);
   if (state.va.estadoMenuFor !== null) positionFloatingMenu(`estado-trigger-${state.va.estadoMenuFor}`, `estado-menu-${state.va.estadoMenuFor}`);
   window.scrollTo(0, pageScroll);
-  drawerAbiertoPara = state.view === 'pipeline' ? state.pl.selectedId : null;
+  drawerAbiertoPara = (state.view === 'pipeline' || state.view === 'vacantes') ? state.pl.selectedId : null;
 }
 
 aplicarTheme();
