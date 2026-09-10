@@ -325,6 +325,13 @@ body {
 .rb-postulacion-row:last-child { border-bottom: none; }
 .rb-postulacion-row:hover .rb-card-name { color: var(--cyan-text); }
 .rb-postulacion-row.rb-postulacion-contratado { background: rgba(60,203,127,.08); border-left: 3px solid var(--success); border-bottom-color: transparent; padding-left: var(--sp-3); border-radius: var(--radius-1); margin-bottom: var(--sp-1); }
+/* Fila de la Landing Zone (ver renderLandingZoneRow) -- lista compacta,
+   no grilla de cards del kanban, así que no reusa .rb-card (min-height
+   fijo pensado para grillas, no para una lista angosta). */
+.rb-landingzone-row { position: relative; border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3); margin-bottom: var(--sp-3); cursor: pointer; transition: border-color var(--dur-2) var(--ease-out); }
+.rb-landingzone-row:last-child { margin-bottom: 0; }
+.rb-landingzone-row:hover { border-color: var(--border-strong); }
+.rb-landingzone-row.rb-top-talent { border-color: rgba(71,235,235,.45); box-shadow: 0 0 0 1px rgba(71,235,235,.2); }
 .rb-am-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px 8px; font-size: var(--fs-xs); line-height: 1; margin: 0 6px 6px 0; }
 
 /* Header del drawer de postulación (volver/nombre/badges/quickfacts):
@@ -905,6 +912,7 @@ const ICONS = {
   coin: '<circle cx="12" cy="12" r="9"/><path d="M9.5 15c0 1.1 1.1 2 2.5 2s2.5-.9 2.5-2-1.1-1.7-2.5-2-2.5-.9-2.5-2 1.1-2 2.5-2 2.5.9 2.5 2"/>',
   users: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="8.5" r="2.2"/><path d="M15.2 12.2c2.5.4 4.3 2.3 4.3 4.8"/>',
   user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/>',
+  userPlus: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/><path d="M19 8v6M16 11h6"/>',
   building: '<rect x="4" y="3" width="16" height="18"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   link: '<path d="M9 15l6-6"/><path d="M8.5 12 6 14.5a3.2 3.2 0 0 0 4.5 4.5L13 16.5"/><path d="M15.5 12 18 9.5a3.2 3.2 0 0 0-4.5-4.5L11 7.5"/>',
@@ -1688,6 +1696,14 @@ const ORDEN_ESTADO_CANDIDATO = ['En proceso', 'Disponible', 'Colocado', 'No inte
    señal más fuerte que ya existe en el modelo, la reusamos para destacar
    visualmente las tarjetas en vez de inventar un criterio nuevo. */
 function esTopTalent(p) { return p.signal === 'strong_yes'; }
+/* Landing Zone: toda postulación en GATE_INTAKE vive ahí, no en el kanban
+   (ver renderBoardColumns/renderPipelineBoard). `pendienteGo` es un flag
+   dentro de ese mismo `intake` -- NO una etapa nueva en FULL_ORDER -- para
+   no tener que enseñarle este matiz a idxEnOrden/dots de progreso/etc,
+   que nunca deben verlo (el kanban ya no muestra intake en absoluto). Se
+   lee siempre con `!!` porque los mocks existentes no lo traen seteado. */
+function estaEnLandingZone(p) { return p.etapa === GATE_INTAKE; }
+function estaPendienteDeGo(p) { return p.etapa === GATE_INTAKE && !!p.pendienteGo; }
 function initials(nombre) { return nombre.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase(); }
 function clienteLogo(nombre, size) {
   const src = CLIENTE_LOGOS[nombre];
@@ -1888,6 +1904,7 @@ const state = {
   cl: { selectedId: null, query: '', industriaF: '', activoF: '', amF: '', cerradasOpen: false, tiersCollapsed: {} },
   pl: { scope: 'todo', cliente: '', query: '', prioridadFiltro: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, estadosCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
+  altaCandidato: null,
   editForm: null,
   postVerdictDraft: null, postVerdictFb: '',
   docAbierto: null,
@@ -2088,13 +2105,11 @@ function progresoGlobal(postulaciones) {
      usa para badges individuales (ahi el cian de "gate" sigue teniendo
      sentido) -- es solo la paleta del grafico segmentado. */
   const buckets = [];
-  /* El gate de Identificado ya no es su propio bucket -- se suma al de
-     "Sourcing" (mismo criterio que renderBoardColumns en el kanban),
-     porque conceptualmente es parte de esa fase, no un paso previo a
-     ella. */
+  /* GATE_INTAKE ya no suma acá -- vive en la Landing Zone de cada
+     Vacante, no en ningún bucket del funnel de pipeline (que ya recibe
+     `postulaciones` pre-filtradas sin intake, ver los llamadores). */
   PHASES.forEach((phase, i) => {
-    const esSourcing = phase.id === 'sourcing';
-    const count = postulaciones.filter(p => phase.sub.includes(p.etapa)).length + (esSourcing ? postulaciones.filter(p => p.etapa === GATE_INTAKE).length : 0);
+    const count = postulaciones.filter(p => phase.sub.includes(p.etapa)).length;
     buckets.push({ label: phase.label, color: phase.color, count });
     /* Los gates ya no piden prestado un color de estado (--danger-text/
        --warning-text) -- un gate es un checkpoint DENTRO de la fase que lo
@@ -2186,7 +2201,7 @@ function renderDashboard() {
   const vacantesAbiertas = VACANTES.filter(v => !esVacanteTerminal(v.estado));
   /* "En pipeline activo" excluye tanto las salidas (rechazos/no interesado)
      como contratado -- contratado ya es un resultado, no algo en curso. */
-  const enProceso = POSTULACIONES.filter(p => !SALIDAS.includes(p.etapa) && p.etapa !== 'contratado');
+  const enProceso = POSTULACIONES.filter(p => !SALIDAS.includes(p.etapa) && p.etapa !== 'contratado' && p.etapa !== GATE_INTAKE);
   const colocadosHistorico = POSTULACIONES.filter(p => p.etapa === 'contratado');
   const topTalentActivo = enProceso.filter(esTopTalent);
 
@@ -2433,7 +2448,7 @@ function clienteActivoBadge(activo) {
    para poder mostrar un mini-funnel consolidado en el drawer del cliente
    sin tener que ir a Pipeline a armarlo mentalmente. */
 function progresoVacante(vacanteId) {
-  const activas = POSTULACIONES.filter(p => p.vacanteId === vacanteId && !SALIDAS.includes(p.etapa));
+  const activas = POSTULACIONES.filter(p => p.vacanteId === vacanteId && !SALIDAS.includes(p.etapa) && p.etapa !== GATE_INTAKE);
   return { activas, buckets: progresoGlobal(activas), topTalent: activas.filter(esTopTalent).length };
 }
 function selectCliente(id) { state.cl.selectedId = id; render(); window.scrollTo(0, 0); }
@@ -2718,6 +2733,21 @@ function renderClienteDetail() {
    VISTA: VACANTES (+ wizard de creación + edición)
    ========================================================================= */
 function postulacionesDeVacante(vacanteId) { return POSTULACIONES.filter(p => p.vacanteId === vacanteId); }
+/* Landing Zone de una vacante: todo lo que todavía está en GATE_INTAKE,
+   sin importar si ya está "pendiente de Go" o recién llegó. Ver
+   renderLandingZoneRow para cómo se distinguen ambas colas dentro de la
+   misma lista. */
+function landingZoneDeVacante(vacanteId) { return postulacionesDeVacante(vacanteId).filter(p => p.etapa === GATE_INTAKE); }
+/* Ranking: mismo criterio que ya usa el kanban (porTopTalentPrimero) --
+   top talent primero, y el score de matching automático como desempate en
+   vez de inventar un ranking nuevo. */
+function landingZoneOrdenada(vacanteId) {
+  return landingZoneDeVacante(vacanteId).slice().sort((a, b) => {
+    const top = porTopTalentPrimero(a, b);
+    if (top !== 0) return top;
+    return matchmakingScoreFinal(getMatchmaking(b).dims) - matchmakingScoreFinal(getMatchmaking(a).dims);
+  });
+}
 function selectVacante(id) { state.va.selectedId = id; state.va.editando = false; render(); window.scrollTo(0, 0); }
 
 function vacantesAgrupadas() {
@@ -2785,7 +2815,7 @@ function vacanteHeadcountProgreso(v) {
   return { headcount, cubiertas };
 }
 function renderVacanteCard(v, terminal) {
-  const count = POSTULACIONES.filter(p => p.vacanteId === v.id && !SALIDAS.includes(p.etapa)).length;
+  const count = POSTULACIONES.filter(p => p.vacanteId === v.id && !SALIDAS.includes(p.etapa) && p.etapa !== GATE_INTAKE).length;
   const dl = deadlineInfo(v.clientDeadline);
   const deadlineRow = v.clientDeadline ? `<div class="rb-card-meta-row" style="color:${dl.color}">${icon('clock',12)} ${esc(dl.label || ('Deadline: ' + formatFecha(v.clientDeadline)))}</div>` : '';
   const jdWarn = v.jd.estadoAprobacion === 'borrador' ? `<span class="rb-badge" style="background:rgba(255,176,32,.15);color:var(--warning-text)">JD en borrador</span>` : '';
@@ -2917,6 +2947,11 @@ function renderVacanteDrawerBody() {
         ${v.jd.notasCliente ? `<h3 class="rb-subsection-label">Notas adicionales del cliente</h3><p class="rb-resumen">${esc(v.jd.notasCliente)}</p>` : ''}
       `}
     </div>`;
+  /* Landing Zone: todo lo que todavía no pasó el Go del lead vive acá, no
+     en el Pipeline de abajo (que ahora es estrictamente post-Go). Ver
+     landingZoneOrdenada/renderLandingZoneRow. */
+  const landingZoneList = landingZoneOrdenada(v.id);
+  const enPipeline = postulaciones.filter(p => p.etapa !== GATE_INTAKE);
   /* En una vacante cerrada, el candidato contratado va primero y se
      destaca (borde + badge success); el resto -- rechazados/retirados en
      el camino -- se agrupa aparte bajo un divisor colapsable (mismo idiom
@@ -2925,9 +2960,9 @@ function renderVacanteDrawerBody() {
      chocar con los nombres de cliente que usa esa vista), en vez de
      mezclarse en una sola lista plana -- así el conteo del título refleja
      pipeline realmente activo. */
-  const postActivas = postulaciones.filter(p => !SALIDAS.includes(p.etapa))
+  const postActivas = enPipeline.filter(p => !SALIDAS.includes(p.etapa))
     .sort((a, b) => (a.etapa === 'contratado' ? -1 : 0) - (b.etapa === 'contratado' ? -1 : 0));
-  const postFinalizadas = postulaciones.filter(p => SALIDAS.includes(p.etapa));
+  const postFinalizadas = enPipeline.filter(p => SALIDAS.includes(p.etapa));
   const renderPostRow = p => {
     const c = CANDIDATOS.find(x => x.id === p.candidatoId);
     const contratado = p.etapa === 'contratado';
@@ -2942,7 +2977,7 @@ function renderVacanteDrawerBody() {
   };
   const postTerminalKey = 'post-' + v.id;
   const postTerminalAbierto = !!state.va.terminalOpen[postTerminalKey];
-  const postRows = postulaciones.length === 0
+  const postRows = enPipeline.length === 0
     ? `<p class="rb-resumen" style="color:var(--text-muted)">Todavía no hay candidatos en el pipeline para esta posición.</p>`
     : `${postActivas.map(renderPostRow).join('') || `<p class="rb-resumen" style="color:var(--text-muted)">Sin postulaciones activas por ahora.</p>`}
       ${postFinalizadas.length ? `
@@ -2992,8 +3027,17 @@ function renderVacanteDrawerBody() {
     </div>
     <div class="card rb-detail-section">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4)">
-        <h3 style="margin:0">Postulaciones (${postActivas.length} activa${postActivas.length === 1 ? '' : 's'}${postFinalizadas.length ? ` · ${postFinalizadas.length} finalizada${postFinalizadas.length === 1 ? '' : 's'}` : ''})</h3>
-        ${postulaciones.length ? `<button class="rb-link sm" onclick="goToPipelineVacante(${v.id})">Ver en Pipeline ${icon('arrowUpRight',12)}</button>` : ''}
+        <h3 style="margin:0">Landing Zone (${landingZoneList.length})</h3>
+        <button class="btn sm" onclick="abrirCargaCandidato(${v.id})">${icon('userPlus',12)} Cargar candidato</button>
+      </div>
+      ${landingZoneList.length === 0
+        ? `<p class="rb-resumen" style="color:var(--text-muted)">Sin candidatos por revisar todavía.</p>`
+        : landingZoneList.map(renderLandingZoneRow).join('')}
+    </div>
+    <div class="card rb-detail-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4)">
+        <h3 style="margin:0">Pipeline (${postActivas.length} activa${postActivas.length === 1 ? '' : 's'}${postFinalizadas.length ? ` · ${postFinalizadas.length} finalizada${postFinalizadas.length === 1 ? '' : 's'}` : ''})</h3>
+        ${enPipeline.length ? `<button class="rb-link sm" onclick="goToPipelineVacante(${v.id})">Ver en Pipeline ${icon('arrowUpRight',12)}</button>` : ''}
       </div>
       ${postRows}
     </div>`;
@@ -3842,6 +3886,84 @@ function moveTo(id, nuevaEtapa) {
   p.dias = 0;
 }
 
+/* =========================================================================
+   ALTA MANUAL DE CANDIDATO (carga proactiva/outreach del sourcer) --
+   único lugar de todo el archivo que hace push a CANDIDATOS/POSTULACIONES
+   (el resto del mock es 100% estático). Formulario acotado a propósito
+   (no los ~30 campos que tiene un Candidato completo en la Talent
+   Database) -- entra directo a la Landing Zone de la vacante elegida, no
+   al pipeline, así que no hace falta más que lo necesario para evaluarlo
+   ahí. Mismo patrón de estado que state.wizard/state.va.wizardOpen. */
+function nextId(arr) { return arr.reduce((max, x) => Math.max(max, x.id), 0) + 1; }
+function newAltaCandidatoState(vacanteId) {
+  return { vacanteId, nombre: '', rol: '', seniority: 'Semi Senior', linkedin: '', cvSimulado: '', expectativa: '', disponibilidad: '30 días', skills: [] };
+}
+function abrirCargaCandidato(vacanteId) { state.altaCandidato = newAltaCandidatoState(vacanteId); render(); }
+function cerrarCargaCandidato() { state.altaCandidato = null; render(); }
+function confirmarAltaCandidato() {
+  const d = state.altaCandidato;
+  if (!d.nombre.trim() || !d.rol.trim()) return;
+  const v = VACANTES.find(x => x.id === d.vacanteId);
+  const candidatoId = nextId(CANDIDATOS);
+  CANDIDATOS.push({
+    id: candidatoId, nombre: d.nombre.trim(), origen: 'Outbound', rol: d.rol.trim(), seniority: d.seniority,
+    skills: d.skills, ubicacion: '', modalidad: '', disponibilidad: d.disponibilidad, expectativa: Number(d.expectativa) || 0,
+    industria: '', ultimaEvaluacion: '', score: null, experiencia: '', idiomas: [], resumen: '', historialAdicional: [],
+    email: '', telefono: '', linkedin: d.linkedin.trim(), dni: '', diasPresencialesPorSemana: null, regimenLaboralActual: '',
+    tipoContrato: '', periodicidadContratoRenovacion: '', sueldoBasicoBrutoMensual: 0, bonoAnualSueldos: 0, utilidadesSueldos: 0,
+    montoMensualVales: 0, otrosBeneficios: '', epsActual: '', practica: v.practica, especialidad: v.especialidad,
+    subEspecialidad: v.subEspecialidad, aniosExperienciaRelevante: 0, autonomia: '',
+    softSkills: { comunicacion: 0, liderazgo: 0, trabajoEnEquipo: 0, adaptabilidad: 0, resolucionProblemas: 0 },
+  });
+  const postulacionId = nextId(POSTULACIONES);
+  POSTULACIONES.push({
+    id: postulacionId, candidatoId, vacanteId: v.id, vacante: v.titulo, cliente: v.cliente,
+    etapa: GATE_INTAKE, dias: 0, signal: null, dateIdentified: new Date().toISOString().slice(0, 10), pendienteGo: false,
+  });
+  const nombre = d.nombre.trim();
+  state.altaCandidato = null;
+  showToast(`${nombre} fue agregado a la Landing Zone de ${v.titulo}`);
+  render();
+}
+function renderAltaCandidatoModal() {
+  if (!state.altaCandidato) return '';
+  const d = state.altaCandidato;
+  const v = VACANTES.find(x => x.id === d.vacanteId);
+  const puedeConfirmar = d.nombre.trim().length > 0 && d.rol.trim().length > 0;
+  return `
+    <div class="rb-drawer-overlay" style="z-index:65" onclick="cerrarCargaCandidato()"></div>
+    <div class="modal-preview">
+      <div class="mhead">
+        <span class="ic">${icon('userPlus', 18)}</span>
+        <div><h5>Cargar candidato</h5><p>Se agrega a la Landing Zone de ${esc(v ? v.titulo : '')}</p></div>
+      </div>
+      <label class="rb-wizard-label">Nombre completo</label>
+      <input class="input" value="${esc(d.nombre)}" oninput="state.altaCandidato.nombre=this.value; render()" />
+      <div style="display:flex;gap:var(--sp-3)">
+        <div style="flex:1"><label class="rb-wizard-label" for="ac-rol">Rol</label>
+          <input id="ac-rol" class="input" value="${esc(d.rol)}" oninput="state.altaCandidato.rol=this.value; render()" /></div>
+        <div style="flex:1"><label class="rb-wizard-label" for="ac-seniority">Seniority</label>
+          ${renderSelect('ac-seniority', ['Junior', 'Semi Senior', 'Senior'].map(s => ({ value: s, label: s })), d.seniority, 'Seniority', "state.altaCandidato.seniority=value; render();", null, null, true)}</div>
+      </div>
+      <label class="rb-wizard-label">LinkedIn</label>
+      <input class="input" placeholder="linkedin.com/in/..." value="${esc(d.linkedin)}" oninput="state.altaCandidato.linkedin=this.value; render()" />
+      <label class="rb-wizard-label">CV</label>
+      <input class="input" placeholder="Nombre del archivo (simulado)" value="${esc(d.cvSimulado)}" oninput="state.altaCandidato.cvSimulado=this.value; render()" />
+      <div style="display:flex;gap:var(--sp-3)">
+        <div style="flex:1"><label class="rb-wizard-label">Expectativa salarial (S/)</label>
+          <input class="input" type="number" value="${esc(d.expectativa)}" oninput="state.altaCandidato.expectativa=this.value" /></div>
+        <div style="flex:1"><label class="rb-wizard-label">Disponibilidad</label>
+          <input class="input" value="${esc(d.disponibilidad)}" oninput="state.altaCandidato.disponibilidad=this.value" /></div>
+      </div>
+      <label class="rb-wizard-label">Skills</label>
+      ${renderTagInput('altaCandidato.skills', d.skills, 'Ej. AWS')}
+      <div class="mactions">
+        <button class="btn secondary sm" onclick="cerrarCargaCandidato()">Cancelar</button>
+        <button class="btn sm" ${puedeConfirmar ? '' : 'disabled'} onclick="confirmarAltaCandidato()">${icon('check',12)} Agregar a la Landing Zone</button>
+      </div>
+    </div>`;
+}
+
 function handleAdvance(id) {
   const p = POSTULACIONES.find(x => x.id === id);
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -4058,12 +4180,31 @@ function confirmarAprobar() {
   const id = state.aprobarAbierto;
   const p = POSTULACIONES.find(x => x.id === id);
   state.aprobarAbierto = null;
+  /* Defensivo: en GATE_INTAKE, "aprobar" es literalmente el Go del lead --
+     solo debería poder llegar acá si el sourcer ya lo mandó a validación
+     (ver enviarAValidacion/renderLandingZoneRow, único lugar que hoy abre
+     este modal en ese gate). Si alguna vez se llama sin ese paso, no
+     hacer nada en vez de saltear la validación. */
+  if (p.etapa === GATE_INTAKE && !p.pendienteGo) return;
   handleVerdict(id, p.etapa, 'aprobar', '');
+}
+/* Paso 1 del Go en dos pasos: el sourcer, desde la Landing Zone, solo
+   puede pedir la validación -- no aprueba directo. No cambia `etapa`
+   (sigue en GATE_INTAKE): solo marca que ya está listo para que el lead
+   responsable de la posición (hoy los cofounders) dé el Go real desde
+   abrirAprobarModal/confirmarAprobar. */
+function enviarAValidacion(id) {
+  const p = POSTULACIONES.find(x => x.id === id);
+  const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+  p.pendienteGo = true;
+  showToast(`${c.nombre} fue enviado a validación — pendiente del Go del lead responsable`);
+  render();
 }
 function aprobarModalTexto(p) {
   if (p.etapa === GATE_INTAKE) {
+    if (!p.pendienteGo) return 'Se enviará a validación del lead responsable — todavía no entra al pipeline hasta que se dé el Go.';
     const recruiter = recruiterDePostulacion(p);
-    return `Se enviará un link con la disponibilidad de ${recruiter || 'el recruiter asignado'} para agendar el screening.`;
+    return `Se dará el Go — el candidato entra al pipeline y se enviará un link con la disponibilidad de ${recruiter || 'el recruiter asignado'} para agendar el screening.`;
   }
   if (p.etapa === GATE_GO_INTERNO) return `El candidato se enviará directo a ${p.cliente} para su revisión.`;
   if (p.etapa === GATE_CLIENTE) return `Esto marca la oferta como enviada.`;
@@ -4086,6 +4227,7 @@ function handleVerdict(postulacionId, gateId, tipo, sustento) {
     if (tipo !== 'aprobar' && (!sustento || !sustento.trim())) return;
     if (sustento && sustento.trim()) p.sustentoIdentificado = sustento.trim();
     p.veredictoIdentificado = tipo;
+    p.pendienteGo = false; // termina el ciclo de la Landing Zone, apruebe o no
   }
   /* En Decisión Cliente el feedback sigue siendo opcional (no bloquea
      Confirmar como en Identificado), pero ahora sí se persiste -- antes
@@ -4168,6 +4310,48 @@ function postulacionesFiltradas() {
    para escanear el tablero entero de un vistazo sin leer cada tarjeta. */
 function topTalentRibbon(p) {
   return esTopTalent(p) ? `<div class="rb-top-ribbon" title="Top talent — señal Strong Yes">${icon('trophy', 12)}</div>` : '';
+}
+/* Mismo criterio de color que ESTADO_COLOR (línea ~1678): un solo mapeo
+   por resultado, reusado en vez de repetir el condicional en cada lugar
+   que muestra el resultado de resolverIntakeMatching. */
+const MATCH_RESULTADO_COLOR = { 'Fuerte': 'var(--success-text)', 'Aceptable': 'var(--warning-text)', 'Débil': 'var(--danger-text)' };
+function matchColor(resultado) { return MATCH_RESULTADO_COLOR[resultado] || 'var(--text-muted)'; }
+/* Fila de la Landing Zone (detalle de Vacante): candidatos en GATE_INTAKE,
+   antes de que el kanban los vea. Distinta de renderPostRow (que es del
+   Pipeline ya post-Go) porque necesita match%, origen y las acciones
+   propias del intake -- no las reusa para no forzar un componente
+   genérico a cubrir dos necesidades bien distintas. El click en la fila
+   (salvo en los botones de acción, que cortan la propagación) abre el
+   detalle de la postulación, donde ya vive el detalle por dimensión del
+   matching (sección colapsable "Matching de CV vs Job Description") y el
+   flujo completo de descarte/rechazo con sustento obligatorio -- no se
+   duplica ninguno de los dos acá. */
+function renderLandingZoneRow(p) {
+  const c = CANDIDATOS.find(x => x.id === p.candidatoId);
+  const m = resolverIntakeMatching(p);
+  const pendienteGo = !!p.pendienteGo;
+  return `<div class="rb-landingzone-row ${esTopTalent(p) ? 'rb-top-talent' : ''}" onclick="goToDetalleProceso(${p.id})">
+    ${topTalentRibbon(p)}
+    <div class="rb-card-name-row">
+      <p class="rb-card-name">${esc(c.nombre)}</p>
+      <span class="rb-badge" title="Ver detalle del matching" style="background:${matchColor(m.resultado)}22;color:${matchColor(m.resultado)}">${icon('sparkles',12)} ${esc(m.resultado)} (${m.score}%)</span>
+    </div>
+    <p class="rb-card-sub">${esc(c.rol)} · ${esc(c.seniority)}${c.expectativa ? ` · S/ ${c.expectativa.toLocaleString('es-PE')}/mes` : ''}</p>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
+      ${origenBadge(c.origen, true)}
+      ${pendienteGo ? `<span class="rb-badge" style="background:var(--warning)22;color:var(--warning-text)">${icon('clock',11)} Pendiente de Go</span>` : ''}
+    </div>
+    <div class="rb-verdict-row" style="margin-top:var(--sp-2)">
+      ${pendienteGo ? `
+        <button class="btn sm" onclick="event.stopPropagation(); abrirAprobarModal(${p.id})">${icon('check',12)} Dar Go</button>
+        <button class="btn danger sm" onclick="event.stopPropagation(); goToDetalleProceso(${p.id})">${icon('x',12)} Rechazar</button>
+      ` : `
+        <button class="btn sm" onclick="event.stopPropagation(); enviarAValidacion(${p.id})">${icon('arrowUpRight',12)} Enviar a validación (Go)</button>
+        <button class="btn secondary sm" onclick="event.stopPropagation(); goToDetalleProceso(${p.id})">${icon('x',12)} Descartar</button>
+      `}
+      <button class="rb-icon-btn rb-icon-btn-danger" title="Poner en blacklist" onclick="event.stopPropagation(); abrirBlacklistModal(${p.id})">${icon('ban',14)}</button>
+    </div>
+  </div>`;
 }
 function renderPipelineCard(p, phase) {
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -4259,10 +4443,9 @@ function renderGateCard(p, gateId) {
      GO Interno" en la card) -- ninguno de los dos varía nunca entre
      cards del mismo gate, mismo defecto que ya se descartó para el
      badge de checklist: puramente decorativo, sin información nueva. */
-  /* Segundo dato de la card, propio de cada gate:
-     - Identificado: Matching automático (antes vivía como un bloque
-       aparte después del footer -- ahora es un dato más, debajo del
-       salario, igual que en el resto de las fases).
+  /* Segundo dato de la card, propio de cada gate (GATE_INTAKE ya no llega
+     acá -- vive en la Landing Zone, ver renderLandingZoneRow, que tiene su
+     propio badge de matching):
      - GO Interno: el entrevistador que hizo la Entrevista Técnica --
        el dato real que sustenta esta decisión. (Se evaluó un badge de
        checklist completo/incompleto acá -- se descarta: bajo el modelo
@@ -4270,10 +4453,6 @@ function renderGateCard(p, gateId) {
        card que pueda llegar a este gate, sería puramente decorativo).
      - Decisión Cliente: el feedback del cliente, si ya existe. */
   const sub2Html = (() => {
-    if (gateId === GATE_INTAKE) {
-      const m = resolverIntakeMatching(p);
-      return `<p class="rb-card-sub">${icon('sparkles',12)} Matching automático: <strong>${esc(m.resultado)}</strong>${m.score !== null ? ` (${m.score}%)` : ''}</p>`;
-    }
     if (gateId === GATE_GO_INTERNO) {
       const item = resolverEntrevistas(p).find(e => e.tipo === 'Entrevista Técnica');
       return (item && item.entrevistador) ? `<p class="rb-card-sub">${icon('user',12)} Entrevistador: ${esc(item.entrevistador.nombre)}</p>` : '';
@@ -4328,26 +4507,18 @@ function renderGateColumn(gateId, label, items) {
    que el botón "Avanzar", nunca salta etapas ni bypassea un gate.  */
 const porTopTalentPrimero = (a, b) => (esTopTalent(b) ? 1 : 0) - (esTopTalent(a) ? 1 : 0);
 function renderBoardColumns(activas) {
-  const gateIntake = activas.filter(p => p.etapa === GATE_INTAKE).sort(porTopTalentPrimero);
   const goInterno = activas.filter(p => p.etapa === GATE_GO_INTERNO).sort(porTopTalentPrimero);
   const gateCliente = activas.filter(p => p.etapa === GATE_CLIENTE).sort(porTopTalentPrimero);
   let boardHtml = '';
-  /* El gate de Identificado ya no tiene columna propia -- se unifica con
-     "Sourcing" (ver PHASES), la fase a la que ya pertenece conceptualmente
-     (mismo criterio que ya usa el Historial del drawer, ver
-     tipoSourcing/sourcingActual). Sus cards (renderGateCard, esperando
-     veredicto) se anteponen a las de Agendamiento dentro de la MISMA
-     columna "Sourcing" en vez de vivir en una columna "Gate: Identificado"
-     aparte. No hace falta separador visual: renderGateCard ya trae su
-     propio tinte (.rb-gate-card) y no tiene botón de avanzar, así que se
-     distingue solo con verla. */
+  /* GATE_INTAKE ya no se renderiza acá -- vive exclusivamente en la
+     Landing Zone del detalle de Vacante (ver renderVacanteDrawerBody).
+     `activas` ya llega sin postulaciones en intake (ver renderPipelineBoard),
+     así que la columna "Sourcing" arranca directo en agenda_enviada. */
   PHASES.forEach((phase, i) => {
-    const esSourcing = phase.id === 'sourcing';
     const cardsInPhase = activas.filter(p => phase.sub.includes(p.etapa)).sort(porTopTalentPrimero);
-    const totalCount = cardsInPhase.length + (esSourcing ? gateIntake.length : 0);
+    const totalCount = cardsInPhase.length;
     const dropAttrs = `data-etapas="${phase.sub.join(',')}" ondragover="onColumnDragOver(event)" ondragleave="onColumnDragLeave(event)" ondrop="onColumnDrop(event)"`;
-    const cardsHtml = (esSourcing ? gateIntake.map(p => renderGateCard(p, GATE_INTAKE)).join('') : '')
-      + cardsInPhase.map(p => renderPipelineCard(p, phase)).join('');
+    const cardsHtml = cardsInPhase.map(p => renderPipelineCard(p, phase)).join('');
     const colapsado = !!state.pl.estadosCollapsed[phase.id];
     boardHtml += `
     <div class="rb-phase${colapsado ? ' rb-phase-collapsed' : ''}">
@@ -4412,7 +4583,10 @@ function toggleHistorialSeccionBtn(p, seccion, abierta) {
 function renderPipelineBoard() {
   const clientes = [...new Set(POSTULACIONES.map(p => p.cliente))].sort();
   const filtered = postulacionesFiltradas();
-  const activas = filtered.filter(p => !SALIDAS.includes(p.etapa));
+  /* GATE_INTAKE ya no vive en el kanban -- ver Landing Zone en el detalle
+     de Vacante (renderVacanteDrawerBody). El pipeline visual arranca
+     recién en Sourcing/agenda_enviada, una vez que el lead dio el Go. */
+  const activas = filtered.filter(p => !SALIDAS.includes(p.etapa) && p.etapa !== GATE_INTAKE);
   const archivadas = filtered.filter(p => SALIDAS.includes(p.etapa));
   /* Con el buscador activo, cualquier swimlane de cliente/vacante que sí
      tenga resultados se auto-expande (ignora el colapso guardado) -- si
@@ -4808,9 +4982,18 @@ function renderPostulacionDrawerBody() {
           </div>
         </div>`;
     } else if (esIdentificado) {
-      verdictBody = `
+      /* Go en dos pasos: mientras no esté pendienteGo, el sourcer solo
+         puede pedir validación (no hay botón "Aprobar" acá) -- el Go real
+         (abrirAprobarModal) queda reservado para cuando el lead ya tiene
+         algo que validar. Mismo criterio que renderLandingZoneRow, no se
+         duplica la lógica, solo el texto de los botones. */
+      verdictBody = p.pendienteGo ? `
         <div class="rb-verdict-row">
-          <button class="btn sm" onclick="abrirAprobarModal(${p.id})">${icon('check',12)} Aprobar</button>
+          <button class="btn sm" onclick="abrirAprobarModal(${p.id})">${icon('check',12)} Dar Go</button>
+          <button class="btn danger sm" onclick="state.postVerdictDraft='descartar'; state.postVerdictFb=''; render()">${icon('x',12)} Rechazar</button>
+        </div>` : `
+        <div class="rb-verdict-row">
+          <button class="btn sm" onclick="enviarAValidacion(${p.id})">${icon('arrowUpRight',12)} Enviar a validación (Go)</button>
           <button class="btn danger sm" onclick="state.postVerdictDraft='descartar'; state.postVerdictFb=''; render()">${icon('x',12)} Descartar</button>
         </div>`;
     } else {
@@ -4846,7 +5029,9 @@ function renderPostulacionDrawerBody() {
        ("...antes de enviarla al cliente"), lo cual describía al revés
        quién decide en cada uno. */
     const instruccionGate = esIdentificado
-      ? 'Revisa el Matching de CV vs Job Description de arriba y decide si el candidato continúa en el proceso o queda descartado.'
+      ? (p.pendienteGo
+        ? 'El candidato está pendiente del Go del lead responsable de la posición. Da el Go para que entre al pipeline, o recházalo.'
+        : 'Revisa el Matching de CV vs Job Description de arriba y decide si el candidato pasa a validación (Go) del lead o queda descartado.')
       : p.etapa === GATE_CLIENTE
       ? 'Registra la decisión que ya tomó el cliente sobre este candidato.'
       : 'Valida la información del candidato antes de enviarla al cliente.';
@@ -5177,6 +5362,7 @@ function renderPostulacionDrawerBody() {
         <p class="rb-detail-role"><button class="rb-link" onclick="goToVacante(${p.vacanteId})">${esc(p.vacante)}</button> · ${esc(p.cliente)} · Recruiter: ${esc(recruiterDePostulacion(p) || 'Sin asignar')}</p></div>
         <div class="rb-detail-header-actions">
           <span class="rb-badge" style="background:${ESTADO_COLOR[deriveEstado(p.etapa)]}22;color:${ESTADO_COLOR[deriveEstado(p.etapa)]}">${esc(ETAPA_LABELS[p.etapa] || deriveEstado(p.etapa))}</span>
+          ${p.pendienteGo ? `<span class="rb-badge" style="background:var(--warning)22;color:var(--warning-text)">${icon('clock',11)} Pendiente de Go</span>` : ''}
           ${origenBadge(candidato.origen)}
         </div>
       </div>
@@ -5443,7 +5629,11 @@ function renderCulminarModal() {
    etapa activa (ver puedeBlacklistear), no solo desde el gate de
    Identificado. */
 function renderBlacklistModal() {
-  if (!state.blacklistAbierto || state.view !== 'pipeline') return '';
+  /* También se abre desde la Landing Zone del detalle de Vacante
+     (state.view === 'vacantes', ver renderLandingZoneRow) sin navegar a
+     Pipeline -- a diferencia del resto de acciones de blacklist, que
+     siempre vivieron en el detalle de la postulación dentro de Pipeline. */
+  if (!state.blacklistAbierto || (state.view !== 'pipeline' && state.view !== 'vacantes')) return '';
   const p = POSTULACIONES.find(x => x.id === state.blacklistAbierto);
   if (!p) return '';
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -5480,7 +5670,10 @@ function renderBlacklistModal() {
    HIRING_MANAGERS_POR_CLIENTE), así que acá se muestra a quién puntual
    le va a llegar, no solo "al cliente X" en general. */
 function renderAprobarModal() {
-  if (!state.aprobarAbierto || state.view !== 'pipeline') return '';
+  /* "Dar Go" en la Landing Zone (state.view === 'vacantes', ver
+     renderLandingZoneRow) también abre este modal, sin navegar a
+     Pipeline. */
+  if (!state.aprobarAbierto || (state.view !== 'pipeline' && state.view !== 'vacantes')) return '';
   const p = POSTULACIONES.find(x => x.id === state.aprobarAbierto);
   if (!p) return '';
   const c = CANDIDATOS.find(x => x.id === p.candidatoId);
@@ -5695,6 +5888,7 @@ function render() {
     ${renderAprobarModal()}
     ${renderCulminarModal()}
     ${renderBlacklistModal()}
+    ${renderAltaCandidatoModal()}
     ${renderFloatingMenus()}
     ${toastHtml()}
   `;
