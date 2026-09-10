@@ -212,7 +212,6 @@ body {
 .rb-group-label { font-size: var(--fs-sm); color: var(--cyan-text); text-transform: uppercase; letter-spacing: .06em; margin: 0; }
 .rb-toolbar-row { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-4); flex-wrap: wrap; }
 
-.rb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-4); }
 /* Bento: grid de 4 columnas con grid-auto-flow:dense -- cada widget declara
    cuanto espacio "pesa" (rb-bento-lg/wide/sm/full) y el algoritmo dense
    rellena los huecos que deja un vecino mas chico en vez de dejar toda la
@@ -234,9 +233,6 @@ body {
 .rb-dash-row .val { width: 28px; text-align: right; flex-shrink: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--text-muted); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); padding: var(--sp-5); }
 .card.compact { border-radius: var(--radius-2); padding: var(--sp-3); }
-.rb-vac-card { cursor: pointer; transition: border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out); }
-.rb-vac-card:hover { border-color: var(--border-strong); background: var(--surface-2); transform: translateY(-2px); box-shadow: var(--shadow-2); }
-
 /* Estados finales (colocado/no interesado, cerrada/cancelada): siguen
    visibles como referencia pero con menor peso visual y al final del
    orden -- nunca se ocultan, solo se les baja la prioridad. */
@@ -275,7 +271,6 @@ body {
 .rb-td-row-goto { display: flex; justify-content: flex-end; }
 .rb-td-row-goto .rb-link { color: var(--text-muted); }
 .rb-td-row-goto .rb-link:hover { color: var(--cyan-text); }
-.rb-vac-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--sp-3); gap: var(--sp-2); }
 .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,var(--rb-blue),var(--rb-purple)); display: grid; place-items: center; color: #fff; font-weight: 700; font-style: italic; font-size: 12px; flex-shrink: 0; font-family: 'Space Grotesk', sans-serif; }
 .avatar.sm { width: 24px; height: 24px; font-size: 10px; }
 .avatar.lg { width: 48px; height: 48px; font-size: var(--fs-md); }
@@ -289,8 +284,6 @@ body {
 .rb-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: var(--radius-full); font-size: var(--fs-xs); font-weight: 500; background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 45%, transparent); letter-spacing: .02em; line-height: 1; white-space: nowrap; }
 .rb-card-name { font-size: var(--fs-md); font-weight: 600; margin: var(--sp-2) 0 0 0; }
 .rb-card-role { font-size: var(--fs-sm); color: var(--text-muted); margin: 2px 0 var(--sp-3) 0; }
-.rb-card-meta { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: var(--sp-3); }
-.rb-card-meta-row { display: flex; align-items: center; gap: 6px; }
 /* Señal de "necesita atención" en el card de la lista de Clientes -- para
    que un Account Manager con varias cuentas note un riesgo de SLA sin
    tener que entrar al detalle de cada cliente (ver posicionesEnRiesgoDeCliente). */
@@ -335,6 +328,25 @@ body {
 .rb-landingzone-row { position: relative; padding: var(--sp-4) 0; border-bottom: 1px solid var(--border); cursor: pointer; }
 .rb-landingzone-row:last-child { border-bottom: none; }
 .rb-landingzone-row:hover .rb-card-name { color: var(--cyan-text); }
+/* Fila plana genérica (lista, no card ni grilla) para listados densos --
+   mismo idioma que .rb-landingzone-row/.rb-postulacion-row de arriba,
+   generalizado acá para reusarse en Posiciones y Clientes (ver
+   renderPosiciónRow/renderClienteRow) en vez de duplicar 2 clases casi
+   idénticas. Título+badges en una línea, meta debajo en otra -- mucho
+   más denso que la card alta que reemplaza, sin la rigidez de columnas
+   fijas de la tabla de Talent Database (ver .rb-td-row). */
+/* Envuelve un grupo de .rb-list-row -- mismo criterio que .rb-td-list de
+   Talent Database (una caja bordeada conteniendo filas separadas por
+   hairline), reemplaza al .rb-grid de cards que usaban antes Posiciones/
+   Clientes. Padding horizontal acá porque las filas ya no lo tienen
+   propio (antes vivía en la card individual). */
+.rb-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-3); background: var(--surface); padding: 0 var(--sp-4); }
+.rb-list-row { padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.rb-list-row:last-child { border-bottom: none; }
+.rb-list-row:hover .rb-card-name { color: var(--cyan-text); }
+.rb-list-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); flex-wrap: wrap; }
+.rb-list-row-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--text-muted); margin-top: 4px; }
+.rb-list-row-meta .sep { color: var(--text-dim); }
 .rb-am-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px 8px; font-size: var(--fs-xs); line-height: 1; margin: 0 6px 6px 0; }
 
 /* Header del drawer de postulación (volver/nombre/badges/quickfacts):
@@ -2521,29 +2533,34 @@ function lineaResumenTexto(c) {
   if (staffing > 0) partes.push(`${staffing} Staffing`);
   return partes.join(' · ');
 }
+/* Fila (no card) de un Cliente en el listado -- ver .rb-list-row en el
+   CSS. Mismos datos que antes mostraba la card, condensados en 2 líneas;
+   la alerta de riesgo pasa de un bloque a todo el ancho a un tag corto
+   junto al resto de los badges. */
 function renderClienteCard(c) {
   const abiertas = abiertasDeCliente(c.id).length;
   const colocados = colocadosDeCliente(c.id).length;
   const recruiters = recruitersDeCliente(c.id);
   const enRiesgo = posicionesEnRiesgoDeCliente(c.id);
   const lineaResumen = lineaResumenTexto(c);
+  const riesgoTag = enRiesgo.length ? `<span class="rb-cliente-riesgo" style="margin:0">${icon('alertTriangle',12)} ${enRiesgo.length} en riesgo</span>` : '';
+  const metaItems = [
+    `${icon('user',12)} AM: ${esc(c.accountManagers.join(', '))}`,
+    `${icon('compass',12)} Recruiters: ${recruiters.length ? esc(recruiters.join(', ')) : 'sin posiciones abiertas'}`,
+    lineaResumen ? `${icon('barChart',12)} ${esc(lineaResumen)}` : '',
+    `${icon('briefcase',12)} ${abiertas} posiciones abiertas`,
+    `${icon('users',12)} ${colocados} talento colocado`,
+  ].filter(Boolean);
   return `
-    <div class="card rb-vac-card${c.activo ? '' : ' rb-terminal-item'}" onclick="selectCliente(${c.id})">
-      <div class="rb-vac-card-top">
+    <div class="rb-list-row${c.activo ? '' : ' rb-terminal-item'}" onclick="selectCliente(${c.id})">
+      <div class="rb-list-row-top">
         <div style="display:flex;align-items:center;gap:var(--sp-3)">
           ${clienteLogo(c.nombre, 'md')}
-          <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-role">${esc(c.industria)}</p></div>
+          <div><p class="rb-card-name" style="margin:0">${esc(c.nombre)}</p><p class="rb-card-role" style="margin:0">${esc(c.industria)}</p></div>
         </div>
-        <div class="rb-vac-badges">${clienteActivoBadge(c.activo)}</div>
+        <div class="rb-vac-badges">${riesgoTag}${clienteActivoBadge(c.activo)}</div>
       </div>
-      ${enRiesgo.length ? `<p class="rb-card-meta-row rb-cliente-riesgo">${icon('alertTriangle',12)} ${enRiesgo.length} ${enRiesgo.length === 1 ? 'posición' : 'posiciones'} con SLA en riesgo</p>` : ''}
-      <div class="rb-card-meta">
-        <div class="rb-card-meta-row">${icon('user',12)} AM: ${esc(c.accountManagers.join(', '))}</div>
-        <div class="rb-card-meta-row">${icon('compass',12)} Recruiters: ${recruiters.length ? esc(recruiters.join(', ')) : 'sin posiciones abiertas'}</div>
-        ${lineaResumen ? `<div class="rb-card-meta-row">${icon('barChart',12)} ${esc(lineaResumen)}</div>` : ''}
-        <div class="rb-card-meta-row">${icon('briefcase',12)} ${abiertas} posiciones abiertas</div>
-        <div class="rb-card-meta-row">${icon('users',12)} ${colocados} talento colocado</div>
-      </div>
+      <div class="rb-list-row-meta">${metaItems.join('<span class="sep">·</span>')}</div>
     </div>`;
 }
 function toggleTierCollapse(tier) { state.cl.tiersCollapsed[tier] = !state.cl.tiersCollapsed[tier]; render(); }
@@ -2592,7 +2609,7 @@ function renderClientesList() {
         ${tierBadge(tier)}
         <span class="rb-phase-count">${items.length} ${items.length === 1 ? 'cliente' : 'clientes'}</span>
       </div>
-      ${colapsado ? '' : `<div class="rb-grid">${items.map(renderClienteCard).join('')}</div>`}
+      ${colapsado ? '' : `<div class="rb-list">${items.map(renderClienteCard).join('')}</div>`}
     </div>`;
   }).join('');
   return `
@@ -2878,31 +2895,32 @@ function posiciónHeadcountProgreso(v) {
   const cubiertas = POSTULACIONES.filter(p => p.posiciónId === v.id && p.etapa === 'contratado').length;
   return { headcount, cubiertas };
 }
+/* Fila (no card) de una Posición en el listado -- ver .rb-list-row en el
+   CSS. Mismos datos que antes mostraba la card, condensados en 2 líneas
+   en vez de una card alta con 5 filas de meta apiladas. */
 function renderPosiciónCard(v, terminal) {
   const count = POSTULACIONES.filter(p => p.posiciónId === v.id && !SALIDAS.includes(p.etapa) && p.etapa !== GATE_INTAKE).length;
   const dl = deadlineInfo(v.clientDeadline);
-  const deadlineRow = v.clientDeadline ? `<div class="rb-card-meta-row" style="color:${dl.color}">${icon('clock',12)} ${esc(dl.label || ('Deadline: ' + formatFecha(v.clientDeadline)))}</div>` : '';
   const jdWarn = v.jd.estadoAprobacion === 'borrador' ? `<span class="rb-badge" style="background:rgba(255,176,32,.15);color:var(--warning-text)">JD en borrador</span>` : '';
   /* Quién abrió la posición del lado del cliente -- ver
      HIRING_MANAGERS_POR_CLIENTE/hiringManagerDePosición. No hay un único
      interlocutor por cliente, cada posición puede tener el suyo. */
   const hm = hiringManagerDePosición(v);
-  const hmRow = hm ? `<div class="rb-card-meta-row">${icon('user',12)} ${esc(hm.nombre)} (Hiring Manager)</div>` : '';
   const { headcount, cubiertas } = posiciónHeadcountProgreso(v);
+  const metaItems = [
+    `${icon('briefcase',12)} ${esc(v.engagementModel)}`,
+    `${icon('mapPin',12)} ${esc(v.modalidad)}`,
+    `${icon('users',12)} ${count} en pipeline`,
+    hm ? `${icon('user',12)} ${esc(hm.nombre)} (Hiring Manager)` : '',
+    v.clientDeadline ? `<span style="color:${dl.color}">${icon('clock',12)} ${esc(dl.label || ('Deadline: ' + formatFecha(v.clientDeadline)))}</span>` : '',
+  ].filter(Boolean);
   return `
-  <div class="card rb-vac-card${terminal ? ' rb-terminal-item' : ''}" onclick="selectPosición(${v.id})">
-    <div class="rb-vac-card-top">
-      <div><p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p><p class="rb-card-role">${esc(v.seniority)}${headcount > 1 ? ` · Headcount: ${cubiertas}/${headcount}` : ''}</p></div>
-      <div class="rb-vac-badges">${renderEstadoPosiciónTrigger(v)}</div>
+  <div class="rb-list-row${terminal ? ' rb-terminal-item' : ''}" onclick="selectPosición(${v.id})">
+    <div class="rb-list-row-top">
+      <div><p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p><p class="rb-card-role" style="margin:0">${esc(v.seniority)}${headcount > 1 ? ` · Headcount: ${cubiertas}/${headcount}` : ''}</p></div>
+      <div class="rb-vac-badges">${renderEstadoPosiciónTrigger(v)}${priorityBadge(v.priority)}${slaBadge(dl.slaStatus)}${jdWarn}</div>
     </div>
-    <div class="rb-card-meta">
-      <div class="rb-card-meta-row">${icon('briefcase',12)} ${esc(v.engagementModel)}</div>
-      <div class="rb-card-meta-row">${icon('mapPin',12)} ${esc(v.modalidad)}</div>
-      <div class="rb-card-meta-row">${icon('users',12)} ${count} en pipeline</div>
-      ${hmRow}
-      ${deadlineRow}
-    </div>
-    <div class="rb-vac-badges" style="justify-content:flex-start;margin-top:var(--sp-2)">${priorityBadge(v.priority)}${slaBadge(dl.slaStatus)}${jdWarn}</div>
+    <div class="rb-list-row-meta">${metaItems.join('<span class="sep">·</span>')}</div>
   </div>`;
 }
 function renderPosicionesList() {
@@ -2918,14 +2936,14 @@ function renderPosicionesList() {
     const terminalAbierto = !!state.va.terminalOpen[nombre];
     const terminalBlock = terminales.length ? `
       <div class="rb-terminal-divider" onclick="toggleTerminalOpen(${esc(JSON.stringify(nombre))})">${terminalAbierto ? icon('chevronDown',10) : icon('chevronRight',10)} ${terminales.length} cerrada${terminales.length === 1 ? '' : 's'}/cancelada${terminales.length === 1 ? '' : 's'}</div>
-      ${terminalAbierto ? `<div class="rb-grid">${terminales.map(v => renderPosiciónCard(v, true)).join('')}</div>` : ''}` : '';
+      ${terminalAbierto ? `<div class="rb-list">${terminales.map(v => renderPosiciónCard(v, true)).join('')}</div>` : ''}` : '';
     return `<div>
       <div class="rb-group-header" onclick="toggleGroupCollapse('va', ${esc(JSON.stringify(nombre))})">
         <span class="rb-group-chevron">${colapsado ? icon('chevronRight',11) : icon('chevronDown',11)}</span>
         ${clienteLogo(nombre, 'sm')}
         <span class="rb-group-label">${esc(nombre)} (${groups[nombre].length})</span>
       </div>
-      ${colapsado ? '' : `<div class="rb-grid">${cards}</div>${terminalBlock}`}
+      ${colapsado ? '' : `<div class="rb-list">${cards}</div>${terminalBlock}`}
     </div>`;
   }).join('');
 
