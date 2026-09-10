@@ -285,7 +285,7 @@ let YO = null;
    colgado de un link chico en la pantalla de Vacantes cuando no hay
    sesión -- no reemplaza al registro real, es un atajo de prototipo. */
 const YO_DEMO = {
-  nombre: 'Renata Salcedo', rol: 'Backend Engineer', seniority: 'Senior', ubicacion: 'Lima, Perú', pais: 'Perú',
+  nombre: 'Renata Salcedo', nombres: 'Renata', apellidoPaterno: 'Salcedo', apellidoMaterno: '', rol: 'Backend Engineer', seniority: 'Senior', ubicacion: 'Lima, Perú', pais: 'Perú',
   email: 'renata.salcedo@gmail.com', telefono: '+51 911 137 253', linkedin: 'linkedin.com/in/renata-salcedo',
   expectativa: 13500, disponibilidad: '15 días',
   skills: ['Java', 'AWS', 'Kafka', 'PostgreSQL'],
@@ -410,9 +410,16 @@ const REGISTRO_STEPS = [
   { key: 'confirmar', label: 'Confirmar' },
 ];
 function iniciarRegistro(vacanteId) {
-  state.registro = { vacanteId, step: 0, form: { nombre: '', email: '', telefono: '', linkedin: '', pais: PAISES[0], ciudad: '', cvNombre: '' } };
+  state.registro = { vacanteId, step: 0, form: { nombres: '', apellidoPaterno: '', apellidoMaterno: '', email: '', telefono: '', linkedin: '', pais: PAISES[0], ciudad: '', cvNombre: '' } };
   state.view = 'registro';
   render();
+}
+/* Mismo criterio que rumbo_prototype.html (armarNombreCompleto): se
+   guarda armado en YO.nombre, no como getter -- el resto del portal ya
+   lee YO.nombre como string plano (initials(), header, etc.). El materno
+   es opcional. */
+function armarNombreCompleto(nombres, apellidoPaterno, apellidoMaterno) {
+  return [nombres, apellidoPaterno, apellidoMaterno].map(s => (s || '').trim()).filter(Boolean).join(' ');
 }
 function cancelarRegistro() { state.registro = null; irA('vacantes'); }
 /* Validación mínima por paso -- no deja avanzar sin lo esencial de ESE
@@ -422,7 +429,7 @@ function cancelarRegistro() { state.registro = null; irA('vacantes'); }
 function registroPasoValido() {
   const f = state.registro.form;
   const paso = REGISTRO_STEPS[state.registro.step].key;
-  if (paso === 'datos') return f.nombre.trim() && f.email.trim() && f.telefono.trim();
+  if (paso === 'datos') return f.nombres.trim() && f.apellidoPaterno.trim() && f.email.trim() && f.telefono.trim();
   if (paso === 'ubicacion') return f.pais && f.ciudad.trim();
   if (paso === 'cv') return !!f.cvNombre;
   return true;
@@ -445,8 +452,10 @@ function quitarCvRegistro() { state.registro.form.cvNombre = ''; render(); }
 function completarRegistro() {
   const f = state.registro.form;
   const vacanteId = state.registro.vacanteId;
+  const nombres = f.nombres.trim(), apellidoPaterno = f.apellidoPaterno.trim(), apellidoMaterno = f.apellidoMaterno.trim();
   YO = {
-    nombre: f.nombre.trim(), rol: '', seniority: '', ubicacion: `${f.ciudad.trim()}, ${f.pais}`, pais: f.pais,
+    nombre: armarNombreCompleto(nombres, apellidoPaterno, apellidoMaterno), nombres, apellidoPaterno, apellidoMaterno,
+    rol: '', seniority: '', ubicacion: `${f.ciudad.trim()}, ${f.pais}`, pais: f.pais,
     email: f.email.trim(), telefono: f.telefono.trim(), linkedin: f.linkedin.trim(),
     expectativa: 0, disponibilidad: 'Por definir', skills: [],
     cv: { nombre: f.cvNombre, actualizado: new Date().toISOString().slice(0, 10) },
@@ -628,8 +637,14 @@ function registroPasoHtml() {
   const f = state.registro.form;
   const paso = REGISTRO_STEPS[state.registro.step].key;
   if (paso === 'datos') return `
-    <label class="field">Nombre completo
-      <input id="reg-nombre" class="input" value="${esc(f.nombre)}" oninput="state.registro.form.nombre=this.value; render()" placeholder="Ej. Renata Salcedo">
+    <label class="field">Nombres
+      <input id="reg-nombres" class="input" value="${esc(f.nombres)}" oninput="state.registro.form.nombres=this.value; render()" placeholder="Ej. Renata">
+    </label>
+    <label class="field">Apellido paterno
+      <input id="reg-apellido-paterno" class="input" value="${esc(f.apellidoPaterno)}" oninput="state.registro.form.apellidoPaterno=this.value; render()" placeholder="Ej. Salcedo">
+    </label>
+    <label class="field">Apellido materno <span style="font-weight:400;color:var(--text-dim)">(opcional)</span>
+      <input id="reg-apellido-materno" class="input" value="${esc(f.apellidoMaterno)}" oninput="state.registro.form.apellidoMaterno=this.value; render()" placeholder="Ej. Díaz">
     </label>
     <label class="field">Email
       <input id="reg-email" class="input" type="email" value="${esc(f.email)}" oninput="state.registro.form.email=this.value; render()" placeholder="tu@email.com">
@@ -659,7 +674,7 @@ function registroPasoHtml() {
   /* Confirmar */
   return `
     <div class="rb-registro-resumen">
-      <div><span>Nombre</span><b>${esc(f.nombre)}</b></div>
+      <div><span>Nombre</span><b>${esc(armarNombreCompleto(f.nombres, f.apellidoPaterno, f.apellidoMaterno))}</b></div>
       <div><span>Email</span><b>${esc(f.email)}</b></div>
       <div><span>Teléfono</span><b>${esc(f.telefono)}</b></div>
       ${f.linkedin ? `<div><span>LinkedIn</span><b>${esc(f.linkedin)}</b></div>` : ''}
