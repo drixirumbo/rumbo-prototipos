@@ -2690,23 +2690,33 @@ function renderClienteDetail() {
       ${(engBreak.staffing > 0 && engBreak.recruiting > 0) ? `<span style="color:var(--text-dim)">·</span><span>${engBreak.staffing} Staffing</span><span>${engBreak.recruiting} Recruiting</span>` : ''}
     </div>`;
 
-  const colRows = colocados.length === 0
-    ? `<p class="rb-resumen" style="color:var(--text-muted)">Todavía no hay talento colocado con este cliente.</p>`
-    : colocados.map(({ postulacion, candidato }) => `
-    <div class="rb-postulacion-row" onclick="goToTalentDatabase(${candidato.id})">
-      <div><p class="rb-card-name" style="margin:0">${esc(candidato.nombre)}</p><p class="rb-card-sub" style="margin:0">${esc(postulacion.posición)}</p></div>
-      <span>${icon('arrowUpRight',12)}</span>
-    </div>`).join('');
   const progresoAbiertas = abiertas.length === 0
     ? `<p class="rb-resumen" style="color:var(--text-muted)">No hay posiciones abiertas para este cliente en este momento.</p>`
     : abiertas.map(renderPosiciónProgresoWidget).join('');
+  /* Talento colocado ya no vive como lista aparte -- una posición
+     "Cerrada - Éxito" y el candidato que la cubrió son el mismo evento
+     visto desde dos ángulos, no dos hechos independientes. Se anida acá:
+     quién quedó contratado, debajo de la posición que cerró por eso
+     (agrupado por posiciónId por si el headcount es >1 y hay más de un
+     contratado para la misma posición). */
+  const colocadosPorPosicion = {};
+  colocados.forEach(({ postulacion, candidato }) => {
+    (colocadosPorPosicion[postulacion.posiciónId] = colocadosPorPosicion[postulacion.posiciónId] || []).push(candidato);
+  });
   const cerradasRows = cerradas.length === 0
     ? `<p class="rb-resumen" style="color:var(--text-muted)">Todavía no hay posiciones cerradas para este cliente.</p>`
-    : cerradas.map(v => `
+    : cerradas.map(v => {
+      const contratados = colocadosPorPosicion[v.id] || [];
+      return `
     <div class="rb-postulacion-row" onclick="goToPosición(${v.id})">
-      <div><p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p><p class="rb-card-sub" style="margin:0">${esc(v.seniority)} · ${esc(v.engagementModel)}</p></div>
+      <div>
+        <p class="rb-card-name" style="margin:0">${esc(v.titulo)}</p>
+        <p class="rb-card-sub" style="margin:0">${esc(v.seniority)} · ${esc(v.engagementModel)}</p>
+        ${contratados.length ? `<p class="rb-card-sub" style="margin:4px 0 0;color:var(--success-text)">${icon('check',11)} ${contratados.map(cand => `<button class="rb-link sm" style="color:inherit" onclick="event.stopPropagation(); goToTalentDatabase(${cand.id})">${esc(cand.nombre)}</button>`).join(', ')} contratad${contratados.length === 1 ? 'o' : 'os'}</p>` : ''}
+      </div>
       <div style="display:flex;align-items:center;gap:8px">${estadoPosiciónBadge(v.estado)}${icon('arrowUpRight',12)}</div>
-    </div>`).join('');
+    </div>`;
+    }).join('');
 
   /* Un cliente no tiene un solo interlocutor -- distintas posiciones
      abiertas pueden reportar a Hiring Managers distintos (ver
@@ -2769,7 +2779,6 @@ function renderClienteDetail() {
       </div>
       ${state.cl.cerradasOpen ? `<div style="margin-top:var(--sp-3)">${cerradasRows}</div>` : ''}
     </div>
-    <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)"><h3>Talento colocado (${colocados.length})</h3>${colRows}</div>
     <div class="card rb-detail-section"><h3>Historial de interacciones</h3>${interaccionesBlock}</div>`;
 }
 
