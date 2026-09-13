@@ -293,6 +293,14 @@ body {
 .rb-empty { text-align: center; padding: var(--sp-10) var(--sp-6); color: var(--text-muted); background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius-3); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
 .rb-empty svg { color: var(--text-dim); }
 .rb-empty p { margin: 0; font-size: var(--fs-sm); max-width: 360px; line-height: 1.5; }
+/* Accesos directos del Dashboard: 3 .rb-empty en fila -- mismo lenguaje
+   visual (icono + texto + botón) que los demás empty states, más compactos
+   (menos padding, sin el max-width de 360px que fuerza el wrap a 1 sola
+   columna) porque acá conviven 3 uno al lado del otro, no solos en su card. */
+.rb-quickstart-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.rb-quickstart-card { padding: var(--sp-6) var(--sp-4); }
+.rb-quickstart-card p { max-width: none; }
+@media (max-width: 860px) { .rb-quickstart-grid { grid-template-columns: 1fr; } }
 .rb-vac-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .alert { display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-2); background: var(--surface); border: 1px solid var(--border); margin-bottom: var(--sp-4); }
 .alert .ic { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
@@ -1923,6 +1931,7 @@ const state = {
   pl: { scope: 'todo', cliente: '', query: '', prioridadFiltro: '', lanesOn: true, selectedId: null, highlightId: null, archiveOpen: false, lanesCollapsed: {}, clientesCollapsed: {}, estadosCollapsed: {}, assigneeMenuFor: null, recruiterFilter: '', historialExpandido: {} },
   wizard: null,
   altaCandidato: null,
+  altaCliente: null,
   editForm: null,
   postVerdictDraft: null, postVerdictFb: '',
   docAbierto: null,
@@ -2383,8 +2392,33 @@ function renderDashboard() {
         <span>${icon('arrowUpRight', 12)}</span>
       </div>`).join('');
 
+  /* ---- Accesos directos: los 3 flujos de alta más frecuentes, arriba de
+     todo -- para no obligar a un recruiter a navegar a Clientes/Posiciones/
+     Talent Database solo para empezar algo nuevo. Reusa .rb-empty (mismo
+     patrón icono + texto + botón que ya usan los demás empty states de la
+     app) en vez de introducir un componente visual nuevo. */
+  const accesosDirectosHtml = `
+    <div class="rb-quickstart-grid">
+      <div class="rb-empty rb-quickstart-card">
+        ${icon('userPlus', 26)}
+        <p><strong>Cargar candidato</strong><br>Suma un candidato nuevo y elige a qué posición aplica.</p>
+        <button class="btn secondary sm" onclick="abrirCargaCandidato()">${icon('userPlus', 12)} Cargar candidato</button>
+      </div>
+      <div class="rb-empty rb-quickstart-card">
+        ${icon('building', 26)}
+        <p><strong>Crear cliente</strong><br>Da de alta una cuenta nueva para empezar a abrirle posiciones.</p>
+        <button class="btn secondary sm" onclick="abrirAltaCliente()">${icon('building', 12)} Crear cliente</button>
+      </div>
+      <div class="rb-empty rb-quickstart-card">
+        ${icon('briefcase', 26)}
+        <p><strong>Abrir posición</strong><br>¿Se abrió un puesto nuevo? Arranca el wizard de intake.</p>
+        <button class="btn secondary sm" onclick="openWizard()">${icon('briefcase', 12)} Abrir posición</button>
+      </div>
+    </div>`;
+
   return `
     <h1 class="rb-title rb-display">Dashboard</h1>
+    ${accesosDirectosHtml}
     ${kpiGrid}
     ${riesgoWidget}
     <div class="rb-dash-cols">
@@ -3997,8 +4031,13 @@ function moveTo(id, nuevaEtapa) {
    ahí. Mismo patrón de estado que state.wizard/state.va.wizardOpen. */
 function nextId(arr) { return arr.reduce((max, x) => Math.max(max, x.id), 0) + 1; }
 function newAltaCandidatoState(posiciónId) {
-  return { posiciónId, nombres: '', apellidoPaterno: '', apellidoMaterno: '', rol: '', seniority: 'Semi Senior', linkedin: '', cvSimulado: '', expectativa: '', disponibilidad: '30 días', skills: [] };
+  return { posiciónId: posiciónId || null, nombres: '', apellidoPaterno: '', apellidoMaterno: '', rol: '', seniority: 'Semi Senior', linkedin: '', cvSimulado: '', expectativa: '', disponibilidad: '30 días', skills: [] };
 }
+/* Sin posiciónId (ej. desde el acceso directo del Dashboard) el modal abre
+   con el selector de posición vacío -- ver renderAltaCandidatoModal -- en
+   vez de negar la carga; la única diferencia real es que acá el usuario
+   elige la posición dentro del propio modal en lugar de haber llegado ya
+   con una elegida (drawer de una posición puntual). */
 function abrirCargaCandidato(posiciónId) { state.altaCandidato = newAltaCandidatoState(posiciónId); render(); }
 function cerrarCargaCandidato() { state.altaCandidato = null; render(); }
 /* Adjuntar CV: mismo criterio que adjuntarCvRegistro/quitarCvRegistro en
@@ -4014,8 +4053,11 @@ function quitarCvCandidato() { state.altaCandidato.cvSimulado = ''; render(); }
 function confirmarAltaCandidato() {
   const d = state.altaCandidato;
   /* El materno es opcional (bastante frecuente omitirlo en un alta rápida
-     de outreach) -- nombres y paterno sí son obligatorios, igual que rol. */
-  if (!d.nombres.trim() || !d.apellidoPaterno.trim() || !d.rol.trim()) return;
+     de outreach) -- nombres y paterno sí son obligatorios, igual que rol.
+     La posición también es obligatoria acá (no solo cuando venía preelegida
+     desde el drawer): sin ella no hay a qué Landing Zone agregar la
+     postulación que se crea más abajo. */
+  if (!d.nombres.trim() || !d.apellidoPaterno.trim() || !d.rol.trim() || !d.posiciónId) return;
   const v = POSICIONES.find(x => x.id === d.posiciónId);
   const nombres = d.nombres.trim(), apellidoPaterno = d.apellidoPaterno.trim(), apellidoMaterno = d.apellidoMaterno.trim();
   const nombre = armarNombreCompleto(nombres, apellidoPaterno, apellidoMaterno);
@@ -4039,6 +4081,68 @@ function confirmarAltaCandidato() {
   showToast(`${nombre} fue agregado a la Landing Zone de ${v.titulo}`);
   render();
 }
+/* ---- Alta de cliente: mismo patrón de estado/modal que altaCandidato de
+   arriba. No hay flujo de "editar cliente" en la app (los clientes viven
+   como mock data curada) así que este alta es deliberadamente mínima --
+   solo lo que un AM necesita para que el cliente exista y se le puedan
+   abrir posiciones desde el wizard (Nombre/Industria/Tier/AM). ---- */
+function newAltaClienteState() {
+  return { nombre: '', industria: '', tier: 2, accountManagers: [] };
+}
+function abrirAltaCliente() { state.altaCliente = newAltaClienteState(); render(); }
+function cerrarAltaCliente() { state.altaCliente = null; render(); }
+function confirmarAltaCliente() {
+  const d = state.altaCliente;
+  if (!d.nombre.trim() || !d.industria.trim() || d.accountManagers.length === 0) return;
+  const cliente = {
+    id: nextId(CLIENTES), nombre: d.nombre.trim(), industria: d.industria.trim(), tier: Number(d.tier),
+    activo: true, accountManagers: d.accountManagers, interacciones: [],
+  };
+  CLIENTES.push(cliente);
+  state.altaCliente = null;
+  showToast(`${cliente.nombre} fue agregado como cliente`);
+  goToCliente(cliente.id);
+}
+/* Igual que drawerAbiertoPara para el drawer de postulación: sin esto, la
+   animación de entrada del overlay (rb-fade-in, compartida con
+   .rb-drawer-overlay) se re-dispara en CADA render mientras el modal está
+   abierto -- no solo al abrirlo -- dando un parpadeo notorio cada vez que
+   se tipea un caracter o se elige algo en un dropdown (ambos re-renderizan
+   el modal entero). */
+let altaClienteAbiertoPrevio = false;
+function renderAltaClienteModal() {
+  if (!state.altaCliente) return '';
+  const d = state.altaCliente;
+  const puedeConfirmar = d.nombre.trim().length > 0 && d.industria.trim().length > 0 && d.accountManagers.length > 0;
+  const yaAbierto = altaClienteAbiertoPrevio;
+  /* Los AM existentes ya usados en algún cliente, como sugerencia rápida
+     (mismo criterio que amsUnicos en renderClientesList) -- sin impedir
+     escribir uno nuevo si el AM todavía no tiene ningún cliente asignado. */
+  const amsExistentes = [...new Set(CLIENTES.flatMap(c => c.accountManagers))].sort();
+  return `
+    <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:65" onclick="cerrarAltaCliente()"></div>
+    <div class="modal-preview">
+      <div class="mhead">
+        <span class="ic">${icon('building', 18)}</span>
+        <div><h5>Crear cliente</h5><p>Da de alta una cuenta nueva para poder abrirle posiciones</p></div>
+      </div>
+      <label class="rb-wizard-label" for="acl-nombre">Nombre</label>
+      <input id="acl-nombre" class="input" placeholder="Ej. Interbank" value="${esc(d.nombre)}" oninput="state.altaCliente.nombre=this.value; render()" />
+      <div style="display:flex;gap:var(--sp-3)">
+        <div style="flex:1"><label class="rb-wizard-label" for="acl-industria">Industria</label>
+          <input id="acl-industria" class="input" placeholder="Ej. Banca" value="${esc(d.industria)}" oninput="state.altaCliente.industria=this.value; render()" /></div>
+        <div style="flex:1"><label class="rb-wizard-label" for="acl-tier">Tier</label>
+          ${renderSelect('acl-tier', [1, 2, 3].map(t => ({ value: t, label: 'Tier ' + t })), d.tier, 'Tier', 'state.altaCliente.tier=parseInt(value,10); render();', null, null, true)}</div>
+      </div>
+      <label class="rb-wizard-label">Account manager${d.accountManagers.length === 1 ? '' : 's'}</label>
+      ${renderTagInput('altaCliente.accountManagers', d.accountManagers, 'Ej. Lucía Bravo')}
+      ${amsExistentes.length ? `<p class="rb-search-hint" style="margin-top:-4px">${icon('user', 12)} Existentes: ${amsExistentes.map(esc).join(', ')}</p>` : ''}
+      <div class="mactions">
+        <button class="btn secondary sm" onclick="cerrarAltaCliente()">Cancelar</button>
+        <button class="btn sm" ${puedeConfirmar ? '' : 'disabled'} onclick="confirmarAltaCliente()">${icon('check',12)} Crear cliente</button>
+      </div>
+    </div>`;
+}
 /* Igual que drawerAbiertoPara para el drawer de postulación: sin esto, la
    animación de entrada del overlay (rb-fade-in, compartida con
    .rb-drawer-overlay) se re-dispara en CADA render mientras el modal está
@@ -4050,15 +4154,26 @@ function renderAltaCandidatoModal() {
   if (!state.altaCandidato) return '';
   const d = state.altaCandidato;
   const v = POSICIONES.find(x => x.id === d.posiciónId);
-  const puedeConfirmar = d.nombres.trim().length > 0 && d.apellidoPaterno.trim().length > 0 && d.rol.trim().length > 0;
+  const puedeConfirmar = d.nombres.trim().length > 0 && d.apellidoPaterno.trim().length > 0 && d.rol.trim().length > 0 && !!d.posiciónId;
   const yaAbierto = altaCandidatoAbiertoPrevio;
+  /* Selector de posición: solo cuando no llegó preelegida (ej. desde el
+     acceso directo del Dashboard) -- si ya venía de "Cargar candidato" en
+     el drawer de una posición puntual, se sigue mostrando fija como
+     siempre, sin poder cambiarla desde acá. Solo posiciones abiertas: no
+     tiene sentido sumar un candidato a la Landing Zone de algo ya cerrado. */
+  const posicionesAbiertasOpts = POSICIONES.filter(p => !esPosiciónTerminal(p.estado))
+    .map(p => ({ value: p.id, label: `${p.titulo} · ${p.cliente}` }));
+  const selectorPosición = v ? '' : `
+      <label class="rb-wizard-label" for="ac-posicion">Posición</label>
+      ${renderSelect('ac-posicion', [{ value: '', label: 'Selecciona una posición' }, ...posicionesAbiertasOpts], d.posiciónId || '', 'Selecciona una posición', 'state.altaCandidato.posiciónId=parseInt(value,10)||null; render();', null, null, true)}`;
   return `
     <div class="rb-drawer-overlay${yaAbierto ? ' rb-no-anim' : ''}" style="z-index:65" onclick="cerrarCargaCandidato()"></div>
     <div class="modal-preview">
       <div class="mhead">
         <span class="ic">${icon('userPlus', 18)}</span>
-        <div><h5>Cargar candidato</h5><p>Se agrega a la Landing Zone de ${esc(v ? v.titulo : '')}</p></div>
+        <div><h5>Cargar candidato</h5><p>${v ? `Se agrega a la Landing Zone de ${esc(v.titulo)}` : 'Elige a qué posición aplica'}</p></div>
       </div>
+      ${selectorPosición}
       <div style="display:flex;gap:var(--sp-3)">
         <div style="flex:1"><label class="rb-wizard-label" for="ac-nombres">Nombres</label>
           <input id="ac-nombres" class="input" value="${esc(d.nombres)}" oninput="state.altaCandidato.nombres=this.value; render()" /></div>
@@ -6004,7 +6119,7 @@ function render() {
      scroll interno del overlay llega a su tope/fondo, dando el efecto de
      que la página salta o se ve mal (se suma a overscroll-behavior:contain
      en .rb-side-drawer/.modal-preview, que ataca lo mismo desde el CSS). */
-  const hayOverlayFijo = ((state.view === 'pipeline' || state.view === 'posiciones') && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto || !!state.altaCandidato;
+  const hayOverlayFijo = ((state.view === 'pipeline' || state.view === 'posiciones') && state.pl.selectedId !== null) || !!state.docAbierto || !!state.retiroAbierto || !!state.aprobarAbierto || !!state.culminarAbierto || !!state.blacklistAbierto || !!state.altaCandidato || !!state.altaCliente;
   document.body.style.overflow = hayOverlayFijo ? 'hidden' : '';
   /* .rb-drawer-scroll es el que de verdad tiene scroll interno (ver
      .rb-side-drawer: flex-column, el header es un hermano fijo aparte) --
@@ -6029,6 +6144,7 @@ function render() {
     ${renderCulminarModal()}
     ${renderBlacklistModal()}
     ${renderAltaCandidatoModal()}
+    ${renderAltaClienteModal()}
     ${renderFloatingMenus()}
     ${toastHtml()}
   `;
@@ -6059,6 +6175,7 @@ function render() {
   window.scrollTo(0, pageScroll);
   drawerAbiertoPara = (state.view === 'pipeline' || state.view === 'posiciones') ? state.pl.selectedId : null;
   altaCandidatoAbiertoPrevio = !!state.altaCandidato;
+  altaClienteAbiertoPrevio = !!state.altaCliente;
 }
 
 aplicarTheme();
