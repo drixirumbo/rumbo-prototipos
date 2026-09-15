@@ -3314,22 +3314,10 @@ function renderEditPosiciónForm(v) {
       <h3 class="rb-subsection-label">Skills must-have</h3>${renderTagInput('editForm.skillsMustHave', ef.skillsMustHave, 'Ej. AWS')}
       <h3 class="rb-subsection-label">Skills nice-to-have</h3>${renderTagInput('editForm.skillsNiceToHave', ef.skillsNiceToHave, 'Ej. Kubernetes')}
     </div>
-    <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-      <h3>Estrategia de sourcing</h3>
-      <label class="rb-wizard-label">Industria deseable</label>
-      <input id="ef-industria" class="input" value="${esc(ef.industriaDeseable)}" placeholder="Ej. Retail o consumo masivo" oninput="state.editForm.industriaDeseable=this.value" />
-      <label class="rb-wizard-label">Empresas objetivo</label>
-      <input id="ef-empresas" class="input" value="${esc(ef.empresasObjetivo)}" placeholder="Ej. Empresas de consumo masivo con áreas de datos maduras" oninput="state.editForm.empresasObjetivo=this.value" />
-      <label class="rb-wizard-label">Palabras clave / Boolean</label>
-      <input id="ef-boolean" class="input" value="${esc(ef.booleanSourcing)}" placeholder="Ej. Data Engineer, SQL, Python, Airflow" oninput="state.editForm.booleanSourcing=this.value" />
-      <label class="rb-wizard-label">Red flags a considerar</label>
-      <textarea id="ef-redflags" class="input" rows="2" placeholder="Ej. Solo experiencia en BI/reporting sin construcción de pipelines" oninput="state.editForm.redFlagsSourcing=this.value">${esc(ef.redFlagsSourcing)}</textarea>
-      <label class="rb-wizard-label">Notas adicionales del cliente</label>
-      <textarea id="ef-notascliente" class="input" rows="2" placeholder="Notas de la conversación de intake con el cliente..." oninput="state.editForm.notasCliente=this.value">${esc(ef.notasCliente)}</textarea>
-    </div>
     <div class="rb-detail-grid">
       <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-        <h3>Bandas de presupuesto por nivel</h3>
+        <h3>Compensación y condiciones</h3>
+        <h3 class="rb-subsection-label">Bandas de presupuesto por nivel</h3>
         ${ef.bandas.map((b, i) => `
           <div class="rb-banda-row">
             <input id="ef-banda-${i}-nivel" class="input" placeholder="Nivel" value="${esc(b.nivel)}" oninput="updateBandaField('editForm.bandas',${i},'nivel',this.value)" />
@@ -3338,10 +3326,21 @@ function renderEditPosiciónForm(v) {
             <span class="rb-tag-x" onclick="removeBanda('editForm.bandas',${i}); render()">${icon('x',10)}</span>
           </div>`).join('')}
         <button type="button" class="btn ghost sm" onclick="addBanda('editForm.bandas')">+ Agregar banda</button>
+        <h3 class="rb-subsection-label">Otras condiciones</h3>
+        ${renderCondicionesPosiciónFields('state.editForm.condiciones', 'ef-cond', ef.condiciones)}
       </div>
       <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-        <h3>Otras condiciones</h3>
-        ${renderCondicionesPosiciónFields('state.editForm.condiciones', 'ef-cond', ef.condiciones)}
+        <h3>Estrategia de sourcing</h3>
+        <label class="rb-wizard-label">Industria deseable</label>
+        <input id="ef-industria" class="input" value="${esc(ef.industriaDeseable)}" placeholder="Ej. Retail o consumo masivo" oninput="state.editForm.industriaDeseable=this.value" />
+        <label class="rb-wizard-label">Empresas objetivo</label>
+        <input id="ef-empresas" class="input" value="${esc(ef.empresasObjetivo)}" placeholder="Ej. Empresas de consumo masivo con áreas de datos maduras" oninput="state.editForm.empresasObjetivo=this.value" />
+        <label class="rb-wizard-label">Palabras clave / Boolean</label>
+        <input id="ef-boolean" class="input" value="${esc(ef.booleanSourcing)}" placeholder="Ej. Data Engineer, SQL, Python, Airflow" oninput="state.editForm.booleanSourcing=this.value" />
+        <label class="rb-wizard-label">Red flags a considerar</label>
+        <textarea id="ef-redflags" class="input" rows="2" placeholder="Ej. Solo experiencia en BI/reporting sin construcción de pipelines" oninput="state.editForm.redFlagsSourcing=this.value">${esc(ef.redFlagsSourcing)}</textarea>
+        <label class="rb-wizard-label">Notas adicionales del cliente</label>
+        <textarea id="ef-notascliente" class="input" rows="2" placeholder="Notas de la conversación de intake con el cliente..." oninput="state.editForm.notasCliente=this.value">${esc(ef.notasCliente)}</textarea>
       </div>
     </div>
     <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
@@ -3599,7 +3598,8 @@ function renderWizardStep(w) {
     </div>
     <div class="rb-detail-grid">
       <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-        <h3 id="wiz-bandas-label">Bandas de presupuesto por nivel</h3>
+        <h3>Compensación y condiciones</h3>
+        <h3 class="rb-subsection-label" id="wiz-bandas-label">Bandas de presupuesto por nivel</h3>
         ${d.bandas.map((b, i) => `
           <div class="rb-banda-row" role="group" aria-label="Banda ${i + 1}">
             <input id="wiz-banda-${i}-nivel" class="input" aria-label="Nivel" placeholder="Nivel" value="${esc(b.nivel)}" oninput="updateBandaField('wizard.draft.bandas',${i},'nivel',this.value)" />
@@ -3608,24 +3608,22 @@ function renderWizardStep(w) {
             <span class="rb-tag-x" role="button" tabindex="0" aria-label="Quitar banda ${i + 1}" onclick="removeBanda('wizard.draft.bandas',${i}); render()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); removeBanda('wizard.draft.bandas',${i}); render();}">${icon('x',10)}</span>
           </div>`).join('')}
         <button type="button" class="btn ghost sm" onclick="addBanda('wizard.draft.bandas')">+ Agregar banda</button>
-      </div>
-      <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-        <h3>Otras condiciones</h3>
+        <h3 class="rb-subsection-label">Otras condiciones</h3>
         ${renderCondicionesPosiciónFields('state.wizard.draft.condiciones', 'wiz-cond', d.condiciones)}
       </div>
-    </div>
-    <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
-      <h3>Estrategia de sourcing</h3>
-      <label class="rb-wizard-label" for="wiz-draft-industria">Industria deseable</label>
-      <input id="wiz-draft-industria" class="input" value="${esc(d.industriaDeseable)}" placeholder="Ej. Retail o consumo masivo" oninput="state.wizard.draft.industriaDeseable=this.value" />
-      <label class="rb-wizard-label" for="wiz-draft-empresas">Empresas objetivo</label>
-      <input id="wiz-draft-empresas" class="input" value="${esc(d.empresasObjetivo)}" placeholder="Ej. Empresas de consumo masivo con áreas de datos maduras" oninput="state.wizard.draft.empresasObjetivo=this.value" />
-      <label class="rb-wizard-label" for="wiz-draft-boolean">Palabras clave / Boolean</label>
-      <input id="wiz-draft-boolean" class="input" value="${esc(d.booleanSourcing)}" placeholder="Ej. Data Engineer, SQL, Python, Airflow" oninput="state.wizard.draft.booleanSourcing=this.value" />
-      <label class="rb-wizard-label" for="wiz-draft-redflags">Red flags a considerar</label>
-      <textarea id="wiz-draft-redflags" class="input" rows="2" placeholder="Ej. Solo experiencia en BI/reporting sin construcción de pipelines" oninput="state.wizard.draft.redFlagsSourcing=this.value">${esc(d.redFlagsSourcing)}</textarea>
-      <label class="rb-wizard-label" for="wiz-draft-notascliente">Notas adicionales del cliente</label>
-      <textarea id="wiz-draft-notascliente" class="input" rows="2" placeholder="Notas de la conversación de intake con el cliente..." oninput="state.wizard.draft.notasCliente=this.value">${esc(d.notasCliente)}</textarea>
+      <div class="card rb-detail-section" style="margin-bottom:var(--sp-6)">
+        <h3>Estrategia de sourcing</h3>
+        <label class="rb-wizard-label" for="wiz-draft-industria">Industria deseable</label>
+        <input id="wiz-draft-industria" class="input" value="${esc(d.industriaDeseable)}" placeholder="Ej. Retail o consumo masivo" oninput="state.wizard.draft.industriaDeseable=this.value" />
+        <label class="rb-wizard-label" for="wiz-draft-empresas">Empresas objetivo</label>
+        <input id="wiz-draft-empresas" class="input" value="${esc(d.empresasObjetivo)}" placeholder="Ej. Empresas de consumo masivo con áreas de datos maduras" oninput="state.wizard.draft.empresasObjetivo=this.value" />
+        <label class="rb-wizard-label" for="wiz-draft-boolean">Palabras clave / Boolean</label>
+        <input id="wiz-draft-boolean" class="input" value="${esc(d.booleanSourcing)}" placeholder="Ej. Data Engineer, SQL, Python, Airflow" oninput="state.wizard.draft.booleanSourcing=this.value" />
+        <label class="rb-wizard-label" for="wiz-draft-redflags">Red flags a considerar</label>
+        <textarea id="wiz-draft-redflags" class="input" rows="2" placeholder="Ej. Solo experiencia en BI/reporting sin construcción de pipelines" oninput="state.wizard.draft.redFlagsSourcing=this.value">${esc(d.redFlagsSourcing)}</textarea>
+        <label class="rb-wizard-label" for="wiz-draft-notascliente">Notas adicionales del cliente</label>
+        <textarea id="wiz-draft-notascliente" class="input" rows="2" placeholder="Notas de la conversación de intake con el cliente..." oninput="state.wizard.draft.notasCliente=this.value">${esc(d.notasCliente)}</textarea>
+      </div>
     </div>
     <div class="rb-wizard-footer">
       <button class="btn secondary" onclick="finalizarWizard(false)">Guardar como borrador</button>
