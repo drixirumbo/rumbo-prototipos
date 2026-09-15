@@ -375,8 +375,8 @@ body {
 .rb-quickfact { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); color: var(--text-muted); }
 a.rb-quickfact { color: var(--cyan-text); text-decoration: none; cursor: pointer; }
 a.rb-quickfact:hover { text-decoration: underline; }
-.rb-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-6); margin-bottom: var(--sp-6); }
-.rb-detail-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-6); margin-bottom: var(--sp-6); }
+.rb-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-6); margin-bottom: var(--sp-6); align-items: start; }
+.rb-detail-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-6); margin-bottom: var(--sp-6); align-items: start; }
 .rb-detail-section h3 { font-size: var(--fs-md); font-weight: 600; color: var(--text); margin: 0 0 var(--sp-4) 0; }
 /* Sub-encabezado para una segunda agrupación dentro de la misma card (ej.
    "Skills nice-to-have" bajo "Skills must-have") -- se distingue del
@@ -3200,7 +3200,7 @@ function renderEditPosiciónForm(v) {
   return `
     <div class="rb-back" onclick="cancelEditPosición()">${icon('chevronLeft',12)} Cancelar y volver a ${esc(v.titulo)}</div>
     <h1 class="rb-detail-name rb-display" style="margin-bottom:var(--sp-4)">Editar posición</h1>
-    <div class="rb-detail-grid">
+    <div class="rb-detail-grid-3">
       <div class="card rb-detail-section"><h3>Datos generales</h3>
         <label class="rb-wizard-label">Título</label>
         <input id="ef-titulo" class="input" value="${esc(ef.titulo)}" oninput="state.editForm.titulo=this.value; render()" />
@@ -3212,12 +3212,14 @@ function renderEditPosiciónForm(v) {
         ${renderSelect('ef-estado', ESTADOS_POSICIÓN_OPCIONES.map(e => ({ value: e, label: e })), ef.estado, 'Estado', 'state.editForm.estado=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="ef-engagement">Engagement Model</label>
         ${renderSelect('ef-engagement', ['Staffing', 'Recruiting'].map(s => ({ value: s, label: s })), ef.engagementModel, 'Engagement Model', 'state.editForm.engagementModel=value; render();', null, null, true)}
+        <label class="rb-wizard-label" for="ef-priority">Priority</label>
+        ${renderSelect('ef-priority', ['Low', 'Medium', 'High'].map(s => ({ value: s, label: s })), ef.priority, 'Priority', 'state.editForm.priority=value; render();', null, null, true)}
+      </div>
+      <div class="card rb-detail-section"><h3>Modalidad y clasificación</h3>
         <label class="rb-wizard-label" for="ef-modalidad">Modalidad</label>
         ${renderSelect('ef-modalidad', MODALIDAD_POSICIÓN_OPCIONES.map(s => ({ value: s, label: s })), ef.modalidad, 'Modalidad', 'state.editForm.modalidad=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="ef-ubicacion">Ubicación${ef.modalidad === 'Remoto' ? ' (opcional)' : ''}</label>
         <input id="ef-ubicacion" class="input" value="${esc(ef.ubicacion)}" placeholder="Ej. Lima, Perú" oninput="state.editForm.ubicacion=this.value" />
-        <label class="rb-wizard-label" for="ef-priority">Priority</label>
-        ${renderSelect('ef-priority', ['Low', 'Medium', 'High'].map(s => ({ value: s, label: s })), ef.priority, 'Priority', 'state.editForm.priority=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="ef-practica">Práctica</label>
         ${renderSelect('ef-practica', PRACTICAS_TAXONOMIA.map(p => ({ value: p.practica, label: p.practica })), ef.practica, 'Práctica', "state.editForm.practica=value; state.editForm.especialidad=especialidadesDe(value)[0]||''; state.editForm.subEspecialidad=subEspecialidadesDe(value, state.editForm.especialidad)[0]||''; render();", null, null, true)}
         <label class="rb-wizard-label" for="ef-especialidad">Especialidad</label>
@@ -3472,7 +3474,7 @@ function renderWizardStep(w) {
   const d = w.draft;
   return `
     <h1 class="rb-detail-name rb-display" style="margin-bottom:var(--sp-4)">Revisar y aprobar</h1>
-    <div class="rb-detail-grid">
+    <div class="rb-detail-grid-3">
       <div class="card rb-detail-section"><h3>Datos generales</h3>
         <label class="rb-wizard-label" for="wiz-draft-titulo">Título</label>
         <input id="wiz-draft-titulo" class="input" value="${esc(d.titulo)}" oninput="state.wizard.draft.titulo=this.value; render()" />
@@ -3482,12 +3484,14 @@ function renderWizardStep(w) {
         ${renderSelect('wiz-draft-seniority', ['Junior', 'Mid', 'Senior'].map(s => ({ value: s, label: s })), d.seniority, 'Seniority', 'state.wizard.draft.seniority=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="wiz-draft-engagement">Engagement Model</label>
         ${renderSelect('wiz-draft-engagement', ['Staffing', 'Recruiting'].map(s => ({ value: s, label: s })), d.engagementModel, 'Engagement Model', 'state.wizard.draft.engagementModel=value; render();', null, null, true)}
+        <label class="rb-wizard-label" for="wiz-draft-priority">Priority</label>
+        ${renderSelect('wiz-draft-priority', ['Low', 'Medium', 'High'].map(s => ({ value: s, label: s })), d.priority, 'Priority', 'state.wizard.draft.priority=value; render();', null, null, true)}
+      </div>
+      <div class="card rb-detail-section"><h3>Modalidad y clasificación</h3>
         <label class="rb-wizard-label" for="wiz-draft-modalidad">Modalidad</label>
         ${renderSelect('wiz-draft-modalidad', MODALIDAD_POSICIÓN_OPCIONES.map(s => ({ value: s, label: s })), d.modalidad, 'Modalidad', 'state.wizard.draft.modalidad=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="wiz-draft-ubicacion">Ubicación${d.modalidad === 'Remoto' ? ' (opcional)' : ''}</label>
         <input id="wiz-draft-ubicacion" class="input" value="${esc(d.ubicacion)}" placeholder="Ej. Lima, Perú" oninput="state.wizard.draft.ubicacion=this.value" />
-        <label class="rb-wizard-label" for="wiz-draft-priority">Priority</label>
-        ${renderSelect('wiz-draft-priority', ['Low', 'Medium', 'High'].map(s => ({ value: s, label: s })), d.priority, 'Priority', 'state.wizard.draft.priority=value; render();', null, null, true)}
         <label class="rb-wizard-label" for="wiz-draft-practica">Práctica ${!d.practica ? '<span style="color:var(--warning-text);font-weight:400">· sin clasificar todavía</span>' : ''}</label>
         ${renderSelect('wiz-draft-practica', [{ value: '', label: 'Selecciona una práctica' }, ...PRACTICAS_TAXONOMIA.map(p => ({ value: p.practica, label: p.practica }))], d.practica, 'Selecciona una práctica', "state.wizard.draft.practica=value; state.wizard.draft.especialidad=especialidadesDe(value)[0]||''; state.wizard.draft.subEspecialidad=subEspecialidadesDe(value, state.wizard.draft.especialidad)[0]||''; render();", null, null, true)}
         <label class="rb-wizard-label" for="wiz-draft-especialidad">Especialidad</label>
