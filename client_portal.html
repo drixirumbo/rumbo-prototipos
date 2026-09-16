@@ -113,6 +113,11 @@ h3.rb-subsection-label:first-child { margin-top: 0; }
 .rb-decision-resultado { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: var(--sp-2); }
 .rb-toast { position: fixed; bottom: var(--sp-6); right: var(--sp-6); background: var(--surface); border: 1px solid var(--cyan-text); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); box-shadow: var(--shadow-3); z-index: 80; }
 .rb-empty { text-align: center; padding: var(--sp-10) var(--sp-6); color: var(--text-muted); }
+/* Modal de detalle de postulación -- mismo patrón que ya usa
+   candidate_portal.html (agendar entrevista / editar perfil), portado
+   acá para no navegar a pantalla completa por una decisión puntual. */
+.rb-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; }
+.rb-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(640px, 92vw); max-height: 86vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-4); padding: var(--sp-6); z-index: 61; box-shadow: var(--shadow-3); }
 </style>
 </head>
 <body>
@@ -274,7 +279,7 @@ let SOLICITUDES = [
   },
 ];
 
-const state = { view: 'cola', detalleId: null, toast: null, ui: { theme: leerThemeGuardado() } };
+const state = { view: 'cola', postulacionModalId: null, toast: null, ui: { theme: leerThemeGuardado() } };
 let decisionForm = null;
 let solicitudForm = null;
 
@@ -284,18 +289,21 @@ function showToast(msg) { state.toast = msg; render(); setTimeout(() => { state.
 /* =========================================================================
    ACCIONES
    ========================================================================= */
+/* Aprobar/rechazar (o solo revisar) una postulación es una decisión
+   puntual -- se resuelve en un modal (ver renderPostulacionModal) sin
+   abandonar la cola de fondo, en vez de navegar a una vista aparte. */
 function abrirPostulacion(id) {
   const p = postulacionDe(id);
-  state.view = 'detalle'; state.detalleId = id;
+  state.postulacionModalId = id;
   decisionForm = p.decision === null ? { decision: '', feedback: '' } : null;
   render();
 }
-function volverACola() { state.view = 'cola'; state.detalleId = null; decisionForm = null; render(); }
+function volverACola() { state.postulacionModalId = null; decisionForm = null; render(); }
 function elegirDecisionForm(decision) { decisionForm.decision = decision; render(); }
 function decisionValida() { return !!decisionForm.decision && decisionForm.feedback.trim().length > 0; }
 function confirmarDecision() {
   if (!decisionValida()) return;
-  const p = postulacionDe(state.detalleId);
+  const p = postulacionDe(state.postulacionModalId);
   p.decision = decisionForm.decision;
   p.feedback = decisionForm.feedback.trim();
   decisionForm = null;
@@ -313,7 +321,7 @@ function toggleTheme() {
 /* Navegación por tab (Candidatos presentados / Solicitar posición / Mis
    solicitudes) -- mismo idiom que irA() en candidate_portal.html. */
 function irA(view) {
-  state.view = view; state.detalleId = null; decisionForm = null;
+  state.view = view; state.postulacionModalId = null; decisionForm = null;
   solicitudForm = view === 'solicitar' ? nuevaSolicitudForm() : null;
   render();
 }
@@ -478,26 +486,24 @@ function decisionTomadaHtml(p) {
 }
 
 function renderDetalle() {
-  const p = postulacionDe(state.detalleId);
-  if (!p) { volverACola(); return ''; }
+  const p = postulacionDe(state.postulacionModalId);
+  if (!p) return '';
   return `
-    <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="volverACola()">${icon('chevronLeft', 12)} Volver</button>
-    <div class="card">
-      <div class="rb-postulacion-top">
-        <div>
-          <h2 style="font-size:var(--fs-xl)">${esc(p.candidato.nombre)}</h2>
-          <div class="rb-postulacion-sub" style="margin-top:4px">${esc(p.candidato.rol)} · ${esc(p.candidato.seniority)} · postula a ${esc(p.posición)}</div>
-        </div>
-        ${p.decision === null
-          ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Por decidir</span>`
-          : p.decision === 'aprobar'
-          ? `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Avanza a oferta</span>`
-          : `<span class="badge" style="background:rgba(255,90,54,.15);color:var(--danger-text)">${icon('x', 11)} Rechazado</span>`}
+    <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="volverACola()">${icon('x', 12)} Cerrar</button>
+    <div class="rb-postulacion-top">
+      <div>
+        <h2 style="font-size:var(--fs-xl)">${esc(p.candidato.nombre)}</h2>
+        <div class="rb-postulacion-sub" style="margin-top:4px">${esc(p.candidato.rol)} · ${esc(p.candidato.seniority)} · postula a ${esc(p.posición)}</div>
       </div>
-      ${briefHtml(p)}
-      <div style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--border)">
-        ${p.decision === null ? decisionFormHtml(p) : decisionTomadaHtml(p)}
-      </div>
+      ${p.decision === null
+        ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Por decidir</span>`
+        : p.decision === 'aprobar'
+        ? `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Avanza a oferta</span>`
+        : `<span class="badge" style="background:rgba(255,90,54,.15);color:var(--danger-text)">${icon('x', 11)} Rechazado</span>`}
+    </div>
+    ${briefHtml(p)}
+    <div style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--border)">
+      ${p.decision === null ? decisionFormHtml(p) : decisionTomadaHtml(p)}
     </div>`;
 }
 
@@ -525,9 +531,7 @@ function render() {
     { key: 'solicitar', label: 'Solicitar posición' },
     { key: 'solicitudes', label: 'Mis solicitudes' },
   ];
-  const activeTab = state.view === 'detalle' ? 'cola' : state.view;
-  const body = state.view === 'detalle' ? renderDetalle()
-    : state.view === 'solicitar' ? renderSolicitarForm()
+  const body = state.view === 'solicitar' ? renderSolicitarForm()
     : state.view === 'solicitudes' ? renderSolicitudes()
     : renderCola();
   document.getElementById('root').innerHTML = `
@@ -540,10 +544,11 @@ function render() {
       </div>
     </header>
     <main class="rb-main">
-      ${state.view !== 'detalle' ? `<nav class="rb-nav">${TABS.map(t => `<button class="${activeTab === t.key ? 'active' : ''}" onclick="irA('${t.key}')">${esc(t.label)}</button>`).join('')}</nav>` : ''}
-      ${state.view !== 'detalle' ? `<h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>` : ''}
+      <nav class="rb-nav">${TABS.map(t => `<button class="${state.view === t.key ? 'active' : ''}" onclick="irA('${t.key}')">${esc(t.label)}</button>`).join('')}</nav>
+      <h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>
       ${body}
     </main>
+    ${state.postulacionModalId !== null ? `<div class="rb-modal-overlay" onclick="volverACola()"></div><div class="rb-modal">${renderDetalle()}</div>` : ''}
     ${state.toast ? `<div class="rb-toast">${esc(state.toast)}</div>` : ''}
   `;
   if (activeId) {

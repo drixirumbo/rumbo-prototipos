@@ -125,6 +125,10 @@ h3.rb-subsection-label:first-child { margin-top: 0; }
 .rb-reporte-dim-comentario { color: var(--text-muted); font-size: var(--fs-sm); margin-top: 2px; }
 .rb-toast { position: fixed; bottom: var(--sp-6); right: var(--sp-6); background: var(--surface); border: 1px solid var(--cyan-text); border-radius: var(--radius-2); padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); box-shadow: var(--shadow-3); z-index: 80; }
 .rb-empty { text-align: center; padding: var(--sp-10) var(--sp-6); color: var(--text-muted); }
+/* Modal de evaluación de entrevista -- mismo patrón portado desde
+   candidate_portal.html/client_portal.html. */
+.rb-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 60; }
+.rb-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(640px, 92vw); max-height: 86vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-4); padding: var(--sp-6); z-index: 61; box-shadow: var(--shadow-3); }
 </style>
 </head>
 <body>
@@ -289,7 +293,7 @@ let ENTREVISTAS = [
   },
 ];
 
-const state = { view: 'cola', detalleId: null, toast: null, ui: { theme: leerThemeGuardado() } };
+const state = { view: 'cola', entrevistaModalId: null, toast: null, ui: { theme: leerThemeGuardado() } };
 let formEval = null;
 
 function entrevistaDe(id) { return ENTREVISTAS.find(e => e.id === id); }
@@ -298,15 +302,18 @@ function showToast(msg) { state.toast = msg; render(); setTimeout(() => { state.
 /* =========================================================================
    ACCIONES
    ========================================================================= */
+/* Evaluar (o solo revisar) una entrevista es una acción puntual -- se
+   resuelve en un modal (ver renderEntrevistaModal) sin abandonar la cola
+   de entrevistas pendientes de fondo. */
 function abrirEntrevista(id) {
   const e = entrevistaDe(id);
-  state.view = 'detalle'; state.detalleId = id;
+  state.entrevistaModalId = id;
   formEval = e.estado === 'pendiente'
     ? { scores: { tecnico: 0, problemas: 0, comunicacion: 0, liderazgo: 0 }, comentarios: { tecnico: '', problemas: '', comunicacion: '', liderazgo: '' }, decision: '', recomendacion: '' }
     : null;
   render();
 }
-function volverACola() { state.view = 'cola'; state.detalleId = null; formEval = null; render(); }
+function volverACola() { state.entrevistaModalId = null; formEval = null; render(); }
 function calificarDimension(key, score) { formEval.scores[key] = score; render(); }
 function elegirDecision(decision) { formEval.decision = decision; render(); }
 function evaluacionValida() {
@@ -314,7 +321,7 @@ function evaluacionValida() {
 }
 function enviarEvaluacion() {
   if (!evaluacionValida()) return;
-  const e = entrevistaDe(state.detalleId);
+  const e = entrevistaDe(state.entrevistaModalId);
   e.estado = 'completada';
   e.reporte = {
     dimensiones: DIMENSIONES_EVAL.map(d => ({ key: d.key, score: formEval.scores[d.key], comentario: formEval.comentarios[d.key].trim() })),
@@ -425,25 +432,23 @@ function reporteHtml(e) {
 }
 
 function renderDetalle() {
-  const e = entrevistaDe(state.detalleId);
-  if (!e) { volverACola(); return ''; }
+  const e = entrevistaDe(state.entrevistaModalId);
+  if (!e) return '';
   return `
-    <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="volverACola()">${icon('chevronLeft', 12)} Volver</button>
-    <div class="card">
-      <div class="rb-entrevista-top">
-        <div>
-          <h2 class="rb-entrevista-nombre" style="font-size:var(--fs-xl)">${esc(e.candidato.nombre)}</h2>
-          <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.posición.titulo)} · ${esc(e.posición.cliente)} · ${esc(e.candidato.seniority)}</div>
-        </div>
-        ${e.estado === 'pendiente'
-          ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Pendiente</span>`
-          : `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Evaluada</span>`}
+    <button class="btn ghost sm" style="margin-bottom:var(--sp-4)" onclick="volverACola()">${icon('x', 12)} Cerrar</button>
+    <div class="rb-entrevista-top">
+      <div>
+        <h2 class="rb-entrevista-nombre" style="font-size:var(--fs-xl)">${esc(e.candidato.nombre)}</h2>
+        <div class="rb-entrevista-sub">${icon('building', 12)} ${esc(e.posición.titulo)} · ${esc(e.posición.cliente)} · ${esc(e.candidato.seniority)}</div>
       </div>
-      <div class="rb-entrevista-fecha">${icon('calendar', 13)} ${esc(fechaLabel(e.fecha, e.hora))}</div>
-      <div style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--border)">
-        ${referenciaHtml(e)}
-        ${e.estado === 'pendiente' ? evaluacionFormHtml(e) : reporteHtml(e)}
-      </div>
+      ${e.estado === 'pendiente'
+        ? `<span class="badge" style="background:var(--accent-soft);color:var(--rb-blue-300)">Pendiente</span>`
+        : `<span class="badge" style="background:rgba(60,203,127,.15);color:var(--success-text)">${icon('check', 11)} Evaluada</span>`}
+    </div>
+    <div class="rb-entrevista-fecha">${icon('calendar', 13)} ${esc(fechaLabel(e.fecha, e.hora))}</div>
+    <div style="margin-top:var(--sp-5);padding-top:var(--sp-5);border-top:1px solid var(--border)">
+      ${referenciaHtml(e)}
+      ${e.estado === 'pendiente' ? evaluacionFormHtml(e) : reporteHtml(e)}
     </div>`;
 }
 
@@ -473,9 +478,10 @@ function render() {
       </div>
     </header>
     <main class="rb-main">
-      ${state.view !== 'detalle' ? `<h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>` : ''}
-      ${state.view === 'detalle' ? renderDetalle() : renderCola()}
+      <h1 class="rb-page-title">${esc(titulo)}</h1><p class="rb-page-sub">${esc(sub)}</p>
+      ${renderCola()}
     </main>
+    ${state.entrevistaModalId !== null ? `<div class="rb-modal-overlay" onclick="volverACola()"></div><div class="rb-modal">${renderDetalle()}</div>` : ''}
     ${state.toast ? `<div class="rb-toast">${esc(state.toast)}</div>` : ''}
   `;
   if (activeId) {
